@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.thewhitedhadow</groupId>
+    <artifactId>Vivien</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Versions-Definitionen -->
+        <javalin.version>7.2.3</javalin.version>
+        <jgit.version>7.7.1.202607240634-r</jgit.version>
+        <tomlj.version>1.1.1</tomlj.version>
+        <slf4j.version>2.0.18</slf4j.version>
+        <jackson.version>2.17.2</jackson.version>
+    </properties>
+
+    <dependencies>
+        <!-- Webserver Framework (Express.js-Alternative für Java) -->
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>${javalin.version}</version>
+        </dependency>
+
+        <!-- Schlanker Logger für Javalin (verhindert Warning-Meldungen beim Start) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- Git API für Java -->
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
+
+        <!-- Optionale JGit-Erweiterung für SSH (falls ihr SSH-Keys statt HTTPS nutzt) -->
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
+
+        <!-- Extrem schlanker TOML Parser & Writer ohne weitere Abhängigkeiten -->
+        <dependency>
+            <groupId>org.tomlj</groupId>
+            <artifactId>tomlj</artifactId>
+            <version>${tomlj.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Plugin zum Packen als einzeln ausführbare JAR-Datei (Fat JAR) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <!-- Hier DEINE Main-Klasse eintragen, sobald du sie erstellt hast -->
+                                    <mainClass>tws.vivien.ServerMain</mainClass>
+                                </transformer>
+                            </transformers>
+                            <!-- Filter, um Signaturfehler von JGit-Abhängigkeiten im Fat-JAR zu verhindern -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>cz.habarta.typescript-generator</groupId>
+                <artifactId>typescript-generator-maven-plugin</artifactId>
+                <version>4.1.1</version>
+                <executions>
+                    <execution>
+                        <id>generate</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>process-classes</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jsonLibrary>jackson2</jsonLibrary>
+                    <!-- In welchen Java-Packages liegen deine API-Klassen? -->
+                    <classPatterns>
+                        <classPattern>tws.vivien.dto.*</classPattern>
+                        <!-- Später z.B. auch tws.vivien.dto.* -->
+                    </classPatterns>
+                    <!-- Wohin soll die TypeScript-Datei generiert werden? -->
+                    <outputFile>frontend/src/types/vivien-generated.d.ts</outputFile>
+                    <outputKind>module</outputKind>
+                    <outputFileType>declarationFile</outputFileType>
+                    <optionalAnnotations>
+                        <annotation>jakarta.annotation.Nullable</annotation>
+                    </optionalAnnotations>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

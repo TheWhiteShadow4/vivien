@@ -1,0 +1,46 @@
+package tws.vivien;
+
+import tws.vivien.core.Config;
+import tws.vivien.core.ServerMode;
+import tws.vivien.view.Server;
+
+import java.awt.*;
+import java.net.URI;
+
+public class ServerMain
+{
+	private Server server;
+
+	static void main()
+	{
+		Config config = new Config();
+
+		if (config != null)
+		{
+			Server server = new Server(config);
+			if (!config.errors.isEmpty())
+			{
+				server.errors.addAll(config.errors);
+			}
+			server.start();
+
+			if (config.mode != ServerMode.HOSTED)
+			{
+				server.openBrowser();
+			}
+		}
+	}
+
+	private static void openBrowser(String url)
+	{
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE))
+		{
+			try {
+				Desktop.getDesktop().browse(new URI(url));
+				System.out.println("Standard-Browser wurde automatisch geöffnet.");
+			} catch (Exception e) {
+				System.err.println("Browser konnte nicht automatisch geöffnet werden: " + e.getMessage());
+			}
+		}
+	}
+}

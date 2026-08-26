@@ -1,0 +1,37 @@
+Ich arbeite an einer Single-Page Application mit Vue 3 und Tailwind CSS (v4).
+
+Zielgruppe & Ergonomie:
+- Hauptnutzung auf DESKTOP und TABLET. Ignoriere klassisches Mobile-First für Smartphones!
+- Die App nutzt ein festes, klares Layout (wie GitHub Projects oder Google Docs) mit deutlichen Rahmen und Schattierungen. Keine schwebenden Menüs!
+- Schriften und interaktive Elemente müssen überdurchschnittlich groß sein (für gute Tablet-Bedienbarkeit) für ein einheitliches Layout.
+
+Wir nutzen ein striktes Komponenten-basiertes Design-System, um das HTML sauber und Komponenten klein zu halten.
+Bitte halte dich bei der Generierung von Code an folgende Regeln:
+
+1. Nutze KEINE langen Ketten von Standard-Tailwind-Klassen für grundlegendes Design (wie Rundungen, Abstände, Primärfarben).
+
+2. Nutze stattdessen unser Custom Theme:
+- Hintergründe: 'bg-vit-bg', 'bg-vit-surface'
+- Rahmen: 'border border-vit-border'
+- Texte: 'text-vit-text-main', 'text-vit-text-muted'
+- Aktionen (Pastell-Teal): 'bg-vit-primary text-vit-bg hover:bg-vit-primary-hover'
+- Infos (Pastell-Blau): 'text-vit-secondary' oder 'bg-vit-secondary/10'
+- Highlights (Gelb-Orange): 'text-vit-highlight' oder 'bg-vit-accent'
+- Geometrie: 'rounded-vit-radius', 'shadow-vit-shadow'
+
+3. Nutze wenn möglich die existierenden Basis Komponenten:
+
+4. Nutze für das Design AUSSCHLIESSLICH unser Custom Theme über folgende Klassen:
+
+5. Nutze das Vue-Muster für Varianten: Wenn eine Komponente (z. B. ein Button oder eine Karte) verschiedene Farben oder Stile haben kann, erstelle ein `const baseStyles` und ein `const variantStyles` Objekt im <script setup>. Setze die Klassen dynamisch über `:class="[baseStyles, variantStyles[variant]]"`.
+
+6. Trenne Layout von Struktur: Verwende Tailwind-Klassen im HTML-Template nur für strukturelles Layout (wie flex, grid, gap, padding), aber lagere Design-Entscheidungen (Farben, Radien, Border) wie oben beschrieben aus.
+
+7. Alle interaktiven Elemente (Buttons, Links, Inputs) müssen visuelle Rückmeldungen für hover:, focus: und active: besitzen.
+
+
+
+
+"Das HTML ist mir zu unleserlich.
+Bitte nimm diesen Code und lagere die Tailwind-Klassen nach dem Vue-Varianten-Muster (baseStyles und variantStyles) in den Script-Bereich aus.
+Das HTML-Template soll so sauber wie möglich sein."
