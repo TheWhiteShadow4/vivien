@@ -9,9 +9,9 @@ const headerContainer = "h-14 w-full bg-vit-surface border-b border-vit-border p
     <!-- Logo und echter Anwendungsname "Vivien" -->
     <div class="flex items-center gap-3">
         <IconVivien />
-	    <span class="text-lg font-bold tracking-wide bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+	    <h1 class="text-lg font-bold tracking-wide bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
           Vivien
-        </span>
+		</h1>
     </div>
 
     <!-- Rechte Seite: Projekt-Status -->

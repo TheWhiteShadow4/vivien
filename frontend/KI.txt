@@ -21,13 +21,11 @@ Bitte halte dich bei der Generierung von Code an folgende Regeln:
 
 3. Nutze wenn möglich die existierenden Basis Komponenten:
 
-4. Nutze für das Design AUSSCHLIESSLICH unser Custom Theme über folgende Klassen:
+4. Nutze das Vue-Muster für Varianten: Wenn eine Komponente (z. B. ein Button oder eine Karte) verschiedene Farben oder Stile haben kann, erstelle ein `const baseStyles` und ein `const variantStyles` Objekt im <script setup>. Setze die Klassen dynamisch über `:class="[baseStyles, variantStyles[variant]]"`.
 
-5. Nutze das Vue-Muster für Varianten: Wenn eine Komponente (z. B. ein Button oder eine Karte) verschiedene Farben oder Stile haben kann, erstelle ein `const baseStyles` und ein `const variantStyles` Objekt im <script setup>. Setze die Klassen dynamisch über `:class="[baseStyles, variantStyles[variant]]"`.
+5. Trenne Layout von Struktur: Verwende Tailwind-Klassen im HTML-Template nur für strukturelles Layout (wie flex, grid, gap, padding), aber lagere Design-Entscheidungen (Farben, Radien, Border) wie oben beschrieben aus.
 
-6. Trenne Layout von Struktur: Verwende Tailwind-Klassen im HTML-Template nur für strukturelles Layout (wie flex, grid, gap, padding), aber lagere Design-Entscheidungen (Farben, Radien, Border) wie oben beschrieben aus.
-
-7. Alle interaktiven Elemente (Buttons, Links, Inputs) müssen visuelle Rückmeldungen für hover:, focus: und active: besitzen.
+6. Alle interaktiven Elemente (Buttons, Links, Inputs) müssen visuelle Rückmeldungen für hover:, focus: und active: besitzen.
 
 
 

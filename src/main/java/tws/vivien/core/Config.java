@@ -1,6 +1,7 @@
 package tws.vivien.core;
 
 import org.tomlj.Toml;
+import org.tomlj.TomlInvalidTypeException;
 import org.tomlj.TomlParseResult;
 
 import java.io.File;
@@ -9,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class Config
@@ -70,6 +72,7 @@ public class Config
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
+		CReader.readLong(this, config, "waifu").map(Long::intValue).withDefault(8080).get();
 
 		validateRepository(repository);
 	}
@@ -91,6 +94,7 @@ public class Config
 		private Config config;
 		private String configName;
 		private S inputValue;
+		private ConfigException error;
 		private T value;
 
 		public static CReader<String, String> readString(Config config, TomlParseResult toml, String configName)
@@ -108,7 +112,14 @@ public class Config
 			CReader<Long, Long> reader = new CReader<>();
 			reader.config = config;
 			reader.configName = configName;
-			reader.inputValue = toml.getLong(configName);
+			try
+			{
+				reader.inputValue = toml.getLong(configName);
+			}
+			catch(TomlInvalidTypeException e)
+			{
+				reader.error = new ConfigException(configName, Objects.toString(toml.get(configName)), e);
+			}
 			reader.value = reader.inputValue;
 			return reader;
 		}
@@ -123,7 +134,7 @@ public class Config
 		{
 			if (value == null)
 			{
-				config.errors.add(new ConfigException(configName));
+				error = new ConfigException(configName);
 			}
 			value = fallbackValue;
 			return this;
@@ -131,22 +142,29 @@ public class Config
 
 		public <R> CReader<S, R> map(Function<T, R> func)
 		{
-			CReader<S, R> reader = new CReader<>();
-			reader.config = config;
-			reader.configName = configName;
-			reader.inputValue = inputValue;
+			R mappedValue = null;
 			try
 			{
-				reader.value = func.apply(value);
+				mappedValue = func.apply(value);
 			}
 			catch(Exception e)
 			{
-				config.errors.add(new ConfigException(configName, configName, e));
+				if (error == null) error = new ConfigException(configName, inputValue.toString(), e);
 			}
-			return reader;
+			@SuppressWarnings("unchecked")
+			var result = (CReader<S, R>) this;
+			result.value = mappedValue;
+			return result;
 		}
 
-		public T get() { return value; }
+		public T get()
+		{
+			if (error != null)
+			{
+				config.errors.add(error);
+			}
+			return value;
+		}
 	}
 
 	// Abgesicherter Modus

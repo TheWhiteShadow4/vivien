@@ -1,3 +1,4 @@
+<!-- src/App.vue -->
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue'
@@ -6,6 +7,7 @@ import ErrorBannerList from './components/ErrorBannerList.vue'
 import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
 import RepoFileView from './components/views/RepoFileView.vue' // Neu importiert
+import BasePanel from './components/base/BasePanel.vue'
 
 const state = ref<ServerState>({
 	user: undefined,
@@ -18,72 +20,6 @@ const isSidebarOpen = ref(true)
 const isLoading = ref<boolean>(true)
 const networkError = ref<string | null>(null)
 //const currentPage = ref('dashboard')
-
-const mockRepository = ref({
-  elements: [
-    {
-      name: "🎨 Grafiken & UI",
-      type: "FOLDER",
-      childs: [
-        {
-          name: "Charaktere",
-          type: "FOLDER",
-          childs: [
-            { name: "fuchs_held_walk_anim.png", type: "FILE", childs: [] },
-            { name: "bösewicht_pose.png", type: "FILE", childs: [] },
-            { name: "npc_händler_concept.jpg", type: "FILE", childs: [] }
-          ]
-        },
-        {
-          name: "Umgebung",
-          type: "FOLDER",
-          childs: [
-            { name: "tileset_wald_frühling.png", type: "FILE", childs: [] },
-            { name: "hintergrund_parallax_wolken.png", type: "FILE", childs: [] }
-          ]
-        },
-        { name: "ui_hauptmenü_entwurf.png", type: "FILE", childs: [] },
-        { name: "app_icon_final.ico", type: "FILE", childs: [] }
-      ]
-    },
-    {
-      name: "✍️ Story & Dialoge",
-      type: "FOLDER",
-      childs: [
-        { name: "intro_sequenz_skript.txt", type: "FILE", childs: [] },
-        { name: "charakter_backstories.md", type: "FILE", childs: [] },
-        { name: "dialog_baum_händler_v2.json", type: "FILE", childs: [] }
-      ]
-    },
-    {
-      name: "🎵 Audio & Musik",
-      type: "FOLDER",
-      childs: [
-        { name: "titelbildschirm_theme.wav", type: "FILE", childs: [] },
-        { name: "soundeffect_schwert_hieb.mp3", type: "FILE", childs: [] },
-        { name: "ambient_wald_vögel.ogg", type: "FILE", childs: [] }
-      ]
-    },
-    {
-      name: "⚙️ Balance & Design",
-      type: "FOLDER",
-      childs: [
-        { name: "gegner_werte_tabelle.csv", type: "FILE", childs: [] },
-        { name: "items_und_waffen.json", type: "FILE", childs: [] }
-      ]
-    },
-    {
-      name: "readme_anleitung_für_neulinge.md",
-      type: "FILE",
-      childs: []
-    },
-    {
-      name: "project_settings.ini",
-      type: "FILE",
-      childs: []
-    }
-  ]
-})
 
 async function checkBackendStatus()
 {
@@ -134,9 +70,15 @@ onMounted(() => {
         />
 
         <RepoFileView 
-            :repository="mockRepository" 
-          />
+          @server-error="(err) => state.serverErrors.push(err)" 
+        />
       </main>
+
+	  <div class="fixed bottom-6 right-6 z-50 flex flex-row gap-4 max-w-2xl pointer-events-none">
+	  <BasePanel variant="dialog" >Surface</BasePanel>
+      <BasePanel variant="info" >Das ist ein Toast<br /><span class="text-vit-text-muted">Zweite Zeile.</span></BasePanel>
+	  <BasePanel variant="warning" >Warning</BasePanel>
+	  </div>
 
     </div>
   </div>

@@ -1,8 +1,13 @@
 package tws.vivien.core;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import tws.vivien.dto.ElementType;
+import tws.vivien.dto.RepositoryElement;
 import tws.vivien.dto.RepositoryView;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,61 +16,92 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Repository
+public class Repository implements Closeable
 {
 	private final Path rootPath;
+	private final org.eclipse.jgit.lib.Repository jgitRepo;
 
-	public Repository(Path rootPath)
+	public Repository(Path rootPath) throws IOException
 	{
 		this.rootPath = rootPath;
+		this.jgitRepo = Git.open(rootPath.toFile()).getRepository();
 	}
 
-	public RepositoryView getView()
-	{
+	public RepositoryView getView() {
 		RepositoryView view = new RepositoryView();
 		view.elements = createElements(this.rootPath);
 		return view;
 	}
 
 
-	private List<RepositoryView.RepositoryElement> createElements(Path currentPath)
-	{
-		if (!Files.exists(currentPath) || !Files.isDirectory(currentPath))
-		{
+	private List<RepositoryElement> createElements(Path currentPath) {
+		if (!Files.exists(currentPath) || !Files.isDirectory(currentPath)) {
 			return new ArrayList<>();
 		}
 
-		try (Stream<Path> stream = Files.list(currentPath))
-		{
+		try (Stream<Path> stream = Files.list(currentPath)) {
 			return stream
-					// Professioneller Filter: Versteckten .git-Ordner ignorieren
 					.filter(path -> !path.getFileName().toString().equals(".git"))
+					// Nutzung des TreeWalk-basierten Git-Filters
+					.filter(path -> !isIgnoredByGit(path))
 					.map(this::mapToElement)
 					.collect(Collectors.toList());
-		}
-		catch (IOException e)
-		{
-			// Im echten Backend: Nutze hier ein Logging-Framework (z.B. SLF4J)
+		} catch (IOException e) {
 			System.err.println("Fehler beim Lesen des Pfads: " + currentPath + " - " + e.getMessage());
 			return new ArrayList<>();
 		}
 	}
 
-	private RepositoryView.RepositoryElement mapToElement(Path path)
-	{
-		var element = new RepositoryView.RepositoryElement();
-		// Nur den Namen der Datei/des Ordners extrahieren, nicht den absoluten Pfad
+	private boolean isIgnoredByGit(Path path) {
+		// Berechne den relativen Pfad zum Repository-Root (z.B. "src/main.js")
+		String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
+
+		// TreeWalk ist der JGit-Standardweg, um Pfade gegen .gitignore-Regeln zu matchen
+		try (TreeWalk treeWalk = new TreeWalk(jgitRepo)) {
+			// Wir hängen einen FileTreeIterator an, der das Arbeitsverzeichnis simuliert
+			treeWalk.addTree(new FileTreeIterator(jgitRepo));
+			treeWalk.setRecursive(false); // Wir prüfen Ebene für Ebene
+
+			// Laufe durch das Git-Arbeitsverzeichnis, bis wir den gesuchten Pfad finden
+			while (treeWalk.next()) {
+				if (treeWalk.getPathString().equals(relativePath)) {
+					// Hole den internen WorkingTreeIterator für das aktuelle Element
+					FileTreeIterator fti = treeWalk.getTree(0, FileTreeIterator.class);
+					// isEntryIgnored() ohne Parameter prüft das aktuell fokussierte Element
+					return fti != null && fti.isEntryIgnored();
+				}
+
+				// Falls wir in einen Überordner gelaufen sind, betreten wir ihn im TreeWalk
+				if (treeWalk.isSubtree() && relativePath.startsWith(treeWalk.getPathString() + "/")) {
+					treeWalk.enterSubtree();
+				}
+			}
+		} catch (IOException e) {
+			// Im Fehlerfall vorsichtshalber nicht ignorieren
+			System.err.println("Fehler bei der Gitignore-Prüfung für " + relativePath + ": " + e.getMessage());
+		}
+		return false;
+	}
+
+	private RepositoryElement mapToElement(Path path) {
+		RepositoryElement element = new RepositoryElement();
 		element.name = path.getFileName().toString();
 
 		if (Files.isDirectory(path)) {
 			element.type = ElementType.FOLDER;
-			// Rekursiver Aufruf für Unterordner
+			// Rekursion für die nächste Ebene
 			element.children = createElements(path);
 		} else {
 			element.type = ElementType.FILE;
-			element.children = new ArrayList<>();
+			element.children = new ArrayList<>(); // Der wichtige Schutz gegen null
 		}
 
 		return element;
+	}
+
+	@Override
+	public void close() throws IOException
+	{
+		jgitRepo.close();
 	}
 }

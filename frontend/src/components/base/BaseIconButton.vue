@@ -1,0 +1,50 @@
+<!-- src/components/base/BaseIconButton.vue -->
+<script setup lang="ts">
+interface Props {
+  variant?: 'primary' | 'secondary' | 'danger' | 'normal'
+  size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
+}
+
+withDefaults(defineProps<Props>(), {
+  variant: 'normal',
+  size: 'md',
+  disabled: false
+})
+
+defineEmits<{
+  (e: 'click', event: MouseEvent): void
+}>()
+
+// Basis-Design (Identisch zum Button, aber erzwungenes quadratisches Seitenverhältnis)
+const baseStyles = `inline-flex items-center justify-center aspect-square
+rounded-vit-radius transition-all duration-200 cursor-pointer select-none
+focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vit-primary
+disabled:opacity-40 disabled:cursor-not-allowed`
+
+const variantStyles = {
+  primary: "bg-vit-primary text-vit-bg hover:bg-vit-primary-hover active:scale-95 shadow-vit-shadow",
+  secondary: "bg-vit-surface text-vit-text-main border border-vit-border hover:bg-vit-bg active:scale-95 shadow-vit-shadow",
+  danger: "bg-vit-danger text-vit-bg hover:border-vit-danger-hover hover:opacity-90 active:scale-95",
+  normal: "bg-transparent text-vit-text-muted hover:text-vit-text-main hover:border-vit-btn-hover border border-transparent"
+}
+
+// Exakt quadratische Größen-Definitionen
+const sizeStyles = {
+  sm: "w-7 h-7 p-1 text-sm",
+  md: "w-9 h-9 p-1.5 text-base",
+  lg: "w-11 h-11 p-2 text-lg"
+}
+</script>
+
+<template>
+  <button
+    :type="'button'"
+    :disabled="disabled"
+    :class="[baseStyles, variantStyles[variant], sizeStyles[size]]"
+    @click="$emit('click', $event)"
+  >
+    <!-- Slot nimmt exakt ein Icon auf (z.B. ein SVG oder eine Icon-Komponente) -->
+    <slot />
+  </button>
+</template>

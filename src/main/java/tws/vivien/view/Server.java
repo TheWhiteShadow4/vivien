@@ -10,9 +10,9 @@ import tws.vivien.dto.ServerError;
 import tws.vivien.dto.ServerState;
 
 import java.awt.*;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -68,14 +68,7 @@ public class Server
 				var state = new ServerState();
 				state.mode = config.mode;
 				state.view = "Admin";
-				state.serverErrors = errors.stream()
-					.map(e -> new ServerError(e.getMessage(),
-						String.join("\n",
-								Arrays.stream(e.getStackTrace())
-									  .map(StackTraceElement::toString).toList())
-						 )
-					).toList();
-
+				state.serverErrors = errors.stream().map(ServerError::fromError).toList();
 				ctx.json(state);
 			});
 		});
@@ -86,9 +79,18 @@ public class Server
 
 	private void getRepository(Context ctx)
 	{
-		if (repository == null)
+		try
 		{
-			repository = new Repository(config.repository);
+			if (repository == null)
+			{
+				repository = new Repository(config.repository);
+			}
+		}
+		catch (IOException e)
+		{
+			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
+			return;
 		}
 		ctx.json(repository.getView());
 	}

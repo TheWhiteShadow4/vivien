@@ -1,5 +1,7 @@
 package tws.vivien.dto;
 
+import java.util.Arrays;
+
 public class ServerError
 {
 	public String message;
@@ -9,5 +11,14 @@ public class ServerError
 	{
 		this.message = message;
 		this.stacktrace = stacktrace;
+	}
+
+	public static ServerError fromError(Exception e)
+	{
+		return new ServerError(e.getMessage(),
+			 String.join("\n",
+				 Arrays.stream(e.getStackTrace())
+					   .map(StackTraceElement::toString).toList())
+		);
 	}
 }

@@ -1,10 +1,16 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-08-27 08:53:13.
+// Generated using typescript-generator version 4.1.1 on 2026-08-27 10:44:38.
 
 export interface LoginRequest {
     username: string;
     password: string;
+}
+
+export interface RepositoryElement {
+    name: string;
+    type: ElementType;
+    children: RepositoryElement[];
 }
 
 export interface RepositoryView {
@@ -27,12 +33,6 @@ export interface User {
     name: string;
 }
 
-export interface RepositoryElement {
-    name: string;
-    type: ElementType;
-    children: RepositoryElement[];
-}
+export type ElementType = "FOLDER" | "FILE";
 
 export type ServerMode = "LOCAL" | "HOSTED" | "SETUP" | "SAFE";
-
-export type ElementType = "FOLDER" | "FILE";

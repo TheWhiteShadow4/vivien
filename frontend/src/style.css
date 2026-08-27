@@ -6,29 +6,39 @@
 
   /* --- HINTERGRÜNDE & RAHMEN (Mit dezentem Violett-Stich) --- */
   --color-vit-bg: #12101c;          /* Basis-Hintergrund der gesamten App */
-  --color-vit-surface: #1a1726;     /* Für Boxen, Panels, Karten, Tabellen */
-  --color-vit-border: #2e2a42;      /* Klar definierte Trennlinien */
+  --color-vit-surface: #211d30;     /* Für Boxen, Panels, Karten, Tabellen */
+  --color-vit-border: #36324e;      /* Klar definierte Trennlinien */
 
   /* --- KONTRASTE & BRANDING (Pastelltöne) --- */
-  --color-vit-primary: #81e6d9;     /* Pastell-Teal für Haupt-Aktionen & Knöpfe */
-  --color-vit-primary-hover: #4fd1c5;
-  --color-vit-secondary: #90cdf4;   /* Sanftes Pastell-Blau für sekundäre Infos */
+  --color-vit-primary: #7733ff;
+  --color-vit-primary2: #cc33ff;
+  --color-vit-primary-hover: #9966ff;
+  --color-vit-secondary: #00cc99;
 
-  /* --- HIGHLIGHTS & STATUS (Verspieltes Gelb-Orange) --- */
+  /* -- BUTTONS & INTERACTION --- */
+  --color-vit-btn: #2e2a42;
+  --color-vit-btn-hover: #7b73a5;
+
+  /* --- HIGHLIGHTS & STATUS --- */
   --color-vit-highlight: #fbd38d;   /* Pastell-Orange für Marker, Achtung-Meldungen */
-  --color-vit-accent: #f6ad55;      /* Kräftiger für aktive Tab-Zustände, Fokus */
+  --color-vit-accent: #00ffbf;      /* Kräftiger für aktive Tab-Zustände, Fokus */
+  --color-vit-accent-bg: #06806c;
+  --color-vit-danger: #e66416;
+  --color-vit-danger-hover: #ebaa47;
 
   /* --- TEXTFARBEN --- */
-  --color-vit-text-main: #f7fafc;   /* Extrem gut lesbares Off-White */
+  --color-vit-text-main: #f7fafc;   /* Extrem gut lesbares Weiß */
   --color-vit-text-muted: #a0aec0;  /* Für kleinere Infos oder Tabellen-Überschriften */
+  --color-vit-text-warning: #ebaa47;
 
   /* --- SCHRIFTGRÖSSEN (Direkt angehoben für beste Tablet-Ergonomie) --- */
-  --font-size-base: 1.25rem;       /* Standardtext startet bei gut lesbaren 18px */
-  --font-size-lg: 1.5rem;          /* 20px */
-  --font-size-xl: 2.0rem;         /* 24px */
+  --font-size-base: 1rem;       /* 18px */
+  --font-size-lg: 1.25rem;          /* 20px */
+  --font-size-xl: 1.5rem;           /* 24px */
 
   /* --- GEOMETRIE --- */
-  --radius-vit-radius: 8px;         /* Eckenrundung für Buttons, Inputs und Panels */
+  --radius-vit-btn-radius: 20px;         /* Eckenrundung für Buttons, Inputs und Panels */
+  --radius-vit-popup-radius: 8px;         /* Eckenrundung für Buttons, Inputs und Panels */
   --shadow-vit-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
@@ -37,6 +47,7 @@ html, body {
   background-color: var(--color-vit-bg);
   color: var(--color-vit-text-main);
   font-family: var(--font-sans);
+  font-size: var(--font-size-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;

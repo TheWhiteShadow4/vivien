@@ -2,6 +2,9 @@
 
 //import { ref } from 'vue'
 import type { ServerError } from '../types/vivien-generated'
+import BaseButton from './base/BaseButton.vue';
+import BaseIconButton from './base/BaseIconButton.vue';
+import BasePanel from './base/BasePanel.vue';
 
 // Erweitere das Interface für den lokalen UI-Zustand (Ausklappen)
 interface UIError extends ServerError {
@@ -28,10 +31,10 @@ const removeError = (index: number) => {
     
     <!-- Animierter Übergang beim Löschen von Fehlern -->
     <TransitionGroup name="error-fade">
-      <div 
+      <BasePanel 
         v-for="(err, index) in props.errors" 
         :key="index"
-        class="error-card"
+        variant="warning"
       >
         <!-- Kopfzeile des Fehlers -->
         <div class="error-header">
@@ -48,21 +51,17 @@ const removeError = (index: number) => {
           <!-- Buttons -->
           <div class="error-actions">
             <!-- Details Umschalter -->
-            <button 
+			 <BaseButton variant="normal"
               v-if="err.stacktrace"
               @click="err._showDetails = !err._showDetails"
               class="btn-details"
             >
               {{ err._showDetails ? 'Details ausblenden' : 'Details zeigen' }}
-            </button>
+            </BaseButton>
             
             <!-- Schließen Button -->
-            <button 
-              @click="removeError(index)" 
-              class="btn-close"
-            >
-              &times;
-            </button>
+			 <BaseIconButton variant="normal"
+			 	@click="removeError(index)">&times;</BaseIconButton>
           </div>
         </div>
 
@@ -74,7 +73,7 @@ const removeError = (index: number) => {
           <pre class="stacktrace-box">{{ err.stacktrace }}</pre>
         </div>
 
-      </div>
+      </BasePanel>
     </TransitionGroup>
   </div>
 </template>
@@ -85,10 +84,6 @@ const removeError = (index: number) => {
 /* 1. Layout-Strukturen */
 .error-container {
   @apply fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4 flex flex-col gap-2;
-}
-
-.error-card {
-  @apply bg-slate-900 border border-red-500/40 rounded-xl p-4 shadow-2xl backdrop-blur-md;
 }
 
 .error-header {
@@ -109,7 +104,7 @@ const removeError = (index: number) => {
 }
 
 .error-title {
-  @apply font-semibold text-red-200 text-sm md:text-base;
+  @apply font-semibold text-sm md:text-base;
 }
 
 .error-subtitle {
@@ -119,10 +114,6 @@ const removeError = (index: number) => {
 /* 3. Interaktive Elemente / Buttons */
 .btn-details {
   @apply text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 transition-colors;
-}
-
-.btn-close {
-  @apply text-slate-400 hover:text-white text-lg p-1 leading-none rounded-md hover:bg-slate-800 transition-colors;
 }
 
 /* 4. Details / Stacktrace */
