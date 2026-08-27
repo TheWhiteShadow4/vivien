@@ -1,21 +1,26 @@
 package tws.vivien.view;
 
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
-import io.javalin.plugin.bundled.CorsPluginConfig;
 import tws.vivien.core.Config;
+import tws.vivien.core.Repository;
 import tws.vivien.core.SecurityMode;
-import tws.vivien.dto.*;
+import tws.vivien.dto.ServerError;
+import tws.vivien.dto.ServerState;
 
 import java.awt.*;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class Server
 {
 	private final Config config;
 	public List<Exception> errors = new ArrayList<>();
+	private Repository repository;
 
 	public Server(Config config)
 	{
@@ -57,9 +62,7 @@ public class Server
 				}
 			});
 
-			c.routes.get("/api/repo", ctx -> {
-				ctx.result("Willkommen im Dashboard, " + config.user);
-			});
+			c.routes.get("/api/repo", this::getRepository);
 
 			c.routes.get("/api/state", ctx -> {
 				var state = new ServerState();
@@ -79,6 +82,15 @@ public class Server
 		app.start(config.port);
 
 		System.out.println("Vivien läuft auf http://localhost:" + config.port);
+	}
+
+	private void getRepository(Context ctx)
+	{
+		if (repository == null)
+		{
+			repository = new Repository(config.repository);
+		}
+		ctx.json(repository.getView());
 	}
 
 	public void openBrowser()

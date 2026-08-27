@@ -1,15 +1,44 @@
 <!-- src/components/views/RepoFileView.vue -->
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
+// Importiere die generierten Typen aus deiner d.ts-Datei
+import type { RepositoryView, RepositoryElement } from '@/types/vivien-generated'
 
-defineProps({
-  repository: {
-    type: Object,
-    required: true
+const emit = defineEmits<{
+  (e: 'select', element: RepositoryElement): void
+}>()
+
+// Reaktiver Zustand für die API-Daten und Lade-Status
+const repository = ref<RepositoryView | null>(null)
+const isLoading = ref(true)
+const errorMessage = ref<string | null>(null)
+
+// Funktion zum asynchronen Laden der Daten vom Server
+const fetchRepository = async () => {
+  try {
+    isLoading.value = true
+    errorMessage.value = null
+    
+    const response = await fetch('/api/repo')
+    if (!response.ok) {
+      throw new Error(`Server-Fehler: ${response.status} ${response.statusText}`)
+    }
+    
+    // Daten in das typisierte Ref schreiben
+    repository.value = await response.json()
+  } catch (error) {
+    console.error('Fehler beim Abrufen des Repositories:', error)
+    errorMessage.value = 'Das Repository konnte nicht geladen werden.'
+  } finally {
+    isLoading.value = false
   }
-})
+}
 
-const emit = defineEmits(['select'])
+// Lifecycle-Hook: Daten beim Laden der Komponente abfragen
+onMounted(() => {
+  fetchRepository()
+})
 
 // Strukturierte Design-Klassen aus dem vit-Theme
 const tableWrapper = "w-full border border-vit-border rounded-vit-radius bg-vit-surface shadow-vit-shadow overflow-hidden"
@@ -27,19 +56,31 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 
       <!-- Liste der Elemente -->
       <div class="flex flex-col">
+        <!-- Lade-Zustand -->
+        <div v-if="isLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
+          Repository wird geladen...
+        </div>
+
+        <!-- Fehler-Zustand -->
+        <div v-else-if="errorMessage" class="p-8 text-center text-red-500 font-medium">
+          {{ errorMessage }}
+        </div>
+
         <!-- Falls das Verzeichnis leer ist -->
-        <div v-if="!repository.elements || repository.elements.length === 0" class="p-8 text-center text-vit-text-muted">
+        <div v-else-if="!repository || !repository.elements || repository.elements.length === 0" class="p-8 text-center text-vit-text-muted">
           Dieses Verzeichnis ist leer.
         </div>
 
-        <!-- Render der einzelnen Zeilen -->
-        <BaseRepoElement
-          v-for="element in repository.elements"
-          :key="element.name"
-          :name="element.name"
-          :type="element.type"
-          @click-element="emit('select', element)"
-        />
+        <!-- Render der einzelnen Zeilen (nur wenn Daten vorhanden) -->
+        <template v-else>
+          <BaseRepoElement
+            v-for="element in repository.elements"
+            :key="element.name"
+            :name="element.name"
+            :type="element.type"
+            @click-element="emit('select', element)"
+          />
+        </template>
       </div>
     </div>
   </div>

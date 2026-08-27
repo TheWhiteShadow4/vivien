@@ -1,4 +1,4 @@
-Ich arbeite an einer Single-Page Application mit Vue 3 und Tailwind CSS (v4).
+Ich arbeite an einer Single-Page Application mit Vue 3 mit Typescript (v6) und Tailwind CSS (v4).
 
 Zielgruppe & Ergonomie:
 - Hauptnutzung auf DESKTOP und TABLET. Ignoriere klassisches Mobile-First für Smartphones!

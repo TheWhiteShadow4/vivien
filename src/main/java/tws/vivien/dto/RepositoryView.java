@@ -2,7 +2,7 @@ package tws.vivien.dto;
 
 import java.util.List;
 
-public class Repository
+public class RepositoryView
 {
 	public List<RepositoryElement> elements;
 
@@ -10,12 +10,6 @@ public class Repository
 	{
 		public String name;
 		public ElementType type;
-		public List<RepositoryElement> childs;
-	}
-
-	public static enum ElementType
-	{
-		FOLDER,
-		FILE
+		public List<RepositoryElement> children;
 	}
 }
