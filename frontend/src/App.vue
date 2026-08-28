@@ -2,13 +2,14 @@
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue'
-import type { ServerState } from './types/vivien-generated'
+import type { RepositoryElement, ServerState } from './types/vivien-generated'
 import ErrorBannerList from './components/ErrorBannerList.vue'
 import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
-import RepoFileView from './components/views/RepoFileView.vue' // Neu importiert
+import RepoFileView from './components/views/RepoFileView.vue'
 import BasePanel from './components/base/BasePanel.vue'
 import ThePreviewPanel from './components/ThePreviewPanel.vue'
+import { fetchWithView } from './client.ts'
 
 const state = ref<ServerState>({
 	user: undefined,
@@ -20,7 +21,11 @@ const state = ref<ServerState>({
 const isSidebarOpen = ref(true)
 const isLoading = ref<boolean>(true)
 const networkError = ref<string | null>(null)
-//const currentPage = ref('dashboard')
+const previewImage = ref<{
+	src: string,
+	width: number,
+	height: number,
+} | null>(null);
 
 async function checkBackendStatus()
 {
@@ -29,7 +34,7 @@ async function checkBackendStatus()
     networkError.value = null
 
     // Durch den Vite-Proxy wird dies an http://localhost:8080/api/state weitergeleitet
-    const response = await fetch('/api/state')
+    const response = await fetchWithView("/api/state")
     
     if (!response.ok) {
       throw new Error(`Server antwortete mit Status: ${response.status}`)
@@ -43,6 +48,21 @@ async function checkBackendStatus()
   } finally {
     isLoading.value = false
   }
+}
+
+async function updatePreview(el: RepositoryElement | null)
+{
+	// Schön informiert zu werden, aber ohne Objekt passiert nichts.
+	if (el == null) return;
+
+	const response = await fetchWithView(`/api/preview?file=${el.path}`);
+	if (response.ok)
+	{
+		const width = Number.parseInt(response.headers.get("Img-Width")!);
+		const height = Number.parseInt(response.headers.get("Img-Height")!);
+		const blob = await response.blob()
+		previewImage.value = { src: URL.createObjectURL(blob), width, height }
+	}
 }
 
 // Lifecycle-Hook: Wird ausgeführt, sobald die Komponente im Browser geladen ist
@@ -71,11 +91,12 @@ onMounted(() => {
         />
 
         <RepoFileView 
-          @server-error="(err) => state.serverErrors.push(err)" 
+          @server-error="(err) => state.serverErrors.push(err)"
+		  @select="(e) => updatePreview(e)"
         />
       </main>
 
-	  <ThePreviewPanel />
+	  <ThePreviewPanel :imageData="previewImage" />
 
 	  <div class="fixed bottom-6 right-6 z-50 flex flex-row gap-4 max-w-2xl pointer-events-none">
 	  <BasePanel variant="dialog" >Surface</BasePanel>

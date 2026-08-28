@@ -21,7 +21,7 @@ const variantStyles = {
   info: "bg-vit-accent-bg/50 border-vit-accent/50 text-vit-text-main",
 
   // Für Fehlermeldungen
-  warning: "bg-vit-surface/80 border-vit-danger border-2 text-vit-text-main",
+  warning: "bg-vit-danger-bg/80 border-vit-danger border-2 text-vit-text-main",
 }
 
 // Schatten-Hierarchie für visuelle Tiefe

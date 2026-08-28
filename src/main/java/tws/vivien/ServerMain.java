@@ -13,6 +13,9 @@ public class ServerMain
 
 	static void main()
 	{
+		System.setProperty("org.slf4j.simpleLogger.log.io.javalin", "warn");
+		System.setProperty("org.slf4j.simpleLogger.log.org.eclipse.jetty", "warn");
+
 		Config config = new Config();
 
 		Server server = new Server(config);

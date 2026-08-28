@@ -1,48 +1,50 @@
 @import "tailwindcss";
 
 @theme {
-  /* Setzt die Standard-Sans-Schriftart */
+  /* SCHRIFTEN */
   --font-sans: "Inter", "Roboto", system-ui, -apple-system, sans-serif;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
 
-  /* --- HINTERGRÜNDE & RAHMEN (Mit dezentem Violett-Stich) --- */
+  /* --- HINTERGRÜNDE & RAHMEN --- */
   --color-vit-bg: #12101c;          /* Basis-Hintergrund der gesamten App */
   --color-vit-surface: #211d30;     /* Für Boxen, Panels, Karten, Tabellen */
   --color-vit-border: #36324e;      /* Klar definierte Trennlinien */
 
-  /* --- KONTRASTE & BRANDING (Pastelltöne) --- */
-  --color-vit-primary: #7733ff;
-  --color-vit-primary2: #cc33ff;
+  /* --- KONTRASTE & BRANDING --- */
+  --color-vit-primary: #7733ff;		/* Primary hat immer einen vertikalen Gradienten */
+  --color-vit-primary2: #cc33ff;	/* Gradient Oben */
   --color-vit-secondary: #00cc99;
-
-  /* -- BUTTONS & INTERACTION --- */
-  --color-vit-btn: #2e2a42;
-  --color-vit-btn-hover: #7b73a5;
 
   /* --- HIGHLIGHTS & STATUS --- */
   --color-vit-highlight: #fbd38d;   /* Pastell-Orange für Marker, Achtung-Meldungen */
   --color-vit-accent: #00ffbf;      /* Kräftiger für aktive Tab-Zustände, Fokus */
-  --color-vit-accent-bg: #06806c;
+  --color-vit-accent-bg: #06806c;	/* Für vollflächige Elemente */
   --color-vit-danger: #e66416;
-  --color-vit-danger-hover: #ebaa47;
+  --color-vit-danger-bg: #211d30;
+  --color-vit-succes: #00ffbf;
+  --color-vit-failed: #ebaa47;
+
+  /* -- BUTTONS & INTERACTION --- */
+  --color-vit-btn: #2e2a42;
+  --color-vit-btn-hover: #7b73a5;
+  --radius-vit-btn-radius: 20px;	/* Button Seiten komplett rund bei normaler Größe */
+  --color-vit-btn-danger: #ebaa47;
+  --color-vit-btn-danger-hover: #fbd38d;
 
   /* --- TEXTFARBEN --- */
   --color-vit-text-main: #f7fafc;   /* Extrem gut lesbares Weiß */
   --color-vit-text-muted: #a0aec0;  /* Für kleinere Infos oder Tabellen-Überschriften */
-  --color-vit-text-warning: #ebaa47;
-
-  /* --- SCHRIFTGRÖSSEN (Direkt angehoben für beste Tablet-Ergonomie) --- */
-  --font-size-base: 1rem;       /* 18px */
-  --font-size-lg: 1.25rem;          /* 20px */
-  --font-size-xl: 1.75rem;           /* 24px */
+  --color-vit-text-danger: #ebaa47;
 
   /* --- GEOMETRIE --- */
-  --radius-vit-btn-radius: 20px;         /* Eckenrundung für Buttons, Inputs und Panels */
-  --radius-vit-panel-radius: 8px;         /* Eckenrundung für Buttons, Inputs und Panels */
+  --radius-vit-panel-radius: 8px;         /* Eckenrundung für Inputs und Panels */
   --shadow-vit-shadow: 0 2px 6px rgba(0, 0, 0, 1);
   --shadow-vit-inset: inset 0 0 8px rgba(0, 0, 0, 0.5)
 }
 
-/* Native HTML-Elemente direkt stylen (Nutzt die Tailwind v4 Variablen) */
+/* Native HTML-Elemente direkt stylen */
 html, body {
   background-color: var(--color-vit-bg);
   color: var(--color-vit-text-main);

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import IconVivien from '../icons/IconVivien.vue'
+import ViewTypePanel from '../components/ViewTypePanel.vue'
 import type { ServerState } from '@/types/vivien-generated.js';
+
 
 const props = defineProps<{ state?: ServerState }>()
 

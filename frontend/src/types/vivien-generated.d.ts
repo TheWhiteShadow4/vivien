@@ -1,20 +1,27 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-08-27 10:44:38.
+// Generated using typescript-generator version 4.1.1 on 2026-08-28 17:39:19.
 
-export interface LoginRequest {
-    username: string;
-    password: string;
+export interface FileObject {
+    url: string;
+    hash: string;
+    mimeType: string;
+    size: number;
+    width: number;
+    height: number;
 }
 
 export interface RepositoryElement {
     name: string;
+    path: string;
     type: ElementType;
     children: RepositoryElement[];
+    gitStatus: GitStatus;
+    lazy: boolean;
+    parent?: RepositoryElement;
 }
 
-export interface RepositoryView {
-    elements: RepositoryElement[];
+export interface RepositoryView extends RepositoryElement {
 }
 
 export interface ServerError {
@@ -25,14 +32,21 @@ export interface ServerError {
 export interface ServerState {
     view: string;
     mode: ServerMode;
-    user?: User;
+    user?: ServerUser;
     serverErrors: ServerError[];
 }
 
-export interface User {
+export interface ServerUser {
     name: string;
 }
 
-export type ElementType = "ROOT" | "FOLDER" | "FILE";
+export interface UserSettings {
+    username?: string;
+    view: string;
+}
+
+export type ElementType = "FOLDER" | "FILE";
+
+export type GitStatus = "Same" | "Added" | "Modified" | "Deleted" | "Moved";
 
 export type ServerMode = "LOCAL" | "HOSTED" | "SETUP" | "SAFE";

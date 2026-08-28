@@ -18,33 +18,24 @@ import java.util.stream.Stream;
 
 public class Repository implements Closeable
 {
-	private Config config;
 	private final Path rootPath;
 	private final org.eclipse.jgit.lib.Repository jgitRepo;
 
-	public Repository(Config config, Path rootPath) throws IOException
+	public Repository(Path rootPath) throws IOException
 	{
-		this.config = config;
 		this.rootPath = rootPath;
 		this.jgitRepo = Git.open(rootPath.toFile()).getRepository();
 	}
 
-	public RepositoryView getView(String view)
+	public RepositoryView getView(ConfigView view)
 	{
-		/*try (var repository = new FileRepositoryBuilder().setGitDir(repoDir).build(5r g4tf 92w7
-
-		{
-			Git git = new Git(repository))
-			Status status = git.status().call();
-		}*/
-
 		RepositoryView repoView = new RepositoryView();
-		repoView.children = createElements(this.rootPath, view);
+		repoView.children = createElements(this.rootPath, view.getFilter());
 		return repoView;
 	}
 
 
-	private List<RepositoryElement> createElements(Path currentPath, String view)
+	private List<RepositoryElement> createElements(Path currentPath, ConfigView.ViewFilter filter)
 	{
 		if (!Files.exists(currentPath) || !Files.isDirectory(currentPath))
 		{
@@ -54,9 +45,9 @@ public class Repository implements Closeable
 		try (Stream<Path> stream = Files.list(currentPath))
 		{
 			return stream
-					.filter(path -> isIncluded(path))
+					.filter(filter::isIncluded)
 					.filter(path -> !isIgnoredByGit(path))
-					.map(s -> mapToElement(s, view))
+					.map(s -> mapToElement(s, filter))
 					.collect(Collectors.toList());
 		}
 		catch (IOException e)
@@ -66,17 +57,8 @@ public class Repository implements Closeable
 		}
 	}
 
-	private boolean isIncluded(Path path)
+	private boolean isIgnoredByGit(Path path)
 	{
-		String filename = path.getFileName().toString();
-		if (filename.equals(".git")) return false;
-		if (filename.endsWith(".meta")) return false;
-		//config.views
-
-		return true;
-	}
-
-	private boolean isIgnoredByGit(Path path) {
 		// Berechne den relativen Pfad zum Repository-Root (z.B. "src/main.js")
 		String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
 
@@ -107,14 +89,16 @@ public class Repository implements Closeable
 		return false;
 	}
 
-	private RepositoryElement mapToElement(Path path, String view) {
+	private RepositoryElement mapToElement(Path path, ConfigView.ViewFilter filter)
+	{
 		RepositoryElement element = new RepositoryElement();
 		element.name = path.getFileName().toString();
+		element.path = rootPath.relativize(path).toString();
 
 		if (Files.isDirectory(path)) {
 			element.type = ElementType.FOLDER;
 			// Rekursion für die nächste Ebene
-			element.children = createElements(path, view);
+			element.children = createElements(path, filter);
 		} else {
 			element.type = ElementType.FILE;
 			element.children = new ArrayList<>(); // Der wichtige Schutz gegen null
@@ -127,5 +111,14 @@ public class Repository implements Closeable
 	public void close() throws IOException
 	{
 		jgitRepo.close();
+	}
+
+	public Path resolve(String file)
+	{
+		Path path = rootPath.resolve(Path.of(file));
+		if (Files.isRegularFile(path))
+			return path;
+		else
+			return null;
 	}
 }

@@ -3,28 +3,44 @@
 import { ref, onMounted } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
-import type { RepositoryElement } from '@/types/vivien-generated'
+import type { RepositoryView, RepositoryElement } from '@/types/vivien-generated'
+import { fetchWithView } from '@/client.ts';
 
 const emit = defineEmits<{
-	(e: 'select', element: RepositoryElement): void
+	(e: 'select', element: RepositoryElement | null): void
 	(e: 'server-error', errorObj: { message: string; stacktrace: string }): void
 }>()
 
 // Reaktiver Zustand für die API-Daten und Lade-Status
-const repository = ref<RepositoryElement | null>(null)
+const repository = ref<RepositoryView | null>(null)
 const isLoading = ref(true)
 const errorMessage = ref<string | null>(null)
 
-let parentFolder = ref<RepositoryElement | null>(null)
-let currentFolder = ref<RepositoryElement | null>(null)
+const currentFolder = ref<RepositoryElement | null>(null)
+const selectedElement = ref<RepositoryElement | null>(null)
+
+function selectParent()
+{
+	if (currentFolder.value != null && currentFolder.value.parent != null)
+	{
+		selectedElement.value = null;
+		currentFolder.value = currentFolder.value.parent;
+		emit('select', null);
+	}
+}
 
 function selectElement(element: RepositoryElement)
 {
-	emit('select', element);
-
-	if (element.type == 'FOLDER')
+	if (currentFolder.value != null && element.type == 'FOLDER')
 	{
+		selectedElement.value = null;
+		element.parent = currentFolder.value;
 		currentFolder.value = element;
+	}
+	else
+	{
+		selectedElement.value = element;
+		emit('select', element);
 	}
 }
 
@@ -34,7 +50,7 @@ const fetchRepository = async () => {
 		isLoading.value = true
 		errorMessage.value = null
 
-		const response = await fetch('/api/repo')
+		const response = await fetchWithView('/api/repo')
 
 		 if (!response.ok) {
 			// Wenn der Server 500 schickt, parsen wir das ServerError-DTO
@@ -89,20 +105,29 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					{{ errorMessage }}
 				</div>
 
-				<div v-if="currentFolder.type != 'ROOT'" class="p-8 text-center text-vit-text-muted animate-pulse">
-					..
-				</div>
-
-				<!-- Falls das Verzeichnis leer ist -->
-				<div v-else-if="!currentFolder || !currentFolder.children || currentFolder.children.length === 0"
-					class="p-8 text-center text-vit-text-muted">
-					Dieses Verzeichnis ist leer.
-				</div>
-
 				<!-- Render der einzelnen Zeilen (nur wenn Daten vorhanden) -->
-				<template v-else>
-					<BaseRepoElement v-for="element in currentFolder.children" :key="element.name" :name="element.name"
-						:type="element.type" @click-element="selectElement(element)" />
+				<template v-else-if="currentFolder">
+					<div v-if="currentFolder?.parent != null">
+						<BaseRepoElement
+							name=".."
+							type="FOLDER"
+							:selected="false"
+							@click-element="selectParent()" />
+					</div>
+
+					<!-- Falls das Verzeichnis leer ist -->
+					<div v-if="currentFolder.children.length === 0"
+						class="p-8 text-center text-vit-text-muted">
+						Hier ist nix drin.
+					</div>
+					<BaseRepoElement
+						v-for="element in currentFolder.children"
+						:key="element.name"
+						:name="element.name"
+						:type="element.type"
+						:selected="element == selectedElement"
+						@click-element="selectElement(element)"
+					/>
 				</template>
 			</div>
 		</div>

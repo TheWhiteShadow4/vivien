@@ -3,16 +3,14 @@ package tws.vivien.view;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
-import tws.vivien.core.Config;
-import tws.vivien.core.Repository;
-import tws.vivien.core.SecurityMode;
-import tws.vivien.core.ServerMode;
+import tws.vivien.core.*;
 import tws.vivien.dto.ServerError;
 import tws.vivien.dto.ServerState;
 
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -22,11 +20,13 @@ public class Server
 	private final Config config;
 	public List<Exception> errors = new ArrayList<>();
 	private Repository repository;
-	private String clientView = "Admin";
+	private Cache serverCache;
+	//private String clientView = "Admin";
 
 	public Server(Config config)
 	{
 		this.config = config;
+		this.serverCache = new Cache();
 	}
 
 	public void start()
@@ -67,11 +67,14 @@ public class Server
 
 			c.routes.get("/api/repo", this::getRepository);
 
+			c.routes.get("/api/preview", this::getPreview);
+
 			c.routes.get("/api/state", ctx -> {
 				var state = new ServerState();
 				state.mode = config.mode;
-				state.view = clientView;
+				state.view = getViewName(ctx);
 				state.serverErrors = errors.stream().map(ServerError::fromError).toList();
+				ctx.header("Cache-Control", "no-cache");
 				ctx.json(state);
 			});
 		});
@@ -80,22 +83,73 @@ public class Server
 		System.out.println("Vivien läuft auf http://localhost:" + config.port);
 	}
 
+	public void shutdown() throws IOException
+	{
+		if (repository != null)
+			repository.close();
+	}
+
+	private Repository getOrCreateRepository() throws IOException
+	{
+		if (repository == null)
+		{
+			repository = new Repository(config.repository);
+		}
+		return repository;
+	}
+
 	private void getRepository(Context ctx)
 	{
+		String viewname = getViewName(ctx);
 		try
 		{
-			if (repository == null)
+			ConfigView view = config.getView(viewname);
+			ctx.header("Cache-Control", "no-cache");
+			ctx.json(getOrCreateRepository().getView(view));
+		}
+		catch (IOException e)
+		{
+			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
+		}
+	}
+
+	private void getPreview(Context ctx)
+	{
+		String file = ctx.queryParam("file");
+		if (file == null)
+		{
+			ctx.status(400);
+			return;
+		}
+
+		var generator = new PreviewGenerator(serverCache);
+		if (!generator.isSupported(file))
+		{
+			ctx.status(404);
+			return;
+		}
+
+		try
+		{
+			Path path = getOrCreateRepository().resolve(file);
+			if (path != null)
 			{
-				repository = new Repository(config, config.repository);
+				generator.sendPreview(path, "", ctx);
 			}
 		}
 		catch (IOException e)
 		{
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
-			return;
 		}
-		ctx.json(repository.getView(clientView));
+	}
+
+	private String getViewName(Context ctx)
+	{
+		String view = ctx.header("X-App-View");
+		if (view == null) view = "admin";
+		return view;
 	}
 
 	public void openBrowser()

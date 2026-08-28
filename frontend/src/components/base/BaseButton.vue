@@ -30,9 +30,11 @@ const variantStyles = {
   secondary: `bg-vit-secondary/10 border-vit-secondary text-vit-text-main border
   shadow-vit-shadow hover:bg-vit-secondary/50 active:translate-y-[2px]`,
 
-  danger: "bg-vit-danger text-vit-bg shadow-vit-inset hover:bg-vit-danger-hover active:translate-y-[2px]",
+  danger: `bg-vit-btn-danger text-vit-bg font-bold shadow-vit-inset
+  hover:bg-vit-btn-danger-hover active:translate-y-[2px]`,
 
-  normal: "shadow-vit-shadow bg-vit-btn text-vit-text-main hover:bg-vit-btn-hover shadow-none border border-transparent active:translate-y-[2px]"
+  normal: `shadow-vit-shadow bg-vit-btn text-vit-text-main hover:bg-vit-btn-hover
+  shadow-none border border-transparent active:translate-y-[2px]`
 }
 
 // Größen-Varianten für konsistente Abstände

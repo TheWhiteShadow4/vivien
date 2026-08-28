@@ -42,7 +42,7 @@ const removeError = (index: number) => {
             <span class="flex-shrink-0 text-xl">⚠️</span>
             <div>
 			  <p class="text-vit-text-muted text-xs">Backend-Fehler</p>
-              <div class="font-semibold text-sm md:text-base text-vit-highlight">
+              <div class="font-semibold text-sm md:text-base text-vit-text-danger">
                 {{ err.message }}
               </div>
               
@@ -68,7 +68,7 @@ const removeError = (index: number) => {
         <!-- Ausklappbarer Stacktrace -->
         <div 
           v-if="err.stacktrace && err._showDetails" 
-          class="mt-3 pt-3 border-t border-slate-800/80"
+          class="mt-3 pt-3 border-t border-vit-border/80"
         >
           <pre class="text-left text-xs font-mono text-red-300 bg-black/50 p-3 rounded-lg overflow-x-auto max-h-40 shadow-inner select-all">{{ err.stacktrace }}</pre>
         </div>

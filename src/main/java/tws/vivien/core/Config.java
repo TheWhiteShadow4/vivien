@@ -6,9 +6,7 @@ import com.electronwill.nightconfig.core.file.FileConfig;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 public class Config
@@ -22,7 +20,7 @@ public class Config
 	public Object cert = null;
 	public String user = null;
 	public String password = null;
-	public List<ConfigView> views = new ArrayList<>();
+	public Map<String, ConfigView> views = new HashMap<>();
 	public Path repository;
 
 	public List<ConfigException> errors = new ArrayList<>();
@@ -55,6 +53,17 @@ public class Config
 		}
 	}
 
+	public ConfigView getView(String name)
+	{
+		ConfigView view = views.get(name);
+		if (view == null)
+		{
+			System.err.println("View "+name+" ist nicht in der Server Konfig.");
+			return new ConfigView("Admin");
+		}
+		return view;
+	}
+
 	private void readConfig(FileConfig config)
 	{
 		mode = CReader.readString(this, config, "mode")
@@ -68,22 +77,22 @@ public class Config
 						  .map(SecurityMode::fromString).withDefault(defaultSecurity).get();
 
 		serverHost = CReader.readString(this, config, "server.host").withDefault(serverHost).get();
-		port = CReader.readLong(this, config, "server.port").map(Long::intValue).withDefault(port).get();
+		port = CReader.readInt(this, config, "server.port").withDefault(port).get();
 
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
-		//loadViews(config);
+		loadViews(config);
 
-		//CReader.readLong(this, config, "waifu").map(Long::intValue).withDefault(1234).get();
+		errors.add(new ConfigException("waifu", "pantsu", null));
 
 		validateRepository(repository);
 		IO.println("Repository Pfad: " + repository);
 	}
 
-	/*private void loadViews(TomlParseResult config)
+	private void loadViews(FileConfig config)
 	{
-		var table = config.getTable("views");
+		var table = (com.electronwill.nightconfig.core.Config) config.get("views");
 		if (table != null)
 		{
 			for(var entry : table.entrySet())
@@ -91,23 +100,22 @@ public class Config
 				try
 				{
 					String name = entry.getKey();
-					List<String> includes = new ArrayList<>();
-					List<String> excludes = new ArrayList<>();
-					TomlTable viewTable = (TomlTable) entry.getValue();
-					var i = viewTable.getArray("includes");
-					var e = viewTable.getArray("includes");
-					if (i != null) includes = i.toList().stream().map(Object::toString).toList();
-					if (e != null) excludes = e.toList().stream().map(Object::toString).toList();
+					var viewTable = (com.electronwill.nightconfig.core.Config) entry.getValue();
+					String displayName = (String)viewTable.getOptional("name").orElse(name);
+					List<String> includes = viewTable.get("includes");
+					List<String> excludes = viewTable.get("excludes");
 
-					views.add(new ConfigView(name, includes, excludes));
+					views.put(name, new ConfigView(displayName, includes, excludes));
+
 				}
 				catch (Exception e)
 				{
 					errors.add(new ConfigException(entry.getKey(), e));
 				}
 			}
+			IO.println(views);
 		}
-	}*/
+	}
 
 	private void validateRepository(Path repository)
 	{
@@ -139,9 +147,9 @@ public class Config
 			return reader;
 		}
 
-		public static CReader<Long, Long> readLong(Config config, FileConfig toml, String configName)
+		public static CReader<Integer, Integer> readInt(Config config, FileConfig toml, String configName)
 		{
-			CReader<Long, Long> reader = new CReader<>();
+			CReader<Integer, Integer> reader = new CReader<>();
 			reader.config = config;
 			reader.configName = configName;
 			try
@@ -150,6 +158,7 @@ public class Config
 			}
 			catch(Exception e)
 			{
+				e.printStackTrace();
 				reader.error = new ConfigException(configName, Objects.toString(toml.get(configName)), e);
 			}
 			reader.value = reader.inputValue;
@@ -182,7 +191,11 @@ public class Config
 			}
 			catch(Exception e)
 			{
-				if (error == null) error = new ConfigException(configName, Objects.toString(inputValue), e);
+				if (error == null)
+				{
+					e.printStackTrace();
+					error = new ConfigException(configName, Objects.toString(inputValue), e);
+				}
 			}
 			@SuppressWarnings("unchecked")
 			var result = (CReader<S, R>) this;
