@@ -16,9 +16,9 @@
         <!-- Versions-Definitionen -->
         <javalin.version>7.2.3</javalin.version>
         <jgit.version>7.7.1.202607240634-r</jgit.version>
-        <tomlj.version>1.1.1</tomlj.version>
+        <tomlj.version>3.9.0</tomlj.version>
         <slf4j.version>2.0.18</slf4j.version>
-        <jackson.version>2.17.2</jackson.version>
+        <jackson.version>2.22.2</jackson.version>
     </properties>
 
     <dependencies>
@@ -50,10 +50,9 @@
             <version>${jgit.version}</version>
         </dependency>
 
-        <!-- Extrem schlanker TOML Parser & Writer ohne weitere Abhängigkeiten -->
         <dependency>
-            <groupId>org.tomlj</groupId>
-            <artifactId>tomlj</artifactId>
+            <groupId>com.electronwill.night-config</groupId>
+            <artifactId>toml</artifactId>
             <version>${tomlj.version}</version>
         </dependency>
 

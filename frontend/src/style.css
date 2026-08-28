@@ -12,7 +12,6 @@
   /* --- KONTRASTE & BRANDING (Pastelltöne) --- */
   --color-vit-primary: #7733ff;
   --color-vit-primary2: #cc33ff;
-  --color-vit-primary-hover: #9966ff;
   --color-vit-secondary: #00cc99;
 
   /* -- BUTTONS & INTERACTION --- */
@@ -34,12 +33,13 @@
   /* --- SCHRIFTGRÖSSEN (Direkt angehoben für beste Tablet-Ergonomie) --- */
   --font-size-base: 1rem;       /* 18px */
   --font-size-lg: 1.25rem;          /* 20px */
-  --font-size-xl: 1.5rem;           /* 24px */
+  --font-size-xl: 1.75rem;           /* 24px */
 
   /* --- GEOMETRIE --- */
   --radius-vit-btn-radius: 20px;         /* Eckenrundung für Buttons, Inputs und Panels */
-  --radius-vit-popup-radius: 8px;         /* Eckenrundung für Buttons, Inputs und Panels */
-  --shadow-vit-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --radius-vit-panel-radius: 8px;         /* Eckenrundung für Buttons, Inputs und Panels */
+  --shadow-vit-shadow: 0 2px 6px rgba(0, 0, 0, 1);
+  --shadow-vit-inset: inset 0 0 8px rgba(0, 0, 0, 0.5)
 }
 
 /* Native HTML-Elemente direkt stylen (Nutzt die Tailwind v4 Variablen) */

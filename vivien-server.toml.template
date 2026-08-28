@@ -3,7 +3,7 @@ mode = "hosted" # Wir entwicklen mit hosted, weil dabei der Browser nicht geöff
 
 # Das Git-Repository, auf dem Vivien arbeiten soll
 repo_url = "https://github.com"
-local_repo_path = "./game-repo"
+repo_path = "./game-repo"
 
 [server]
 host = "localhost"

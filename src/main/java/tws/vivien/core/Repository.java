@@ -18,38 +18,62 @@ import java.util.stream.Stream;
 
 public class Repository implements Closeable
 {
+	private Config config;
 	private final Path rootPath;
 	private final org.eclipse.jgit.lib.Repository jgitRepo;
 
-	public Repository(Path rootPath) throws IOException
+	public Repository(Config config, Path rootPath) throws IOException
 	{
+		this.config = config;
 		this.rootPath = rootPath;
 		this.jgitRepo = Git.open(rootPath.toFile()).getRepository();
 	}
 
-	public RepositoryView getView() {
-		RepositoryView view = new RepositoryView();
-		view.elements = createElements(this.rootPath);
-		return view;
+	public RepositoryView getView(String view)
+	{
+		/*try (var repository = new FileRepositoryBuilder().setGitDir(repoDir).build(5r g4tf 92w7
+
+		{
+			Git git = new Git(repository))
+			Status status = git.status().call();
+		}*/
+
+		RepositoryView repoView = new RepositoryView();
+		repoView.children = createElements(this.rootPath, view);
+		return repoView;
 	}
 
 
-	private List<RepositoryElement> createElements(Path currentPath) {
-		if (!Files.exists(currentPath) || !Files.isDirectory(currentPath)) {
+	private List<RepositoryElement> createElements(Path currentPath, String view)
+	{
+		if (!Files.exists(currentPath) || !Files.isDirectory(currentPath))
+		{
 			return new ArrayList<>();
 		}
 
-		try (Stream<Path> stream = Files.list(currentPath)) {
+		try (Stream<Path> stream = Files.list(currentPath))
+		{
 			return stream
-					.filter(path -> !path.getFileName().toString().equals(".git"))
-					// Nutzung des TreeWalk-basierten Git-Filters
+					.filter(path -> isIncluded(path))
 					.filter(path -> !isIgnoredByGit(path))
-					.map(this::mapToElement)
+					.map(s -> mapToElement(s, view))
 					.collect(Collectors.toList());
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			System.err.println("Fehler beim Lesen des Pfads: " + currentPath + " - " + e.getMessage());
 			return new ArrayList<>();
 		}
+	}
+
+	private boolean isIncluded(Path path)
+	{
+		String filename = path.getFileName().toString();
+		if (filename.equals(".git")) return false;
+		if (filename.endsWith(".meta")) return false;
+		//config.views
+
+		return true;
 	}
 
 	private boolean isIgnoredByGit(Path path) {
@@ -83,14 +107,14 @@ public class Repository implements Closeable
 		return false;
 	}
 
-	private RepositoryElement mapToElement(Path path) {
+	private RepositoryElement mapToElement(Path path, String view) {
 		RepositoryElement element = new RepositoryElement();
 		element.name = path.getFileName().toString();
 
 		if (Files.isDirectory(path)) {
 			element.type = ElementType.FOLDER;
 			// Rekursion für die nächste Ebene
-			element.children = createElements(path);
+			element.children = createElements(path, view);
 		} else {
 			element.type = ElementType.FILE;
 			element.children = new ArrayList<>(); // Der wichtige Schutz gegen null

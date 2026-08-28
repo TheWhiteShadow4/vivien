@@ -27,7 +27,7 @@ const removeError = (index: number) => {
 
 <template>
   <!-- Container fixiert oben zentriert -->
-  <div class="error-container">
+  <div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4 flex flex-col gap-2">
     
     <!-- Animierter Übergang beim Löschen von Fehlern -->
     <TransitionGroup name="error-fade">
@@ -37,24 +37,24 @@ const removeError = (index: number) => {
         variant="warning"
       >
         <!-- Kopfzeile des Fehlers -->
-        <div class="error-header">
-          <div class="error-content">
-            <span class="error-icon">⚠️</span>
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3 p-2">
+            <span class="flex-shrink-0 text-xl">⚠️</span>
             <div>
-              <h4 class="error-title">
+			  <p class="text-vit-text-muted text-xs">Backend-Fehler</p>
+              <div class="font-semibold text-sm md:text-base text-vit-highlight">
                 {{ err.message }}
-              </h4>
-              <p class="error-subtitle">Backend-Fehler aufgetreten</p>
+              </div>
+              
             </div>
           </div>
           
           <!-- Buttons -->
-          <div class="error-actions">
+          <div class="flex items-center gap-2">
             <!-- Details Umschalter -->
 			 <BaseButton variant="normal"
               v-if="err.stacktrace"
               @click="err._showDetails = !err._showDetails"
-              class="btn-details"
             >
               {{ err._showDetails ? 'Details ausblenden' : 'Details zeigen' }}
             </BaseButton>
@@ -68,9 +68,9 @@ const removeError = (index: number) => {
         <!-- Ausklappbarer Stacktrace -->
         <div 
           v-if="err.stacktrace && err._showDetails" 
-          class="error-details"
+          class="mt-3 pt-3 border-t border-slate-800/80"
         >
-          <pre class="stacktrace-box">{{ err.stacktrace }}</pre>
+          <pre class="text-left text-xs font-mono text-red-300 bg-black/50 p-3 rounded-lg overflow-x-auto max-h-40 shadow-inner select-all">{{ err.stacktrace }}</pre>
         </div>
 
       </BasePanel>
@@ -81,51 +81,6 @@ const removeError = (index: number) => {
 <style scoped>
 @import "tailwindcss";
 
-/* 1. Layout-Strukturen */
-.error-container {
-  @apply fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4 flex flex-col gap-2;
-}
-
-.error-header {
-  @apply flex items-start justify-between gap-3;
-}
-
-.error-content {
-  @apply flex items-center gap-3;
-}
-
-.error-actions {
-  @apply flex items-center gap-2;
-}
-
-/* 2. Textelemente */
-.error-icon {
-  @apply flex-shrink-0 text-xl;
-}
-
-.error-title {
-  @apply font-semibold text-sm md:text-base;
-}
-
-.error-subtitle {
-  @apply text-xs text-slate-400 mt-0.5;
-}
-
-/* 3. Interaktive Elemente / Buttons */
-.btn-details {
-  @apply text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 transition-colors;
-}
-
-/* 4. Details / Stacktrace */
-.error-details {
-  @apply mt-3 pt-3 border-t border-slate-800/80;
-}
-
-.stacktrace-box {
-  @apply text-left text-xs font-mono text-red-300 bg-black/50 p-3 rounded-lg overflow-x-auto max-h-40 shadow-inner select-all;
-}
-
-/* 5. Vue TransitionGroup Animationen (Das vierteilig-wüste Inline-CSS ersetzt durch natives Vue-CSS) */
 .error-fade-enter-active {
   @apply transform ease-out duration-300 transition;
 }

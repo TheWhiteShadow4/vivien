@@ -1,8 +1,7 @@
 package tws.vivien.dto;
 
-import java.util.List;
 
-public class RepositoryView
+public class RepositoryView extends RepositoryElement
 {
-	public List<RepositoryElement> elements;
+
 }

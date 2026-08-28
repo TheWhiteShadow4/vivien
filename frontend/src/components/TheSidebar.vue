@@ -8,7 +8,7 @@ defineProps({
 
 const emit = defineEmits(['navigate'])
 
-const sidebarContainer = "w-80 bg-vit-surface border-r border-vit-border flex flex-col justify-between shrink-0 p-4"
+const sidebarContainer = "w-64 bg-vit-surface border-r border-vit-border flex flex-col justify-between shrink-0 p-4"
 const navButtonBase = "w-full flex items-center gap-3 px-4 py-3 rounded-vit-radius font-medium text-left transition-colors cursor-pointer text-base"
 
 // Farbzustände basierend auf dem "vit"-Theme

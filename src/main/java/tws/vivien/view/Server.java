@@ -6,6 +6,7 @@ import io.javalin.http.HttpStatus;
 import tws.vivien.core.Config;
 import tws.vivien.core.Repository;
 import tws.vivien.core.SecurityMode;
+import tws.vivien.core.ServerMode;
 import tws.vivien.dto.ServerError;
 import tws.vivien.dto.ServerState;
 
@@ -21,6 +22,7 @@ public class Server
 	private final Config config;
 	public List<Exception> errors = new ArrayList<>();
 	private Repository repository;
+	private String clientView = "Admin";
 
 	public Server(Config config)
 	{
@@ -35,12 +37,13 @@ public class Server
 
 			c.bundledPlugins.enableCors(cors ->
 				cors.addRule(rule -> {
-					if (config.security == SecurityMode.LAX)
+					if (config.mode == ServerMode.SETUP || config.security == SecurityMode.LAX)
 					{
 						rule.anyHost(); // Aktiviert Cross-Origin-Requests
 					}
 					else
 					{
+						rule.reflectClientOrigin = true;
 						rule.allowCredentials = true;
 					}
 			}));
@@ -67,7 +70,7 @@ public class Server
 			c.routes.get("/api/state", ctx -> {
 				var state = new ServerState();
 				state.mode = config.mode;
-				state.view = "Admin";
+				state.view = clientView;
 				state.serverErrors = errors.stream().map(ServerError::fromError).toList();
 				ctx.json(state);
 			});
@@ -83,7 +86,7 @@ public class Server
 		{
 			if (repository == null)
 			{
-				repository = new Repository(config.repository);
+				repository = new Repository(config, config.repository);
 			}
 		}
 		catch (IOException e)
@@ -92,7 +95,7 @@ public class Server
 			ctx.json(ServerError.fromError(e));
 			return;
 		}
-		ctx.json(repository.getView());
+		ctx.json(repository.getView(clientView));
 	}
 
 	public void openBrowser()

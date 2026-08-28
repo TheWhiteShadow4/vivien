@@ -1,11 +1,9 @@
 package tws.vivien.core;
 
-import org.tomlj.Toml;
-import org.tomlj.TomlInvalidTypeException;
-import org.tomlj.TomlParseResult;
+
+import com.electronwill.nightconfig.core.file.FileConfig;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -19,11 +17,12 @@ public class Config
 
 	public ServerMode mode;
 	public SecurityMode security;
-	public String serverHost;
-	public int port;
+	public String serverHost = "localhost";
+	public int port = 8080;
 	public Object cert = null;
 	public String user = null;
 	public String password = null;
+	public List<ConfigView> views = new ArrayList<>();
 	public Path repository;
 
 	public List<ConfigException> errors = new ArrayList<>();
@@ -39,22 +38,24 @@ public class Config
 
 		try
 		{
-			TomlParseResult result = Toml.parse(configFile.toPath());
-			if (result.hasErrors())
+			FileConfig reader = FileConfig.of(configFile);
+			reader.load();
+			//TomlParseResult result = TomlParser.parse(configFile.toPath());
+			/*if (reader.hasErrors())
 			{
 				System.err.println("❌ FEHLER beim Parsen der " + CONFIG_FILE_NAME + ": " + result.errors());
 				initSafeConfig();
-			}
-			readConfig(result);
+			}*/
+			readConfig(reader);
 		}
-		catch (IOException e)
+		catch (Exception e)
 		{
 			System.out.println("⚠ Fehlerhafte Konfiguration (" + e.getMessage() + "). Wechsle in SETUP-Modus.");
 			initSafeConfig();
 		}
 	}
 
-	private void readConfig(TomlParseResult config)
+	private void readConfig(FileConfig config)
 	{
 		mode = CReader.readString(this, config, "mode")
 					  .map(ServerMode::fromString).withDefault(ServerMode.LOCAL).get();
@@ -66,16 +67,47 @@ public class Config
 		security = CReader.readString(this, config, "server.security")
 						  .map(SecurityMode::fromString).withDefault(defaultSecurity).get();
 
-		serverHost = CReader.readString(this, config, "server.host").withDefault("localhost").get();
-		port = CReader.readLong(this, config, "server.port").map(Long::intValue).withDefault(8080).get();
+		serverHost = CReader.readString(this, config, "server.host").withDefault(serverHost).get();
+		port = CReader.readLong(this, config, "server.port").map(Long::intValue).withDefault(port).get();
 
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
-		CReader.readLong(this, config, "waifu").map(Long::intValue).withDefault(8080).get();
+		//loadViews(config);
+
+		//CReader.readLong(this, config, "waifu").map(Long::intValue).withDefault(1234).get();
 
 		validateRepository(repository);
+		IO.println("Repository Pfad: " + repository);
 	}
+
+	/*private void loadViews(TomlParseResult config)
+	{
+		var table = config.getTable("views");
+		if (table != null)
+		{
+			for(var entry : table.entrySet())
+			{
+				try
+				{
+					String name = entry.getKey();
+					List<String> includes = new ArrayList<>();
+					List<String> excludes = new ArrayList<>();
+					TomlTable viewTable = (TomlTable) entry.getValue();
+					var i = viewTable.getArray("includes");
+					var e = viewTable.getArray("includes");
+					if (i != null) includes = i.toList().stream().map(Object::toString).toList();
+					if (e != null) excludes = e.toList().stream().map(Object::toString).toList();
+
+					views.add(new ConfigView(name, includes, excludes));
+				}
+				catch (Exception e)
+				{
+					errors.add(new ConfigException(entry.getKey(), e));
+				}
+			}
+		}
+	}*/
 
 	private void validateRepository(Path repository)
 	{
@@ -97,26 +129,26 @@ public class Config
 		private ConfigException error;
 		private T value;
 
-		public static CReader<String, String> readString(Config config, TomlParseResult toml, String configName)
+		public static CReader<String, String> readString(Config config, FileConfig toml, String configName)
 		{
 			CReader<String, String> reader = new CReader<>();
 			reader.config = config;
 			reader.configName = configName;
-			reader.inputValue = toml.getString(configName);
+			reader.inputValue = toml.get(configName);
 			reader.value = reader.inputValue;
 			return reader;
 		}
 
-		public static CReader<Long, Long> readLong(Config config, TomlParseResult toml, String configName)
+		public static CReader<Long, Long> readLong(Config config, FileConfig toml, String configName)
 		{
 			CReader<Long, Long> reader = new CReader<>();
 			reader.config = config;
 			reader.configName = configName;
 			try
 			{
-				reader.inputValue = toml.getLong(configName);
+				reader.inputValue = toml.get(configName);
 			}
-			catch(TomlInvalidTypeException e)
+			catch(Exception e)
 			{
 				reader.error = new ConfigException(configName, Objects.toString(toml.get(configName)), e);
 			}
@@ -135,8 +167,9 @@ public class Config
 			if (value == null)
 			{
 				error = new ConfigException(configName);
+				value = fallbackValue;
 			}
-			value = fallbackValue;
+
 			return this;
 		}
 
@@ -149,7 +182,7 @@ public class Config
 			}
 			catch(Exception e)
 			{
-				if (error == null) error = new ConfigException(configName, inputValue.toString(), e);
+				if (error == null) error = new ConfigException(configName, Objects.toString(inputValue), e);
 			}
 			@SuppressWarnings("unchecked")
 			var result = (CReader<S, R>) this;

@@ -33,6 +33,6 @@ export interface User {
     name: string;
 }
 
-export type ElementType = "FOLDER" | "FILE";
+export type ElementType = "ROOT" | "FOLDER" | "FILE";
 
 export type ServerMode = "LOCAL" | "HOSTED" | "SETUP" | "SAFE";

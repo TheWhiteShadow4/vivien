@@ -17,21 +17,22 @@ defineEmits<{
   (e: 'click', event: MouseEvent): void
 }>()
 
-// 5. & 6. Design-Entscheidungen und interaktive Zustände auslagern
 const baseStyles = `inline-flex items-center justify-center
-rounded-vit-btn-radius shadow-vit-shadow transition-colors duration-200
+rounded-vit-btn-radius transition-colors duration-200
 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2
 focus-visible:ring-vit-primary focus-visible:ring-offset-2 disabled:opacity-50
 disabled:cursor-not-allowed disabled:shadow-none`
 
-// 4. Vue-Muster für Design-Varianten (Nutzt dein Custom Theme)
 const variantStyles = {
-  primary: `bg-vit-primary text-vit-text-main hover:bg-vit-primary-hover font-bold
+  primary: `bg-vit-primary text-vit-text-main font-bold shadow-vit-inset hover:bg-gradient-to-b
   active:translate-y-[2px] bg-gradient-to-t from-vit-primary to-vit-primary2`,
+
   secondary: `bg-vit-secondary/10 border-vit-secondary text-vit-text-main border
-  hover:bg-vit-secondary/50 active:translate-y-[2px]`,
-  danger: "bg-vit-danger text-vit-bg hover:bg-vit-danger-hover active:translate-y-[2px]", // Für Fehler-Aktionen
-  normal: "bg-vit-btn text-vit-text-main hover:bg-vit-btn-hover shadow-none border border-transparent active:translate-y-[2px]"
+  shadow-vit-shadow hover:bg-vit-secondary/50 active:translate-y-[2px]`,
+
+  danger: "bg-vit-danger text-vit-bg shadow-vit-inset hover:bg-vit-danger-hover active:translate-y-[2px]",
+
+  normal: "shadow-vit-shadow bg-vit-btn text-vit-text-main hover:bg-vit-btn-hover shadow-none border border-transparent active:translate-y-[2px]"
 }
 
 // Größen-Varianten für konsistente Abstände

@@ -15,19 +15,16 @@ public class ServerMain
 	{
 		Config config = new Config();
 
-		if (config != null)
+		Server server = new Server(config);
+		if (!config.errors.isEmpty())
 		{
-			Server server = new Server(config);
-			if (!config.errors.isEmpty())
-			{
-				server.errors.addAll(config.errors);
-			}
-			server.start();
+			server.errors.addAll(config.errors);
+		}
+		server.start();
 
-			if (config.mode != ServerMode.HOSTED)
-			{
-				server.openBrowser();
-			}
+		if (config.mode != ServerMode.HOSTED)
+		{
+			server.openBrowser();
 		}
 	}
 

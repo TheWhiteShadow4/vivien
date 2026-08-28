@@ -8,6 +8,7 @@ import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
 import RepoFileView from './components/views/RepoFileView.vue' // Neu importiert
 import BasePanel from './components/base/BasePanel.vue'
+import ThePreviewPanel from './components/ThePreviewPanel.vue'
 
 const state = ref<ServerState>({
 	user: undefined,
@@ -54,7 +55,7 @@ onMounted(() => {
 <template>
   <div class="h-screen w-screen flex flex-col overflow-hidden select-none">
     
-    <TheHeader :server-mode="state.mode" />
+    <TheHeader :state="state" />
 
     <!-- Inhalt unter dem Header -->
     <div class="flex flex-1 min-h-0">
@@ -63,7 +64,7 @@ onMounted(() => {
       <TheSidebar :is-open="isSidebarOpen" />
 
       <!-- Hauptbereich -->
-      <main class="flex-1 bg-vit-bg p-4 overflow-y-auto min-w-0">
+      <main class="flex-1 bg-vit-bg p-1 overflow-y-auto min-w-0">
         <ErrorBannerList 
           :errors="state.serverErrors" 
           @dismiss-error="(index) => state.serverErrors.splice(index, 1)"
@@ -73,6 +74,8 @@ onMounted(() => {
           @server-error="(err) => state.serverErrors.push(err)" 
         />
       </main>
+
+	  <ThePreviewPanel />
 
 	  <div class="fixed bottom-6 right-6 z-50 flex flex-row gap-4 max-w-2xl pointer-events-none">
 	  <BasePanel variant="dialog" >Surface</BasePanel>

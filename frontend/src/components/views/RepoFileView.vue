@@ -3,7 +3,7 @@
 import { ref, onMounted } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
-import type { RepositoryView, RepositoryElement } from '@/types/vivien-generated'
+import type { RepositoryElement } from '@/types/vivien-generated'
 
 const emit = defineEmits<{
 	(e: 'select', element: RepositoryElement): void
@@ -11,9 +11,22 @@ const emit = defineEmits<{
 }>()
 
 // Reaktiver Zustand für die API-Daten und Lade-Status
-const repository = ref<RepositoryView | null>(null)
+const repository = ref<RepositoryElement | null>(null)
 const isLoading = ref(true)
 const errorMessage = ref<string | null>(null)
+
+let parentFolder = ref<RepositoryElement | null>(null)
+let currentFolder = ref<RepositoryElement | null>(null)
+
+function selectElement(element: RepositoryElement)
+{
+	emit('select', element);
+
+	if (element.type == 'FOLDER')
+	{
+		currentFolder.value = element;
+	}
+}
 
 // Funktion zum asynchronen Laden der Daten vom Server
 const fetchRepository = async () => {
@@ -32,6 +45,7 @@ const fetchRepository = async () => {
 
 		// Daten in das typisierte Ref schreiben
 		repository.value = await response.json()
+		currentFolder.value = repository.value;
 	} catch (error) {
 		// Fängt Netzwerkfehler ab (z.B. Backend komplett offline)
 		console.error('Netzwerkfehler:', error)
@@ -75,16 +89,20 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					{{ errorMessage }}
 				</div>
 
+				<div v-if="currentFolder.type != 'ROOT'" class="p-8 text-center text-vit-text-muted animate-pulse">
+					..
+				</div>
+
 				<!-- Falls das Verzeichnis leer ist -->
-				<div v-else-if="!repository || !repository.elements || repository.elements.length === 0"
+				<div v-else-if="!currentFolder || !currentFolder.children || currentFolder.children.length === 0"
 					class="p-8 text-center text-vit-text-muted">
 					Dieses Verzeichnis ist leer.
 				</div>
 
 				<!-- Render der einzelnen Zeilen (nur wenn Daten vorhanden) -->
 				<template v-else>
-					<BaseRepoElement v-for="element in repository.elements" :key="element.name" :name="element.name"
-						:type="element.type" @click-element="emit('select', element)" />
+					<BaseRepoElement v-for="element in currentFolder.children" :key="element.name" :name="element.name"
+						:type="element.type" @click-element="selectElement(element)" />
 				</template>
 			</div>
 		</div>
