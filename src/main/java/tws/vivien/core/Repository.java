@@ -2,6 +2,7 @@ package tws.vivien.core;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -9,7 +10,6 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import tws.vivien.dto.ElementType;
 import tws.vivien.dto.GitStatus;
 import tws.vivien.dto.RepositoryElement;
-import tws.vivien.dto.RepositoryView;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -24,11 +24,14 @@ public class Repository implements Closeable
 {
 	private final Path rootPath;
 	private final Git gitApi;
+	private RepositoryCache cache;
 
-	public Repository(Path rootPath) throws IOException
+	public Repository(Path rootPath) throws IOException, GitAPIException
 	{
 		this.rootPath = rootPath;
 		this.gitApi = Git.open(rootPath.toFile());
+		cache = new RepositoryCache(rootPath, gitApi.getRepository());
+		IO.println(cache.toString());
 	}
 
 	public Git getApi()
@@ -36,11 +39,21 @@ public class Repository implements Closeable
 		return gitApi;
 	}
 
-	public RepositoryView getView(ConfigView view)
+	public RepositoryElement getView(ConfigView view, String path) throws IOException
 	{
-		RepositoryView repoView = new RepositoryView();
-		repoView.children = createElements(this.rootPath, view.getFilter());
-		return repoView;
+		RepositoryElement element = cache.getDirectory(path);
+		if (element != null)
+		{
+			element = element.flatCopyWithChildren();
+		}
+		/*RepositoryRoot repoView = .flat();
+		Path basePath = this.rootPath;
+		if (path != null && !path.equals("/"))
+		{
+			basePath = rootPath.resolve(path);
+		}
+		repoView.children = createElements(basePath, view.getFilter());*/
+		return element;
 	}
 
 
@@ -56,7 +69,7 @@ public class Repository implements Closeable
 			return stream
 					.filter(filter::isIncluded)
 					.filter(path -> !isIgnoredByGit(path))
-					.map(s -> mapToElement(s, filter))
+					.map(s -> mapToElement(s))
 					.collect(Collectors.toList());
 		}
 		catch (IOException e)
@@ -99,7 +112,7 @@ public class Repository implements Closeable
 		return false;
 	}
 
-	private RepositoryElement mapToElement(Path path, ConfigView.ViewFilter filter)
+	private RepositoryElement mapToElement(Path path)
 	{
 		RepositoryElement element = new RepositoryElement();
 		element.name = path.getFileName().toString();
@@ -108,7 +121,7 @@ public class Repository implements Closeable
 		if (Files.isDirectory(path)) {
 			element.type = ElementType.FOLDER;
 			// Rekursion für die nächste Ebene
-			element.children = createElements(path, filter);
+			element.children = null;//createElements(path, filter);
 		} else {
 			element.type = ElementType.FILE;
 			element.children = new ArrayList<>(); // Der wichtige Schutz gegen null
@@ -132,7 +145,7 @@ public class Repository implements Closeable
 	{
 		Status status = gitApi.status().addPath(path.toString()).call();
 		if (!status.isClean())
-			return GitStatus.Same;
+			return GitStatus.Clean;
 		if (!status.getUntracked().isEmpty())
 			return GitStatus.Untracked;
 		if (!status.getAdded().isEmpty())

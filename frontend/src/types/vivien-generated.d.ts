@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-08-28 23:09:18.
+// Generated using typescript-generator version 4.1.1 on 2026-08-29 11:14:40.
 
 export interface FileObject {
     url: string;
@@ -12,9 +12,8 @@ export interface RepositoryElement {
     name: string;
     path: string;
     type: ElementType;
-    children: RepositoryElement[];
+    children?: RepositoryElement[];
     gitStatus: GitStatus;
-    lazy: boolean;
     parent?: RepositoryElement;
 }
 
@@ -49,6 +48,7 @@ export interface FileObjectMeta {
     height: number;
     srcWidth: number;
     srcHeight: number;
+    importProps?: { [index: string]: any };
 }
 
 export type ElementType = "FOLDER" | "FILE";

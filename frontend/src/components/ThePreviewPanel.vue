@@ -9,7 +9,7 @@ const props = defineProps<{
   imageData: FileObject | null
 }>()
 
-const previewContainer = "w-2/5 bg-vit-surface border-l border-vit-border flex flex-col justify-between shrink-0 p-1"
+const previewContainer = "w-2/5 bg-vit-surface border-l border-vit-border flex flex-col shrink-0 p-1"
 
 const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(props.imageData.metadata.size / 1024) : 0)
 </script>
@@ -25,7 +25,7 @@ const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { m
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
 		</div>
-		<div class="flex flex-col">
+		<div class="flex flex-col items-center">
 			<img v-if="imageData" :src="imageData.url" :width="imageData.metadata.width" :height="imageData.metadata.height" />
 			<div class="bg-vit-surface">Dummy Toolbar</div>
 		</div>

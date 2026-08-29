@@ -1,6 +1,9 @@
 <!-- src/components/base/BaseRepoElement.vue -->
 <script setup lang="ts">
+import IconDownload from '@/icons/IconDownload.vue'
 import { computed } from 'vue'
+import BaseIconButton from './BaseIconButton.vue'
+import IconStar from '@/icons/IconStar.vue'
 
 const props = defineProps({
   name: { type: String, required: true },
@@ -11,7 +14,7 @@ const props = defineProps({
 defineEmits(['click-element'])
 
 // Visuelle Stile aus dem vit-Theme
-const rowContainer = `w-full flex items-center justify-between p-4
+const rowContainer = `w-full flex items-center justify-between p-3
 border-b border-vit-border transition-colors cursor-pointer text-base`
 
 const normalRowStyle = "bg-vit-surface hover:bg-vit-bg/50"
@@ -30,6 +33,17 @@ const typeBadge = computed(() => {
     ? "bg-vit-secondary/10 text-vit-secondary border border-vit-secondary/20"
     : "bg-vit-primary/10 text-vit-primary border border-vit-primary/20"
 })
+
+
+function download()
+{
+	
+}
+
+function favorit()
+{
+
+}
 </script>
 
 <template>
@@ -44,9 +58,17 @@ const typeBadge = computed(() => {
       <span :class="[nameStyle, selected ? selectedStyle : normalStyle]">{{ name }}</span>
     </div>
 
-    <!-- Rechte Seite: Typ-Badge -->
-    <span class="px-3 py-1 rounded-vit-radius text-xs font-mono" :class="typeBadge">
-      {{ typeLabel }}
-    </span>
+	<div class="flex items-right text-vit-text-main">
+		<BaseIconButton v-if="type == 'FILE'" class="mx-2" @click.stop="download()"><IconDownload/></BaseIconButton>
+		<BaseIconButton class="mx-2" @click.stop="favorit()"><IconStar/></BaseIconButton>
+		
+		<!-- Rechte Seite: Typ-Badge -->
+		<span class="px-3 py-1 ml-8 rounded-vit-radius w-20 text-xs font-mono" :class="typeBadge">
+		{{ typeLabel }}
+		</span>
+	</div>
+
+    
+
   </div>
 </template>

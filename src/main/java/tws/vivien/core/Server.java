@@ -1,10 +1,10 @@
-package tws.vivien.view;
+package tws.vivien.core;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
-import tws.vivien.core.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import tws.vivien.dto.FileObject;
 import tws.vivien.dto.ServerError;
 import tws.vivien.dto.ServerState;
@@ -22,9 +22,9 @@ import java.util.Objects;
 public class Server
 {
 	private final Config config;
+	private final Cache serverCache;
 	public List<Exception> errors = new ArrayList<>();
 	private Repository repository;
-	private Cache serverCache;
 	private Path webRoot;
 	//private String clientView = "Admin";
 
@@ -38,6 +38,16 @@ public class Server
 	{
 		IO.println(System.getProperty("user.dir"));
 		webRoot = Paths.get("./public").toAbsolutePath();
+
+		try
+		{
+			this.repository = new Repository(config.repository);
+		}
+		catch(IOException | GitAPIException e)
+		{
+			e.printStackTrace();
+		}
+
 		Javalin app = Javalin.create(c -> {
 			// Sagt Vivien, dass sie im Ordner "public" nach statischen Dateien (HTML/JS) suchen soll
 			//c.staticFiles.add("./public", Location.EXTERNAL);
@@ -103,23 +113,15 @@ public class Server
 			repository.close();
 	}
 
-	private Repository getOrCreateRepository() throws IOException
-	{
-		if (repository == null)
-		{
-			repository = new Repository(config.repository);
-		}
-		return repository;
-	}
-
 	private void getRepository(Context ctx)
 	{
 		String viewname = getViewName(ctx);
+		String path = ctx.queryParam("path");
 		try
 		{
 			ConfigView view = config.getView(viewname);
 			ctx.header("Cache-Control", "no-cache");
-			ctx.json(getOrCreateRepository().getView(view));
+			ctx.json(repository.getView(view, path));
 		}
 		catch (IOException e)
 		{
@@ -139,7 +141,6 @@ public class Server
 
 		try
 		{
-			getOrCreateRepository();
 			var generator = new PreviewGenerator(webRoot, repository, serverCache);
 			if (!generator.isSupported(file))
 			{

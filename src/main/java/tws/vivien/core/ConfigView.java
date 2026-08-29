@@ -49,14 +49,20 @@ public class ConfigView
 
 		public ViewFilter(ConfigView config)
 		{
-			for (String pattern : config.includes)
+			if (config.includes != null)
 			{
-				includeMatchers.add(createMatcher(pattern));
+				for (String pattern : config.includes)
+				{
+					includeMatchers.add(createMatcher(pattern));
+				}
 			}
 
-			for (String pattern : config.excludes)
+			if (config.excludes != null)
 			{
-				excludeMatchers.add(createMatcher(pattern));
+				for (String pattern : config.excludes)
+				{
+					excludeMatchers.add(createMatcher(pattern));
+				}
 			}
 		}
 

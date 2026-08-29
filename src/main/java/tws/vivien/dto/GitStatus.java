@@ -3,7 +3,7 @@ package tws.vivien.dto;
 public enum GitStatus
 {
 	Untracked,
-	Same,
+	Clean,
 	Added,
 	Modified,
 	Deleted,

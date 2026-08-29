@@ -55,3 +55,8 @@ html, body {
   margin: 0;
   padding: 0;
 }
+
+input::placeholder {
+	color: var(--color-vit-text-muted);
+	opacity: 0.5;
+}

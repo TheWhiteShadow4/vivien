@@ -29,7 +29,7 @@ public class PreviewGenerator
 	public boolean isSupported(String file)
 	{
 		String fileExt = file.substring(file.length() - 3);
-		return fileExt.equals("png");
+		return fileExt.equals("png") || fileExt.equals("jpg");
 	}
 
 	/*public void sendPreview(Path path, String hash, Context ctx) throws IOException

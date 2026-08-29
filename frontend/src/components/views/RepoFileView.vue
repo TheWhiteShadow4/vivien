@@ -5,6 +5,8 @@ import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
 import type { RepositoryView, RepositoryElement } from '@/types/vivien-generated'
 import { fetchWithView } from '@/client.ts';
+import TextInput from '../base/TextInput.vue';
+import IconSearch from '@/icons/IconSearch.vue';
 
 const emit = defineEmits<{
 	(e: 'select', element: RepositoryElement | null): void
@@ -18,6 +20,8 @@ const errorMessage = ref<string | null>(null)
 
 const currentFolder = ref<RepositoryElement | null>(null)
 const selectedElement = ref<RepositoryElement | null>(null)
+
+const searchQuery = ref('')
 
 function selectParent()
 {
@@ -33,6 +37,10 @@ function selectElement(element: RepositoryElement)
 {
 	if (currentFolder.value != null && element.type == 'FOLDER')
 	{
+		if (!element.children)
+		{
+			fetchRepository(element.path);
+		}
 		selectedElement.value = null;
 		element.parent = currentFolder.value;
 		currentFolder.value = element;
@@ -45,12 +53,12 @@ function selectElement(element: RepositoryElement)
 }
 
 // Funktion zum asynchronen Laden der Daten vom Server
-const fetchRepository = async () => {
+const fetchRepository = async (path: string) => {
 	try {
 		isLoading.value = true
 		errorMessage.value = null
 
-		const response = await fetchWithView('/api/repo')
+		const response = await fetchWithView(`/api/repo?path=${path}`)
 
 		 if (!response.ok) {
 			// Wenn der Server 500 schickt, parsen wir das ServerError-DTO
@@ -59,9 +67,17 @@ const fetchRepository = async () => {
 			return
 		}
 
-		// Daten in das typisierte Ref schreiben
-		repository.value = await response.json()
-		currentFolder.value = repository.value;
+		const tree = await response.json();
+		if (path == '/')
+		{
+			repository.value = tree
+		}
+		// Parent Referenz sichern
+		if (currentFolder.value?.parent)
+		{
+			tree.parent = currentFolder.value.parent;
+		}
+		currentFolder.value = tree;
 	} catch (error) {
 		// Fängt Netzwerkfehler ab (z.B. Backend komplett offline)
 		console.error('Netzwerkfehler:', error)
@@ -76,7 +92,7 @@ const fetchRepository = async () => {
 
 // Lifecycle-Hook: Daten beim Laden der Komponente abfragen
 onMounted(() => {
-	fetchRepository()
+	fetchRepository('/')
 })
 
 // Strukturierte Design-Klassen aus dem vit-Theme
@@ -90,7 +106,16 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			<!-- Tabellen-Kopf -->
 			<div :class="tableHeader">
 				<span>Name</span>
-				<span class="w-16 text-right">Typ</span>
+				
+				<TextInput
+					class="max-w-180 mx-8"
+					v-model="searchQuery"
+					type="search"
+					placeholder="Repository durchsuchen"
+				>
+				<IconSearch />
+				</TextInput>
+				<span class="w-16 text-right">Status</span>
 			</div>
 
 			<!-- Liste der Elemente -->
@@ -116,7 +141,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					</div>
 
 					<!-- Falls das Verzeichnis leer ist -->
-					<div v-if="currentFolder.children.length === 0"
+					<div v-if="currentFolder.children && currentFolder.children.length === 0"
 						class="p-8 text-center text-vit-text-muted">
 						Hier ist nix drin.
 					</div>

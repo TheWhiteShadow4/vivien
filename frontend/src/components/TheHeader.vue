@@ -2,6 +2,8 @@
 import IconVivien from '../icons/IconVivien.vue'
 import ViewTypePanel from '../components/ViewTypePanel.vue'
 import type { ServerState } from '@/types/vivien-generated.js';
+import TextInput from './base/TextInput.vue';
+import { ref } from 'vue';
 
 
 const props = defineProps<{ state?: ServerState }>()
@@ -18,6 +20,7 @@ const headerContainer = "h-14 w-full bg-vit-surface border-b border-vit-border p
           Vivien
 		</h1>
     </div>
+
 
     <ViewTypePanel v-if="props.state" :view="props.state.view" />
   </header>

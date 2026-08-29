@@ -1,8 +1,8 @@
 package tws.vivien;
 
 import tws.vivien.core.Config;
+import tws.vivien.core.Server;
 import tws.vivien.core.ServerMode;
-import tws.vivien.view.Server;
 
 import java.awt.*;
 import java.net.URI;

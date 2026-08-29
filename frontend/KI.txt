@@ -3,6 +3,13 @@ Mein Backend Server läuft mit Javalin (v7.2) mit JGit (v7.7).
 Die Anwendung stellt ein Git Repository im Browser da und soll technisch unversierten Arists,
 die an Hobby Spielen mitwirken, dabei helfen ihre Assets ins Projekt zu bekommen und dort zu bearbeiten.
 
+Was ich bereits habe:
+Backend mit Basic Auth, statischen und dynamischen Routen.
+es kann das Repository Verzeichnis auslesen und dieses gefiltert an den Client senden.
+Das Frontend hat ein Theme und einige Basic Komponenten.
+Es zeigt den Inhalt von jeweils einem Ordner des Repositorys an. Navigieren vor und zurück ist möglich.
+Klickt man auf ein Bild, wird vom Server die Metadaten geladen und eine Vorschau angezeigt.
+
 Zielgruppe & Ergonomie:
 - Hauptnutzung auf DESKTOP und TABLET. Ignoriere klassisches Mobile-First für Smartphones!
 - Die App nutzt ein festes, klares Layout (wie GitHub Projects oder Google Docs) mit deutlichen Rahmen und Schattierungen.

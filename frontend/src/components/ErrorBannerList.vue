@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 //import { ref } from 'vue'
+import IconClose from '@/icons/IconClose.vue';
 import type { ServerError } from '../types/vivien-generated'
 import BaseButton from './base/BaseButton.vue';
 import BaseIconButton from './base/BaseIconButton.vue';
@@ -61,7 +62,7 @@ const removeError = (index: number) => {
             
             <!-- Schließen Button -->
 			 <BaseIconButton variant="normal"
-			 	@click="removeError(index)">&times;</BaseIconButton>
+			 	@click="removeError(index)"><IconClose class="text-vit-text-muted" /></BaseIconButton>
           </div>
         </div>
 
