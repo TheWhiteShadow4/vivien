@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Cache
@@ -30,7 +29,7 @@ public class Cache
 		add(path, hash, null);
 	}
 
-	public void add(Path path, String hash, HashMap<String, Object> metadata)
+	public void add(Path path, String hash, Object metadata)
 	{
 		if (entries.size() > 100)
 		{
@@ -74,10 +73,10 @@ public class Cache
 	public static class CacheEntry
 	{
 		public Path path;
-		public HashMap<String, Object> metadata;
+		public Object metadata;
 		public LocalDate lastAccess;
 
-		public CacheEntry(Path path, HashMap<String, Object> metadata)
+		public CacheEntry(Path path, Object metadata)
 		{
 			this.path = path;
 			this.metadata = metadata;

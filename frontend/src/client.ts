@@ -4,7 +4,8 @@ import { useStore } from '@/store'
 /**
  * Ein Wrapper um das native fetch, der automatisch den View Parameter als Header mitsendet. 
  */
-export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response> {
+export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
+{
   // 1. Store innerhalb der Funktion aufrufen (wichtig, da Pinia beim App-Start bereit sein muss)
   const store = useStore()
 

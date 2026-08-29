@@ -2,6 +2,7 @@ package tws.vivien.core;
 
 
 import com.electronwill.nightconfig.core.file.FileConfig;
+import tws.vivien.plugins.EnginePlugin;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ public class Config
 	public String password = null;
 	public Map<String, ConfigView> views = new HashMap<>();
 	public Path repository;
+	public EnginePlugin enginePlugin;
 
 	public List<ConfigException> errors = new ArrayList<>();
 
@@ -82,6 +84,8 @@ public class Config
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
+		loadEnginePlugin(config);
+
 		loadViews(config);
 
 		errors.add(new ConfigException("waifu", "pantsu", null));
@@ -114,6 +118,26 @@ public class Config
 				}
 			}
 			IO.println(views);
+		}
+	}
+
+	private void loadEnginePlugin(FileConfig config)
+	{
+		String cls = CReader.readString(this, config, "engine_plugin").get();
+		if (cls != null)
+		{
+			if (!cls.contains("."))
+			{
+				cls = "tws.vivien.plugins." + cls;
+			}
+			try
+			{
+				enginePlugin = (EnginePlugin) Class.forName(cls).getConstructor().newInstance();
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 

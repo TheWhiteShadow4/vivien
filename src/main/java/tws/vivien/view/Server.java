@@ -3,7 +3,9 @@ package tws.vivien.view;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
+import io.javalin.http.staticfiles.Location;
 import tws.vivien.core.*;
+import tws.vivien.dto.FileObject;
 import tws.vivien.dto.ServerError;
 import tws.vivien.dto.ServerState;
 
@@ -11,8 +13,10 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Server
@@ -21,6 +25,7 @@ public class Server
 	public List<Exception> errors = new ArrayList<>();
 	private Repository repository;
 	private Cache serverCache;
+	private Path webRoot;
 	//private String clientView = "Admin";
 
 	public Server(Config config)
@@ -31,9 +36,18 @@ public class Server
 
 	public void start()
 	{
+		IO.println(System.getProperty("user.dir"));
+		webRoot = Paths.get("./public").toAbsolutePath();
 		Javalin app = Javalin.create(c -> {
 			// Sagt Vivien, dass sie im Ordner "public" nach statischen Dateien (HTML/JS) suchen soll
-			c.staticFiles.add("/public");
+			//c.staticFiles.add("./public", Location.EXTERNAL);
+			c.staticFiles.add(staticFiles -> {
+				staticFiles.hostedPath = "/";              // URL-Basis im Browser (Root)
+				staticFiles.directory = "public";          // Ordnername (Lass das "./" weg!)
+				staticFiles.location = Location.EXTERNAL;  // Dateisystem statt JAR-Classpath
+
+				staticFiles.headers = Map.of("Cache-Control", "public, max-age=86400, immutable");
+			});
 
 			c.bundledPlugins.enableCors(cors ->
 				cors.addRule(rule -> {
@@ -123,22 +137,20 @@ public class Server
 			return;
 		}
 
-		var generator = new PreviewGenerator(serverCache);
-		if (!generator.isSupported(file))
-		{
-			ctx.status(404);
-			return;
-		}
-
 		try
 		{
-			Path path = getOrCreateRepository().resolve(file);
-			if (path != null)
+			getOrCreateRepository();
+			var generator = new PreviewGenerator(webRoot, repository, serverCache);
+			if (!generator.isSupported(file))
 			{
-				generator.sendPreview(path, "", ctx);
+				ctx.status(404);
+				return;
 			}
+
+			FileObject obj = generator.generatePreviewImage(file);
+			ctx.json(obj);
 		}
-		catch (IOException e)
+		catch (Exception e)
 		{
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));

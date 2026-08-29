@@ -2,7 +2,7 @@
 <script setup lang="ts">
 
 import { ref, onMounted } from 'vue'
-import type { RepositoryElement, ServerState } from './types/vivien-generated'
+import type { FileObject, RepositoryElement, ServerState } from './types/vivien-generated'
 import ErrorBannerList from './components/ErrorBannerList.vue'
 import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
@@ -21,11 +21,7 @@ const state = ref<ServerState>({
 const isSidebarOpen = ref(true)
 const isLoading = ref<boolean>(true)
 const networkError = ref<string | null>(null)
-const previewImage = ref<{
-	src: string,
-	width: number,
-	height: number,
-} | null>(null);
+const previewImage = ref<FileObject | null>(null);
 
 async function checkBackendStatus()
 {
@@ -58,10 +54,8 @@ async function updatePreview(el: RepositoryElement | null)
 	const response = await fetchWithView(`/api/preview?file=${el.path}`);
 	if (response.ok)
 	{
-		const width = Number.parseInt(response.headers.get("Img-Width")!);
-		const height = Number.parseInt(response.headers.get("Img-Height")!);
-		const blob = await response.blob()
-		previewImage.value = { src: URL.createObjectURL(blob), width, height }
+		const fileObject: FileObject = await response.json();
+		previewImage.value = fileObject;
 	}
 }
 

@@ -1,14 +1,11 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-08-28 17:39:19.
+// Generated using typescript-generator version 4.1.1 on 2026-08-28 23:09:18.
 
 export interface FileObject {
     url: string;
-    hash: string;
-    mimeType: string;
-    size: number;
-    width: number;
-    height: number;
+    filename: string;
+    metadata: FileObjectMeta;
 }
 
 export interface RepositoryElement {
@@ -45,8 +42,17 @@ export interface UserSettings {
     view: string;
 }
 
+export interface FileObjectMeta {
+    mimeType: string;
+    size: number;
+    width: number;
+    height: number;
+    srcWidth: number;
+    srcHeight: number;
+}
+
 export type ElementType = "FOLDER" | "FILE";
 
-export type GitStatus = "Same" | "Added" | "Modified" | "Deleted" | "Moved";
+export type GitStatus = "Untracked" | "Same" | "Added" | "Modified" | "Deleted" | "Conflict";
 
 export type ServerMode = "LOCAL" | "HOSTED" | "SETUP" | "SAFE";

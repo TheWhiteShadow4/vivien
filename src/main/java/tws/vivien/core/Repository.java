@@ -1,9 +1,13 @@
 package tws.vivien.core;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import tws.vivien.dto.ElementType;
+import tws.vivien.dto.GitStatus;
 import tws.vivien.dto.RepositoryElement;
 import tws.vivien.dto.RepositoryView;
 
@@ -19,12 +23,17 @@ import java.util.stream.Stream;
 public class Repository implements Closeable
 {
 	private final Path rootPath;
-	private final org.eclipse.jgit.lib.Repository jgitRepo;
+	private final Git gitApi;
 
 	public Repository(Path rootPath) throws IOException
 	{
 		this.rootPath = rootPath;
-		this.jgitRepo = Git.open(rootPath.toFile()).getRepository();
+		this.gitApi = Git.open(rootPath.toFile());
+	}
+
+	public Git getApi()
+	{
+		return gitApi;
 	}
 
 	public RepositoryView getView(ConfigView view)
@@ -63,9 +72,10 @@ public class Repository implements Closeable
 		String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
 
 		// TreeWalk ist der JGit-Standardweg, um Pfade gegen .gitignore-Regeln zu matchen
-		try (TreeWalk treeWalk = new TreeWalk(jgitRepo)) {
+		try (TreeWalk treeWalk = new TreeWalk(gitApi.getRepository()))
+		{
 			// Wir hängen einen FileTreeIterator an, der das Arbeitsverzeichnis simuliert
-			treeWalk.addTree(new FileTreeIterator(jgitRepo));
+			treeWalk.addTree(new FileTreeIterator(gitApi.getRepository()));
 			treeWalk.setRecursive(false); // Wir prüfen Ebene für Ebene
 
 			// Laufe durch das Git-Arbeitsverzeichnis, bis wir den gesuchten Pfad finden
@@ -107,10 +117,39 @@ public class Repository implements Closeable
 		return element;
 	}
 
-	@Override
-	public void close() throws IOException
+	public String getHash(Path file) throws Exception
 	{
-		jgitRepo.close();
+		try(ObjectInserter inserter = gitApi.getRepository().newObjectInserter())
+		{
+			byte[] fileBytes = Files.readAllBytes(file);
+
+			// Berechnet den Hash genau wie Git es intern tut, ohne die Datei im Repo zu speichern
+			return inserter.idFor(Constants.OBJ_BLOB, fileBytes).toString();
+		}
+	}
+
+	public GitStatus getStatus(Path path) throws Exception
+	{
+		Status status = gitApi.status().addPath(path.toString()).call();
+		if (!status.isClean())
+			return GitStatus.Same;
+		if (!status.getUntracked().isEmpty())
+			return GitStatus.Untracked;
+		if (!status.getAdded().isEmpty())
+			return GitStatus.Added;
+		if (!status.getChanged().isEmpty())
+			return GitStatus.Modified;
+		if (!status.getConflicting().isEmpty())
+			return GitStatus.Conflict;
+		if (!status.getMissing().isEmpty())
+			return GitStatus.Deleted;
+		throw new Error("Unbekannter Git State");
+	}
+
+	@Override
+	public void close()
+	{
+		gitApi.close();
 	}
 
 	public Path resolve(String file)

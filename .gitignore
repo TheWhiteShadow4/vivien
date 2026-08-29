@@ -53,3 +53,5 @@ frontend/.env.local
 frontend/.env.*.local
 
 /vivien-server.toml
+
+/public/
