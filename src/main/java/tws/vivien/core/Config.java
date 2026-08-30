@@ -88,7 +88,7 @@ public class Config
 
 		loadViews(config);
 
-		errors.add(new ConfigException("waifu", "pantsu", null));
+		//errors.add(new ConfigException("waifu", "pantsu", null));
 
 		validateRepository(repository);
 		IO.println("Repository Pfad: " + repository);

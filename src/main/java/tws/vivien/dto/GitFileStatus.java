@@ -1,6 +1,6 @@
 package tws.vivien.dto;
 
-public enum GitStatus
+public enum GitFileStatus
 {
 	Untracked,
 	Clean,

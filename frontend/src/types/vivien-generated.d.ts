@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-08-29 11:14:40.
+// Generated using typescript-generator version 4.1.1 on 2026-08-30 12:33:20.
 
 export interface FileObject {
     url: string;
@@ -8,16 +8,25 @@ export interface FileObject {
     metadata: FileObjectMeta;
 }
 
+export interface GitBranchStatus {
+    branch: string;
+    modified: boolean;
+    added: string[];
+    changed: string[];
+    missing: string[];
+    conflicts: string[];
+}
+
 export interface RepositoryElement {
     name: string;
     path: string;
     type: ElementType;
     children?: RepositoryElement[];
-    gitStatus: GitStatus;
+    gitStatus?: GitFileStatus;
     parent?: RepositoryElement;
 }
 
-export interface RepositoryView extends RepositoryElement {
+export interface RepositoryRoot extends RepositoryElement {
 }
 
 export interface ServerError {
@@ -28,6 +37,7 @@ export interface ServerError {
 export interface ServerState {
     view: string;
     mode: ServerMode;
+    branch?: string;
     user?: ServerUser;
     serverErrors: ServerError[];
 }
@@ -39,6 +49,7 @@ export interface ServerUser {
 export interface UserSettings {
     username?: string;
     view: string;
+    sidebar: boolean;
 }
 
 export interface FileObjectMeta {
@@ -51,8 +62,10 @@ export interface FileObjectMeta {
     importProps?: { [index: string]: any };
 }
 
-export type ElementType = "FOLDER" | "FILE";
+export type ElementType = "ROOT" | "FOLDER" | "FILE" | "VIRTUAL";
 
-export type GitStatus = "Untracked" | "Same" | "Added" | "Modified" | "Deleted" | "Conflict";
+export type GitFileStatus = "Untracked" | "Clean" | "Added" | "Modified" | "Deleted" | "Conflict";
+
+export type GitStatus = "Untracked" | "Clean" | "Added" | "Modified" | "Deleted" | "Conflict";
 
 export type ServerMode = "LOCAL" | "HOSTED" | "SETUP" | "SAFE";

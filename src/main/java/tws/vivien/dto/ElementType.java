@@ -4,5 +4,7 @@ public enum ElementType
 {
 	ROOT,
 	FOLDER,
-	FILE
+	FILE,
+	// z.B Suchanfragen
+	VIRTUAL
 }

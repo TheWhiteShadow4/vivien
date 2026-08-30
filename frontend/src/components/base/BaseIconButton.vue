@@ -2,7 +2,7 @@
 <script setup lang="ts">
 interface Props {
   variant?: 'primary' | 'secondary' | 'danger' | 'normal'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' |'xl'
   disabled?: boolean
 }
 
@@ -17,14 +17,14 @@ defineEmits<{
 }>()
 
 // Basis-Design (Identisch zum Button, aber erzwungenes quadratisches Seitenverhältnis)
-const baseStyles = `inline-flex items-center justify-center aspect-square
+const baseStyles = `inline-flex items-center justify-center aspect-square rounded-vit-btn-radius
 rounded-vit-radius transition-all duration-200 cursor-pointer select-none
 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vit-primary
 disabled:opacity-40 disabled:cursor-not-allowed`
 
 const variantStyles = {
-  primary: "bg-vit-primary text-vit-bg hover:bg-vit-primary-hover active:scale-95 shadow-vit-shadow",
-  secondary: "bg-vit-surface text-vit-text-main border border-vit-border hover:bg-vit-bg active:scale-95 shadow-vit-shadow",
+  primary: "bg-vit-primary text-vit-text-main hover:bg-vit-primary-hover active:scale-95 shadow-vit-shadow",
+  secondary: "bg-vit-secondary/10 text-vit-text-main border border-vit-secondary hover:bg-vit-secondary/50 active:scale-95 shadow-vit-shadow",
   danger: "bg-vit-danger text-vit-bg hover:border-vit-danger-hover hover:opacity-90 active:scale-95",
   normal: "bg-transparent text-vit-text-muted hover:text-vit-text-main hover:border-vit-btn-hover border border-transparent"
 }
@@ -33,7 +33,8 @@ const variantStyles = {
 const sizeStyles = {
   sm: "w-7 h-7 p-1 text-sm",
   md: "w-9 h-9 p-1.5 text-base",
-  lg: "w-11 h-11 p-2 text-lg"
+  lg: "w-12 h-12 p-2 text-lg",
+  xl: "w-18 h-18 p-2 text-xl"
 }
 </script>
 

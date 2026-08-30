@@ -13,7 +13,8 @@ public class RepositoryElement
 
 	@Nullable
 	public List<RepositoryElement> children;
-	public GitStatus gitStatus;
+	@Nullable
+	public GitFileStatus gitStatus;
 
 	// Client Only Attribute
 	@Nullable

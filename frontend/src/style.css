@@ -2,7 +2,8 @@
 
 @theme {
   /* SCHRIFTEN */
-  --font-sans: "Inter", "Roboto", system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", "Roboto", system-ui, sans-serif;
+  --font-mono: "Courier New", mono;
   --font-size-base: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.75rem;
@@ -25,6 +26,7 @@
   --color-vit-danger-bg: #211d30;
   --color-vit-succes: #00ffbf;
   --color-vit-failed: #ebaa47;
+  --color-vit-accent2: #66bbee;
 
   /* -- BUTTONS & INTERACTION --- */
   --color-vit-btn: #2e2a42;

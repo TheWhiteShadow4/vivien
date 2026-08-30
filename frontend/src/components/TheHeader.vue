@@ -2,8 +2,6 @@
 import IconVivien from '../icons/IconVivien.vue'
 import ViewTypePanel from '../components/ViewTypePanel.vue'
 import type { ServerState } from '@/types/vivien-generated.js';
-import TextInput from './base/TextInput.vue';
-import { ref } from 'vue';
 
 
 const props = defineProps<{ state?: ServerState }>()

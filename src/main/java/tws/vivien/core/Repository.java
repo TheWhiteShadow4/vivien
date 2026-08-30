@@ -3,12 +3,11 @@ package tws.vivien.core;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import tws.vivien.dto.ElementType;
-import tws.vivien.dto.GitStatus;
+import tws.vivien.dto.GitBranchStatus;
+import tws.vivien.dto.GitFileStatus;
 import tws.vivien.dto.RepositoryElement;
 
 import java.io.Closeable;
@@ -24,7 +23,7 @@ public class Repository implements Closeable
 {
 	private final Path rootPath;
 	private final Git gitApi;
-	private RepositoryCache cache;
+	private final RepositoryCache cache;
 
 	public Repository(Path rootPath) throws IOException, GitAPIException
 	{
@@ -41,21 +40,8 @@ public class Repository implements Closeable
 
 	public RepositoryElement getView(ConfigView view, String path) throws IOException
 	{
-		RepositoryElement element = cache.getDirectory(path);
-		if (element != null)
-		{
-			element = element.flatCopyWithChildren();
-		}
-		/*RepositoryRoot repoView = .flat();
-		Path basePath = this.rootPath;
-		if (path != null && !path.equals("/"))
-		{
-			basePath = rootPath.resolve(path);
-		}
-		repoView.children = createElements(basePath, view.getFilter());*/
-		return element;
+		return cache.getDirectory(path).flatCopyWithChildren();
 	}
-
 
 	private List<RepositoryElement> createElements(Path currentPath, ConfigView.ViewFilter filter)
 	{
@@ -130,32 +116,47 @@ public class Repository implements Closeable
 		return element;
 	}
 
-	public String getHash(Path file) throws Exception
+	public List<RepositoryElement> searchFiles(String query)
 	{
-		try(ObjectInserter inserter = gitApi.getRepository().newObjectInserter())
-		{
-			byte[] fileBytes = Files.readAllBytes(file);
+		String lowerQuery = query.toLowerCase();
 
-			// Berechnet den Hash genau wie Git es intern tut, ohne die Datei im Repo zu speichern
-			return inserter.idFor(Constants.OBJ_BLOB, fileBytes).toString();
-		}
+		// Nutzt den performanten RAM-Lookup ohne Festplatten-I/O
+		return cache.getPathLookup().values().stream()
+				.filter(element -> element.type == ElementType.FILE) // Nur Dateien durchsuchen
+				.filter(element -> element.name.toLowerCase().contains(lowerQuery))
+				.map(RepositoryElement::flatCopy)
+				.toList();
 	}
 
-	public GitStatus getStatus(Path path) throws Exception
+	public GitBranchStatus getBranchStatus() throws Exception
+	{
+		Status status = gitApi.status().call();
+
+		var result = new GitBranchStatus();
+		result.branch = gitApi.getRepository().getBranch();
+		result.modified = status.hasUncommittedChanges();
+		result.changed = status.getUncommittedChanges();
+		result.added = status.getAdded();
+		result.missing = status.getMissing();
+		result.conflicts = status.getConflicting();
+		return result;
+	}
+
+	public GitFileStatus getStatus(Path path) throws Exception
 	{
 		Status status = gitApi.status().addPath(path.toString()).call();
 		if (!status.isClean())
-			return GitStatus.Clean;
+			return GitFileStatus.Clean;
 		if (!status.getUntracked().isEmpty())
-			return GitStatus.Untracked;
+			return GitFileStatus.Untracked;
 		if (!status.getAdded().isEmpty())
-			return GitStatus.Added;
+			return GitFileStatus.Added;
 		if (!status.getChanged().isEmpty())
-			return GitStatus.Modified;
+			return GitFileStatus.Modified;
 		if (!status.getConflicting().isEmpty())
-			return GitStatus.Conflict;
+			return GitFileStatus.Conflict;
 		if (!status.getMissing().isEmpty())
-			return GitStatus.Deleted;
+			return GitFileStatus.Deleted;
 		throw new Error("Unbekannter Git State");
 	}
 
@@ -167,6 +168,7 @@ public class Repository implements Closeable
 
 	public Path resolve(String file)
 	{
+		if (file.startsWith("/")) file = file.substring(1);
 		Path path = rootPath.resolve(Path.of(file));
 		if (Files.isRegularFile(path))
 			return path;

@@ -8,4 +8,5 @@ public class UserSettings
 	@Nullable
 	public String username;
 	public String view;
+	public boolean sidebar;
 }

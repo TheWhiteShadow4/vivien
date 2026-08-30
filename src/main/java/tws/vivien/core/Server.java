@@ -5,9 +5,8 @@ import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import tws.vivien.dto.FileObject;
-import tws.vivien.dto.ServerError;
-import tws.vivien.dto.ServerState;
+import tws.vivien.dto.*;
+import tws.vivien.handlers.IHandler;
 
 import java.awt.*;
 import java.io.IOException;
@@ -97,8 +96,13 @@ public class Server
 				var state = new ServerState();
 				state.mode = config.mode;
 				state.view = getViewName(ctx);
+				//state.user = new ServerUser(config.user);
 				state.serverErrors = errors.stream().map(ServerError::fromError).toList();
-				ctx.header("Cache-Control", "no-cache");
+				ctx.json(state);
+			});
+
+			c.routes.get("/api/git", ctx -> {
+				var state = repository.getBranchStatus();
 				ctx.json(state);
 			});
 		});
@@ -115,11 +119,18 @@ public class Server
 
 	private void getRepository(Context ctx)
 	{
-		String viewname = getViewName(ctx);
+		String q = ctx.queryParam("q");
+
+		if (q != null)
+		{
+			ctx.json(repository.searchFiles(q));
+			return;
+		}
+		String viewName = getViewName(ctx);
 		String path = ctx.queryParam("path");
 		try
 		{
-			ConfigView view = config.getView(viewname);
+			ConfigView view = config.getView(viewName);
 			ctx.header("Cache-Control", "no-cache");
 			ctx.json(repository.getView(view, path));
 		}
@@ -141,14 +152,14 @@ public class Server
 
 		try
 		{
-			var generator = new PreviewGenerator(webRoot, repository, serverCache);
-			if (!generator.isSupported(file))
+			IHandler handler = PreviewGenerator.forFile(file);
+			if (handler == null)
 			{
 				ctx.status(404);
 				return;
 			}
 
-			FileObject obj = generator.generatePreviewImage(file);
+			FileObject obj = handler.generatePreview(webRoot, repository, serverCache, file);
 			ctx.json(obj);
 		}
 		catch (Exception e)

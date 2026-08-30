@@ -1,13 +1,12 @@
-package tws.vivien.core;
+package tws.vivien.handlers;
 
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectInserter;
+import tws.vivien.core.Cache;
+import tws.vivien.core.Repository;
 import tws.vivien.dto.FileObject;
-import tws.vivien.handlers.IHandler;
-import tws.vivien.handlers.ImageHandler;
-import tws.vivien.handlers.TextHandler;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -15,74 +14,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
-public class PreviewGenerator
+public class ImageHandler implements IHandler
 {
-	private final Path webRoot;
-	private final Repository repository;
-	private final Cache cache;
-
-	private static final Map<String, Class<? extends IHandler>> handler;
-
-	static
-	{
-		handler = new HashMap<>();
-		handler.put("png", ImageHandler.class);
-		handler.put("jpg", ImageHandler.class);
-		handler.put("tga", ImageHandler.class);
-		handler.put("txt", TextHandler.class);
-		handler.put("md", TextHandler.class);
-		handler.put("json", TextHandler.class);
-		handler.put("yaml", TextHandler.class);
-	}
-
-	public PreviewGenerator(Path webRoot, Repository repository, Cache cache)
-	{
-		this.webRoot = webRoot;
-		this.repository = repository;
-		this.cache = cache;
-	}
-
-	public static IHandler forFile(String file)
-	{
-		String fileExt = file.substring(file.lastIndexOf(".")+1).toLowerCase();
-		try
-		{
-			return handler.get(fileExt).getConstructor().newInstance();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public boolean isSupported(String file)
-	{
-		String fileExt = file.substring(file.length() - 3);
-		return handler.containsKey(fileExt);
-	}
-
-	/*public void sendPreview(Path path, String hash, Context ctx) throws IOException
-	{
-		var entry = cache.get(hash);
-		FileObject fileObject;
-		if (entry != null)
-		{
-			fileObject = new FileObject(pathToUrl(path), hash, (String) entry.metadata.get("mimeType"));
-			fileObject.width = (Integer) entry.metadata.get("width");
-			fileObject.height = (Integer) entry.metadata.get("height");
-		}
-		else
-		{
-			//fileObject = generatePreviewImage(path, hash);
-		}
-		ctx.json(fileObject);
-	}*/
-
-	public FileObject generatePreviewImage(String file) throws Exception
+	@Override
+	public FileObject generatePreview(Path webRoot, Repository repository, Cache cache, String file) throws Exception
 	{
 		Path path = repository.resolve(file);
 		//GitStatus status = repository.getStatus(path);
@@ -111,7 +47,7 @@ public class PreviewGenerator
 		if (cacheEntry != null)
 		{
 			var meta = (FileObject.FileObjectMeta) cacheEntry.metadata;
-			return new FileObject(pathToUrl(cacheEntry.path), path.getFileName().toString(), meta);
+			return new FileObject(pathToUrl(webRoot, cacheEntry.path), path.getFileName().toString(), meta);
 		}
 		else
 		{
@@ -147,11 +83,11 @@ public class PreviewGenerator
 			meta.srcHeight = height;
 			cache.add(outputPath, hash, meta);
 
-			return new FileObject(pathToUrl(outputPath), path.getFileName().toString(), meta);
+			return new FileObject(pathToUrl(webRoot, outputPath), path.getFileName().toString(), meta);
 		}
 	}
 
-	private String pathToUrl(Path path)
+	private String pathToUrl(Path webRoot, Path path)
 	{
 		Path relativePath = webRoot.relativize(path);
 		return "/" + relativePath.toString().replace("\\", "/");

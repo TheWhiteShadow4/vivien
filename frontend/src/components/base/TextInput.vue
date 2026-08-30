@@ -36,7 +36,7 @@ const value = computed({
 })
 
 // REGLER 5: Design-Entscheidungen (Farben, Radien, Rahmen) ausgelagert
-const containerStyles = 'relative flex items-center w-full bg-vit-surface rounded-vit-panel-radius border shadow-vit-inset transition-all duration-200'
+const containerStyles = 'relative flex items-center w-full bg-vit-surface rounded-vit-panel-radius border transition-all duration-200'
 
 // REGLER 4 & 6: Varianten-Muster mit visuellem Feedback für Focus und Hover
 const variantStyles: Record<InputVariant, string> = {
@@ -45,11 +45,9 @@ const variantStyles: Record<InputVariant, string> = {
 	failed: 'border-vit-failed focus-within:ring-1 focus-within:ring-vit-failed',
 }
 
-// Reine native Input-Stile (Hintergrund transparent, damit das Container-Design greift)
-const inputStyles = 'w-full bg-transparent text-vit-text-main text-base focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
+const inputStyles = 'w-full bg-transparent text-vit-text-main text-base focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed pl-1'
 
 const labelStyles = 'text-sm font-medium text-vit-text-muted select-none'
-const errorTextStyles = 'text-xs text-vit-text-danger font-medium'
 
 function handleKeyDownEnter() {
 	emit('enter')
@@ -74,12 +72,12 @@ function clearInput() {
 		<div :class="[containerStyles, variantStyles[variant], props.disabled ? 'opacity-60' : '']">
 
 			<!-- Slot für ein Icon am Anfang (z.B. Suchlupe) -->
-			<div class="flex items-center pl-3">
+			<div class="flex items-center pl-1">
 				<slot />
 			</div>
 
 			<input :id="id" v-model="value" :type="type" :placeholder="placeholder" :disabled="disabled"
-				:class="[inputStyles, $slots.prepend ? 'pl-2' : 'pl-3', ($slots.append || type === 'search') ? 'pr-2' : 'pr-3', 'py-2']"
+				:class="[inputStyles, (type === 'search') ? 'pr-2' : 'pr-3', 'py-2']"
 				@keydown.enter="handleKeyDownEnter" />
 
 			 <BaseIconButton

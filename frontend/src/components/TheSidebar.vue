@@ -1,59 +1,51 @@
 <!-- src/components/layout/TheSidebar.vue -->
 <script setup lang="ts">
-import BaseButton from './base/BaseButton.vue'
+import type { ServerState } from '@/types/vivien-generated.js';
+import GitControls from './views/GitControls.vue'
+import UserInfo from './UserInfo.vue';
+import BaseIconButton from './base/BaseIconButton.vue';
+import IconArrow from '@/icons/IconArrow.vue';
+import { computed } from 'vue';
+import { useStore } from '@/store/index.ts';
 
-defineProps({
-  activeView: String
-})
+const store = useStore();
 
-const emit = defineEmits(['navigate'])
+const props = defineProps<{ state?: ServerState }>()
 
-const sidebarContainer = "w-64 bg-vit-surface border-r border-vit-border flex flex-col justify-between shrink-0 p-4"
-const navButtonBase = "w-full flex items-center gap-3 px-4 py-3 rounded-vit-radius font-medium text-left transition-colors cursor-pointer text-base"
-
-// Farbzustände basierend auf dem "vit"-Theme
-const navButtonStyles = (isActive: boolean) => {
-  return isActive 
-    ? "bg-vit-primary text-vit-bg font-bold shadow-vit-shadow" 
-    : "text-vit-text-muted hover:text-vit-text-main hover:bg-vit-bg/50"
+function toggleSidebar()
+{
+	store.updateSetting("sidebar", !store.settings.sidebar);
 }
 
-const styleguideHeading = "text-xs font-semibold text-vit-text-muted uppercase tracking-wider"
-// Layout-Klassen für das responsive Zweier-Grid
-const gridLayout = "grid grid-cols-2 gap-3"
+const sidebarContainer = `bg-vit-surface flex flex-col justify-start shrink-0
+duration-100 ease-in overflow-hidden`
+const sidebarMenu = "h-full border-r border-vit-border flex flex-col justify-start py-4"
+const branchBadge = "border border-vit-accent px-4 py-2"
+const toggleIcon = computed(() => store.settings.sidebar ? "rotate-90" : "rotate-270");
+const headerLayoutStyles  = computed(() => {
+  return store.settings.sidebar 
+    ? 'flex flex-row-reverse justify-between items-center mr-2 py-2' //Offen
+    : 'flex flex-col justify-center items-center py-2'    // Zu:
+})
 </script>
 
 <template>
-  <aside :class="sidebarContainer">
-    <!-- Navigation -->
-    <nav class="flex flex-col gap-2">
-      <button 
-        @click="emit('navigate', 'dashboard')"
-        :class="[navButtonBase, navButtonStyles(activeView === 'dashboard')]"
-      >
-        <span>📊</span> Dashboard
-      </button>
-      
-      <button 
-        @click="emit('navigate', 'assets')"
-        :class="[navButtonBase, navButtonStyles(activeView === 'assets')]"
-      >
-        <span>🎨</span> Assets (Artists)
-      </button>
-      
-      <button 
-        @click="emit('navigate', 'story')"
-        :class="[navButtonBase, navButtonStyles(activeView === 'story')]"
-      >
-        <span>✍️</span> Story & Skripte
-      </button>
-    </nav>
+  <aside :class="[sidebarContainer, store.settings.sidebar ? 'w-56' : 'w-16']">
+	<div :class="headerLayoutStyles" >
+		<BaseIconButton @click="toggleSidebar()"><IconArrow :class="toggleIcon" /></BaseIconButton>
+		<UserInfo v-if="props.state?.user" :small="!store.settings.sidebar" :user="props.state.user" />	
+	</div>
+	<div v-if="store.settings.sidebar" :class="branchBadge">
+		<span class="pr-2 text-vit-text-muted">Branch:</span>
+		<span class="font-bold">{{ store.git?.branch }}</span>
+	</div>
+	<div :class="sidebarMenu">
+		<GitControls :variant="store.settings.sidebar ? 'full' : 'small'" />
 
-	<div class="flex flex-col gap-3">
-        <h3 :class="styleguideHeading">Base Buttons</h3>
+	<!--<div class="flex flex-col gap-3">
+        <h3 class="text-xs font-semibold text-vit-text-muted uppercase tracking-wider">Base Buttons</h3>
         
-        <!-- 4. Zweierreihen über CSS Grid -->
-        <div :class="gridLayout">
+        <div class="grid grid-cols-2 gap-3">
 		<BaseButton variant="normal">Normal</BaseButton>
 		<BaseButton variant="primary">Primary</BaseButton>
 		<BaseButton variant="secondary">Secondary</BaseButton>
@@ -67,17 +59,8 @@ const gridLayout = "grid grid-cols-2 gap-3"
 		<span class="text-vit-text-main">Normaler Text</span><br />
 		<span class="text-vit-highlight">Highlight Text</span><br />
 		<span class="text-vit-accent">Accent Text</span><br />
+	</div>-->
+	
 	</div>
-
-    <!-- Benutzer / Rolle -->
-    <div class="border-t border-vit-border pt-4 text-sm text-vit-text-muted flex items-center gap-2">
-      <div class="w-8 h-8 rounded-full bg-vit-accent flex items-center justify-center text-vit-bg font-bold">
-        A
-      </div>
-      <div>
-        <p class="text-vit-text-main font-medium leading-none">Alex (Artist)</p>
-        <p class="text-xs mt-1">Kein Git benötigt</p>
-      </div>
-    </div>
   </aside>
 </template>

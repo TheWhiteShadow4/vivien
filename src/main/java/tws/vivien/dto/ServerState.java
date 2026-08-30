@@ -10,6 +10,8 @@ public class ServerState
 	public String view;
 	public ServerMode mode;
 	@Nullable
+	public String branch;
+	@Nullable
 	public ServerUser user;
 	public List<ServerError> serverErrors;
 }

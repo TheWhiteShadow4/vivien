@@ -3,7 +3,7 @@ package tws.vivien.core;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.ignore.IgnoreNode;
 import tws.vivien.dto.ElementType;
-import tws.vivien.dto.GitStatus;
+import tws.vivien.dto.GitFileStatus;
 import tws.vivien.dto.RepositoryElement;
 import tws.vivien.dto.RepositoryRoot;
 
@@ -29,10 +29,10 @@ public class RepositoryCache
 	private RepositoryRoot rootElement;
 
 	// Der Turbo-Lookup für gezielte Updates: Pfad -> Element-Referenz
-	private final ConcurrentHashMap<String, RepositoryElement> pathLookup = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, RepositoryElement> pathLookup = new ConcurrentHashMap<>(500);
 
 	// WatchKeys zu Pfaden mappen, um zu wissen, welcher Ordner gefeuert hat
-	private final ConcurrentHashMap<WatchKey, Path> watchKeys = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<WatchKey, Path> watchKeys = new ConcurrentHashMap<>(500);
 	private final WatchService watchService;
 
 	public synchronized RepositoryRoot getRootElement() {
@@ -138,9 +138,11 @@ public class RepositoryCache
 	// Liefert ein spezifisches Unterverzeichnis für das Lazy Loading im Client
 	public RepositoryElement getDirectory(String path) throws IOException
 	{
-		String normalizedPath = path.replace("\\", "/").replaceAll("^/|/$", "");
-		if (normalizedPath.isEmpty()) return getRoot();
-		var result = pathLookup.get(normalizedPath);
+		path = path.replace("\\", "/");
+		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
+		if (path.isEmpty()) return getRoot();
+		IO.println("getDirectory: Lookup für " + path);
+		var result = pathLookup.get(path);
 		if (result == null) throw new IOException("Element für '" + path + "' nicht gefunden.");
 		return result;
 	}
@@ -154,9 +156,9 @@ public class RepositoryCache
 
 		this.rootElement = new RepositoryRoot();
 		this.rootElement.name = "";
-		this.rootElement.path = "";
+		this.rootElement.path = "/";
 		this.rootElement.type = ElementType.ROOT;
-		this.rootElement.gitStatus = GitStatus.Clean;
+		this.rootElement.gitStatus = GitFileStatus.Clean;
 
 		// Wir scannen initial nur die Root-Ebene für das Lazy-Prinzip vor
 		scanDirectoryFromDisk(this.rootElement);
@@ -171,19 +173,18 @@ public class RepositoryCache
 		File[] files = dir.listFiles();
 
 		if (files == null) {
-			parent.children = new ArrayList<>();
+			parent.children = Collections.emptyList();
 			return;
 		}
 
-		List<RepositoryElement> childrenList = new ArrayList<>();
-
+		List<RepositoryElement> childrenList = new ArrayList<>(files.length);
 		for (File file : files)
 		{
 			String name = file.getName();
 			if (name.equals(".git")) continue;
 
 			// Relativen Pfad für dieses Element bauen
-			String childPath = parent.path.isEmpty() ? name : parent.path + "/" + name;
+			String childPath = parent.path.endsWith("/") ? parent.path + name : parent.path + "/" + name;
 
 			// 🛑 FILTER: Ignorierte Unity-Ordner/Dateien überspringen
 			if (isIgnored(childPath, file.isDirectory())) {
@@ -364,9 +365,9 @@ public class RepositoryCache
 	}
 
 	// Dummy-Methode: Hier dockst du deine JGit Status-Prüfung an
-	private GitStatus determineGitStatus(String relativePath)
+	private GitFileStatus determineGitStatus(String relativePath)
 	{
-		return GitStatus.Clean;
+		return GitFileStatus.Clean;
 	}
 
 	@Override
@@ -416,18 +417,16 @@ public class RepositoryCache
 		if (isContainer) {
 			sb.append("📁 ").append(displayName).append("/");
 
-			if (element.children == null) {
-				sb.append(" [Lazy / Nicht geladen]");
-			} else if (element.children.isEmpty()) {
-				sb.append(" [Geladen / Leer]");
+			if (element.children == null || element.children.isEmpty()) {
+				sb.append(" [Leer]");
 			} else {
-				sb.append(" [Geladen: ").append(element.children.size()).append(" Elemente]");
+				sb.append(" [").append(element.children.size()).append(" Elemente]");
 			}
 		} else {
 			sb.append("📄 ").append(displayName);
 		}
 
-		if (element.gitStatus != null && element.gitStatus != GitStatus.Clean)
+		if (element.gitStatus != null && element.gitStatus != GitFileStatus.Clean)
 		{
 			sb.append(" (").append(element.gitStatus).append(")");
 		}
