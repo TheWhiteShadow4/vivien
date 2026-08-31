@@ -36,7 +36,6 @@ export interface RepositoryElement {
     type: ElementType;
     children?: RepositoryElement[];
     gitStatus?: GitFileStatus;
-    parent?: RepositoryElement;
 }
 
 export interface RepositoryRoot extends RepositoryElement {

@@ -21,7 +21,7 @@ public class ServerMain
 		Server server = new Server(config);
 		if (!config.errors.isEmpty())
 		{
-			server.errors.addAll(config.errors);
+			server.persistedErors.addAll(config.errors);
 		}
 		server.start();
 

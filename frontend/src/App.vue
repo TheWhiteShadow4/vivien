@@ -80,7 +80,14 @@ function onGitCommand(arg: string)
 	}
 }
 
-function closeCommitDialog() { showCommitDialog.value = false; }
+function closeCommitDialog(needRefresh: boolean)
+{
+	showCommitDialog.value = false;
+	if (needRefresh)
+	{
+		checkGitStatus();
+	}
+}
 
 // Lifecycle-Hook: Wird ausgeführt, sobald die Komponente im Browser geladen ist
 onMounted(() => {
@@ -133,8 +140,8 @@ onUnmounted(() => {
 
 	<CommitDialog
 		v-if="showCommitDialog"
-		@submit="closeCommitDialog()"
-		@cancel="closeCommitDialog()"
+		@submit="closeCommitDialog(true)"
+		@cancel="closeCommitDialog(false)"
 	/>
 	<LoginDialog v-if="!store.settings.email" />
   </div>

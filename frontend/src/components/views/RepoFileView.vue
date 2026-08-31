@@ -3,7 +3,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
-import type { RepositoryRoot, RepositoryElement, ServerError, StageInfo } from '@/types/vivien-generated'
+import type { RepositoryElement, ServerError, StageInfo } from '@/types/vivien-generated'
 import { emitDisconectError, fetchWithView } from '@/client.ts';
 import TextInput from '../base/TextInput.vue';
 import IconSearch from '@/icons/IconSearch.vue';
@@ -20,9 +20,11 @@ const emit = defineEmits<{
 }>()
 
 // Reaktiver Zustand für die API-Daten und Lade-Status
-const repository = ref<RepositoryRoot | null>(null)
+//const repository = ref<RepositoryRoot | null>(null)
 const isLoading = ref(true)
 const errorMessage = ref<string | null>(null)
+
+const folderCache: Map<string, RepositoryElement> = new Map([]);
 
 const previousFolder = ref<RepositoryElement | null>(null)
 const currentFolder = ref<RepositoryElement | null>(null)
@@ -37,21 +39,28 @@ function selectParent()
 		const el = currentFolder.value;
 		if (el.type == "FOLDER")
 		{
-			if (el.parent != null)
+			let parentPath = el.path.substring(0, el.path.lastIndexOf("/"));
+			if (parentPath == "") parentPath = "/";
+			console.log("Parent path: " + parentPath);
+
+			const parent = folderCache.get(parentPath);
+			if (parent)
 			{
 				selectedElement.value = null;
-				navigateToFolder(el.parent);
+				navigateToFolder(parent);
 			}
 			else
 			{
-				let parentPath = el.path.substring(0, el.path.lastIndexOf("/"));
-				if (parentPath == "") parentPath = "/";
-				console.log("Parent path: " + parentPath);
 				fetchRepository(parentPath);
 			}
 		}
 		emit('select', null);
 	}
+}
+
+function isRoot(el: RepositoryElement): boolean
+{
+	return el.type == 'ROOT';
 }
 
 function selectElement(element: RepositoryElement, doppelt: boolean)
@@ -63,8 +72,9 @@ function selectElement(element: RepositoryElement, doppelt: boolean)
 			fetchRepository(element.path);
 		}
 		selectedElement.value = null;
-		element.parent = currentFolder.value;
-		currentFolder.value = element;
+		//folderCache.value.set(parentPath);
+		//element.parent = currentFolder.value;
+		//currentFolder.value = element;
 	}
 	else
 	{
@@ -73,7 +83,7 @@ function selectElement(element: RepositoryElement, doppelt: boolean)
 	}
 }
 
-async function fetchSerach(query: string)
+async function fetchSearch(query: string)
 {
 	try
 	{
@@ -138,38 +148,17 @@ async function fetchRepository(path: string)
 		}
 
 		const tree: RepositoryElement = await response.json();
-		if (tree.type == "ROOT")
+		/*if (tree.type == "ROOT")
 		{
 			repository.value = tree
-		}
-		// Parent Referenz sichern
-		if (currentFolder.value?.parent)
-		{
-			tree.parent = currentFolder.value.parent;
-		}
+		}*/
+		folderCache.set(tree.path, tree);
 		navigateToFolder(tree);
 	}
 	finally
 	{
 		isLoading.value = false
 	}
-}
-
-function findElementByPath(root: RepositoryElement, targetPath: string): RepositoryElement | null
-{
-	const normalizedTarget = targetPath.replace(/^\/|\/$/g, '')
-	if (normalizedTarget === '') return root
-
-	// Nutzt eine Breitensuche oder Tiefensuche in deinem children-Baum
-	if (root.path === normalizedTarget) return root
-	if (root.children)
-	{
-		for (const child of root.children) {
-			const found = findElementByPath(child, normalizedTarget)
-			if (found) return found
-		}
-	}
-	return null
 }
 
 function navigateToFolder(folder: RepositoryElement, isBrowserBackAction = false)
@@ -202,21 +191,26 @@ function navigateToQuery(result: RepositoryElement, query: string)
 
 function handleBrowserNavigation(event: PopStateEvent)
 {
-	if (!repository.value) return
+	if (folderCache.size == 0) return
 
 	// Versuche den Pfad aus dem State zu lesen, andernfalls direkt aus den Query-Parametern
 	const urlParams = new URLSearchParams(window.location.search)
 	const targetPath = event.state?.path ?? urlParams.get('path') ?? ''
 
 	// Finde das passende Element im RAM-Baum
-	const targetFolder = findElementByPath(repository.value, targetPath)
+	let targetFolder = folderCache.get(targetPath);
 
-	if (targetFolder) {
+	if (targetFolder)
+	{
 		// Navigieren, aber pushState überspringen
 		navigateToFolder(targetFolder, true)
-	} else {
+	}
+	else
+	{
+		targetFolder = folderCache.get("/");
+		if (!targetFolder) return;
 		// Fallback zur Wurzel, falls der Pfad (z.B. nach externem Löschen) nicht existiert
-		navigateToFolder(repository.value, true)
+		navigateToFolder(targetFolder, true)
 	}
 }
 
@@ -249,6 +243,7 @@ async function handleFileChange(event: Event)
 			{
 				const result = await response.json() as StageInfo
 				store.stage = result;
+				fetchRepository(currentFolder.value.path);
 			}
 			else
 			{
@@ -291,9 +286,9 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					v-model="searchQuery"
 					type="search"
 					placeholder="Repository durchsuchen"
-					@enter="fetchSerach(searchQuery)"
+					@enter="fetchSearch(searchQuery)"
 					@clear="clearSerach()">
-					<BaseIconButton @click="fetchSerach(searchQuery)">
+					<BaseIconButton @click="fetchSearch(searchQuery)">
 					<IconSearch />
 				</BaseIconButton>
 				</TextInput>
@@ -325,8 +320,8 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 				<template v-else-if="currentFolder">
 					<div v-if="currentFolder?.type != 'ROOT'">
 						<BaseRepoElement
-							name=".."
-							type="FOLDER"
+							label=".."
+							:element="currentFolder"
 							:selected="false"
 							@clicked="selectParent()" />
 					</div>
@@ -337,12 +332,11 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 						Hier ist nix drin.
 					</div>
 					<BaseRepoElement
-						v-for="element in currentFolder.children"
-						:key="element.name"
-						:name="element.name"
-						:type="element.type"
-						:selected="element == selectedElement"
-						@clicked="selectElement(element, $event)"
+						v-for="el in currentFolder.children"
+						:key="el.name"
+						:element="el"
+						:selected="el == selectedElement"
+						@clicked="selectElement(el, $event)"
 					/>
 				</template>
 			</div>

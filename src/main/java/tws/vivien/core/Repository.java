@@ -168,13 +168,13 @@ public class Repository implements Closeable
 		var add = gitApi.add();
 		var rm = gitApi.rm();
 
-		for(Path path : stage.added)
+		for(String pathStr : stage.added)
 		{
-			add.addFilepattern(path.toString().replace("\\", "/"));
+			add.addFilepattern(pathStr);
 		}
-		for(Path path : stage.removed)
+		for(String pathStr : stage.removed)
 		{
-			rm.addFilepattern(path.toString().replace("\\", "/"));
+			rm.addFilepattern(pathStr);
 		}
 		if (!stage.added.isEmpty()) add.call();
 		if (!stage.removed.isEmpty()) rm.call();
@@ -244,5 +244,10 @@ public class Repository implements Closeable
 			return path;
 		else
 			return null;
+	}
+
+	public String getRelativePath(Path path)
+	{
+		return rootPath.relativize(path).toString().replace("\\", "/");
 	}
 }

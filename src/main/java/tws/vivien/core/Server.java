@@ -16,12 +16,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Server
 {
 	private final Config config;
 	private final Cache serverCache;
-	public List<Exception> errors = new ArrayList<>();
+	public List<Exception> persistedErors = new ArrayList<>();
+	public List<Exception> requestErrors = new ArrayList<>();
 	private Repository repository;
 	private Path webRoot;
 	private Map<String, UserStage> userStages = new HashMap<>();
@@ -43,6 +45,21 @@ public class Server
 			this.repository = new Repository(config.repository);
 		}
 		catch(IOException | GitAPIException e)
+		{
+			e.printStackTrace();
+		}
+
+		try
+		{
+			var c = new CommitRequest();
+			c.name = "Anna";
+			c.email = "anna@exampl.de";
+			c.message = "Hallo";
+			var s = new UserStage();
+			s.added.add("tennis-gal.png");
+			repository.commit(c, s);
+		}
+		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
@@ -102,8 +119,9 @@ public class Server
 				state.mode = config.mode;
 				state.view = getViewName(ctx);
 				//state.user = new ServerUser(config.user);
-				state.serverErrors = errors.stream().map(ServerError::fromError).toList();
+				state.serverErrors = Stream.concat(persistedErors.stream(), requestErrors.stream()).map(ServerError::fromError).toList();
 				ctx.json(state);
+				requestErrors.clear();
 			});
 
 			c.routes.get("/api/git", this::getBranchStatus);
@@ -201,7 +219,7 @@ public class Server
 		catch(Exception e)
 		{
 			e.printStackTrace();
-			errors.add(e);
+			requestErrors.add(e);
 		}
 		ctx.json(state);
 	}
@@ -228,9 +246,9 @@ public class Server
 		UserStage userstage = userStages.computeIfAbsent(email, k -> new UserStage());
 
 		ctx.uploadedFiles("files").forEach(file -> {
-			Path path = folderPath.resolve(file.filename());
-			FileUtil.streamToFile(file.content(), path.toString());
-			userstage.added.add(path);
+			Path fullPath = folderPath.resolve(file.filename());
+			FileUtil.streamToFile(file.content(), fullPath.toString());
+			userstage.added.add(repository.getRelativePath(fullPath));
 		});
 
 		ctx.json(new StageInfo(userstage));
