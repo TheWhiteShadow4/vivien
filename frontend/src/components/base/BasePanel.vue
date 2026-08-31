@@ -10,7 +10,7 @@ withDefaults(defineProps<Props>(), {
   elevation: 'high'
 })
 
-const baseStyles = `w-full border rounded-vit-panel-radius py-2 px-4
+const baseStyles = `border rounded-vit-panel-radius py-2 px-4
 transition-all duration-200`
 
 const variantStyles = {

@@ -8,7 +8,7 @@ export type InputVariant = 'default' | 'success' | 'failed'
 
 interface Props {
 	modelValue: string
-	type?: 'text' | 'search' | 'password' | 'email'
+	type?: 'text' | 'search' | 'password'
 	placeholder?: string
 	label?: string
 	id?: string

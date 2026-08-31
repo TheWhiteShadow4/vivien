@@ -3,11 +3,14 @@ package tws.vivien.core;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.BranchTrackingStatus;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import tws.vivien.dto.ElementType;
 import tws.vivien.dto.GitBranchStatus;
-import tws.vivien.dto.GitFileStatus;
+import tws.vivien.dto.RemoteGitStatus;
 import tws.vivien.dto.RepositoryElement;
 
 import java.io.Closeable;
@@ -135,14 +138,57 @@ public class Repository implements Closeable
 		var result = new GitBranchStatus();
 		result.branch = gitApi.getRepository().getBranch();
 		result.modified = status.hasUncommittedChanges();
-		result.changed = status.getUncommittedChanges();
+		result.untracked = status.getUntracked();
 		result.added = status.getAdded();
+		result.changed = status.getUncommittedChanges();
 		result.missing = status.getMissing();
 		result.conflicts = status.getConflicting();
 		return result;
 	}
 
-	public GitFileStatus getStatus(Path path) throws Exception
+	public RemoteGitStatus getRemoteStatus(Config config, String branch) throws Exception
+	{
+		List<RemoteConfig> remotes = RemoteConfig.getAllRemoteConfigs(gitApi.getRepository().getConfig());
+		if (remotes.isEmpty()) return null;
+
+		FetchResult _result = gitApi.fetch().setCredentialsProvider(config.credentials).call();
+		var trackingStatus = BranchTrackingStatus.of(gitApi.getRepository(), branch);
+
+		if (trackingStatus == null) return null;
+
+		// Commits, die dem Server fehlen und Commits, die noch nicht gepusht sind
+		return new RemoteGitStatus(trackingStatus.getBehindCount(), trackingStatus.getAheadCount());
+	}
+
+	public void commit(String name, String email, String message) throws Exception
+	{
+		if (name == null) throw new NullPointerException("name ist null");
+		if (email == null) throw new NullPointerException("email ist null");
+		if (message == null) throw new NullPointerException("message ist null");
+		gitApi.commit().setCommitter(name, email).setMessage(message).call();
+	}
+
+	public void push() throws Exception
+	{
+
+	}
+
+	public void pull() throws Exception
+	{
+
+	}
+
+	public void stash() throws Exception
+	{
+
+	}
+
+	public void unstash() throws Exception
+	{
+
+	}
+
+	/*public GitFileStatus getStatus(Path path) throws Exception
 	{
 		Status status = gitApi.status().addPath(path.toString()).call();
 		if (!status.isClean())
@@ -158,7 +204,7 @@ public class Repository implements Closeable
 		if (!status.getMissing().isEmpty())
 			return GitFileStatus.Deleted;
 		throw new Error("Unbekannter Git State");
-	}
+	}*/
 
 	@Override
 	public void close()

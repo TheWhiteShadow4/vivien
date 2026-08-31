@@ -10,6 +10,7 @@ import RepoFileView from './components/views/RepoFileView.vue'
 import ThePreviewPanel from './components/ThePreviewPanel.vue'
 import { fetchWithView } from './client.ts'
 import { useStore } from './store/index.ts'
+import LoginDialog from './components/dialoge/LoginDialog.vue'
 
 const store = useStore();
 
@@ -120,6 +121,8 @@ onMounted(() => {
       <BasePanel variant="info" >Das ist ein Toast<br /><span class="text-vit-text-muted">Zweite Zeile.</span></BasePanel>
 	  <BasePanel variant="warning" >Warning</BasePanel>
 	  </div>-->
+
+	  <LoginDialog v-if="!store.settings.email" />
 
     </div>
   </div>

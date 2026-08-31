@@ -47,10 +47,12 @@ public class Server
 			e.printStackTrace();
 		}
 
-		Javalin app = Javalin.create(c -> {
+		Javalin app = Javalin.create(c ->
+		{
 			// Sagt Vivien, dass sie im Ordner "public" nach statischen Dateien (HTML/JS) suchen soll
 			//c.staticFiles.add("./public", Location.EXTERNAL);
-			c.staticFiles.add(staticFiles -> {
+			c.staticFiles.add(staticFiles ->
+			{
 				staticFiles.hostedPath = "/";              // URL-Basis im Browser (Root)
 				staticFiles.directory = "public";          // Ordnername (Lass das "./" weg!)
 				staticFiles.location = Location.EXTERNAL;  // Dateisystem statt JAR-Classpath
@@ -59,26 +61,28 @@ public class Server
 			});
 
 			c.bundledPlugins.enableCors(cors ->
-				cors.addRule(rule -> {
-					if (config.mode == ServerMode.SETUP || config.security == SecurityMode.LAX)
+					cors.addRule(rule ->
 					{
-						rule.anyHost(); // Aktiviert Cross-Origin-Requests
-					}
-					else
-					{
-						rule.reflectClientOrigin = true;
-						rule.allowCredentials = true;
-					}
-			}));
+						if (config.mode == ServerMode.SETUP || config.security == SecurityMode.LAX)
+						{
+							rule.anyHost(); // Aktiviert Cross-Origin-Requests
+						}
+						else
+						{
+							rule.reflectClientOrigin = true;
+							rule.allowCredentials = true;
+						}
+					}));
 
 			// Der Before-Filter für geschützte Routen
-			c.routes.before("/api/*", ctx -> {
+			c.routes.before("/api/*", ctx ->
+			{
 				if (config.user != null)
 				{
 					var credentials = ctx.basicAuthCredentials();
 					if (credentials != null
-						&& Objects.equals(config.user, credentials.getUsername())
-						&& Objects.equals(config.password, credentials.getPassword()))
+							&& Objects.equals(config.user, credentials.getUsername())
+							&& Objects.equals(config.password, credentials.getPassword()))
 					{
 						return; // Zugriff erlaubt, Filter wird verlassen
 					}
@@ -92,7 +96,8 @@ public class Server
 
 			c.routes.get("/api/preview", this::getPreview);
 
-			c.routes.get("/api/state", ctx -> {
+			c.routes.get("/api/state", ctx ->
+			{
 				var state = new ServerState();
 				state.mode = config.mode;
 				state.view = getViewName(ctx);
@@ -101,10 +106,13 @@ public class Server
 				ctx.json(state);
 			});
 
-			c.routes.get("/api/git", ctx -> {
-				var state = repository.getBranchStatus();
-				ctx.json(state);
-			});
+			c.routes.get("/api/git", this::getBranchStatus);
+
+			c.routes.post("/api/commit", this::commit);
+			c.routes.post("/api/push", this::push);
+			c.routes.post("/api/pull", this::pull);
+			c.routes.post("/api/stash", this::stash);
+			c.routes.post("/api/unstash", this::unstash);
 		});
 		app.start(config.port);
 
@@ -166,6 +174,106 @@ public class Server
 		{
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
+		}
+	}
+
+	private void getBranchStatus(Context ctx)
+	{
+		GitBranchStatus state;
+		try
+		{
+			state = repository.getBranchStatus();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			errors.add(e);
+			ctx.status(500);
+			return;
+		}
+
+		try
+		{
+			state.remote = repository.getRemoteStatus(config, state.branch);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			errors.add(e);
+		}
+		ctx.json(state);
+	}
+
+	private void commit(Context ctx)
+	{
+		String name = ctx.queryParam("name");
+		String email = ctx.queryParam("email");
+		String message = ctx.queryParam("message");
+		try
+		{
+			repository.commit(name, email, message);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			errors.add(e);
+			ctx.status(500);
+		}
+	}
+
+	private void push(Context ctx)
+	{
+		try
+		{
+			repository.push();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			errors.add(e);
+			ctx.status(500);
+		}
+	}
+
+	private void pull(Context ctx)
+	{
+		try
+		{
+			repository.pull();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			errors.add(e);
+			ctx.status(500);
+		}
+	}
+
+	private void stash(Context ctx)
+	{
+		try
+		{
+			repository.stash();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			errors.add(e);
+			ctx.status(500);
+		}
+	}
+
+	private void unstash(Context ctx)
+	{
+		try
+		{
+			repository.unstash();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			errors.add(e);
+			ctx.status(500);
 		}
 	}
 

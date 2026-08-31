@@ -5,8 +5,10 @@ import jakarta.annotation.Nullable;
 /// Client seitiger Benutzer
 public class UserSettings
 {
-	@Nullable
-	public String username;
+	// Git User
+	@Nullable public String username;
+	@Nullable public String email;
+
 	public String view;
 	public boolean sidebar;
 }

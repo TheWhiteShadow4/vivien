@@ -2,6 +2,7 @@ package tws.vivien.core;
 
 
 import com.electronwill.nightconfig.core.file.FileConfig;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import tws.vivien.plugins.EnginePlugin;
 
 import java.io.File;
@@ -21,6 +22,7 @@ public class Config
 	public Object cert = null;
 	public String user = null;
 	public String password = null;
+	public UsernamePasswordCredentialsProvider credentials;
 	public Map<String, ConfigView> views = new HashMap<>();
 	public Path repository;
 	public EnginePlugin enginePlugin;
@@ -83,6 +85,10 @@ public class Config
 
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
+
+		var gitUser = CReader.readString(this, config, "git.user").get();
+		var gitPassword = CReader.readString(this, config, "git.password").get();
+		credentials = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
 
 		loadEnginePlugin(config);
 

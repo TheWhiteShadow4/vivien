@@ -50,13 +50,17 @@ public class PreviewGenerator
 		String fileExt = file.substring(file.lastIndexOf(".")+1).toLowerCase();
 		try
 		{
-			return handler.get(fileExt).getConstructor().newInstance();
+			var fileHandler = handler.get(fileExt);
+			if (fileHandler != null)
+			{
+				return fileHandler.getConstructor().newInstance();
+			}
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			return null;
 		}
+		return null;
 	}
 
 	public boolean isSupported(String file)

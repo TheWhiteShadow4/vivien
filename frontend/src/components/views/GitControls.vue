@@ -15,7 +15,7 @@ const store = useStore();
 const commitStyle = computed(() => {
 	if (store.git)
 	{
-		if (store.git.modified)
+		if (store.git.modified || store.git.untracked.length > 0)
 		{
 			return "font-bold bg-gradient-to-t from-vit-primary to-vit-primary2";
 		}
@@ -26,6 +26,23 @@ const commitStyle = computed(() => {
 	}
 	return "text-vit-text-muted";
 });
+
+const pushStyle = computed(() => {
+	if (store.git && store.git.remote)
+	{
+		if (store.git.remote.behindCount || store.git.untracked.length > 0)
+		{
+			return "font-bold bg-gradient-to-t from-vit-primary to-vit-primary2";
+		}
+		else
+		{
+			return "text-vit-text-muted";
+		}
+	}
+	return "text-vit-text-muted";
+});
+
+
 interface Props {
   variant?: "full" | "small"
 }

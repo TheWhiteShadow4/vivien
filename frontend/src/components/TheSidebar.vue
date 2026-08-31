@@ -19,12 +19,12 @@ function toggleSidebar()
 
 const sidebarContainer = `bg-vit-surface flex flex-col justify-start shrink-0
 duration-100 ease-in overflow-hidden`
-const sidebarMenu = "h-full border-r border-vit-border flex flex-col justify-start py-4"
-const branchBadge = "border border-vit-accent px-4 py-2"
+const sidebarMenu = "h-full border-r border-vit-border flex flex-col justify-start"
+const branchBadge = "border border-vit-accent px-4 py-2 mb-6"
 const toggleIcon = computed(() => store.settings.sidebar ? "rotate-90" : "rotate-270");
 const headerLayoutStyles  = computed(() => {
   return store.settings.sidebar 
-    ? 'flex flex-row-reverse justify-between items-center mr-2 py-2' //Offen
+    ? 'flex flex-row-reverse justify-between items-center mr-2' //Offen
     : 'flex flex-col justify-center items-center py-2'    // Zu:
 })
 </script>
@@ -32,8 +32,13 @@ const headerLayoutStyles  = computed(() => {
 <template>
   <aside :class="[sidebarContainer, store.settings.sidebar ? 'w-56' : 'w-16']">
 	<div :class="headerLayoutStyles" >
-		<BaseIconButton @click="toggleSidebar()"><IconArrow :class="toggleIcon" /></BaseIconButton>
-		<UserInfo v-if="props.state?.user" :small="!store.settings.sidebar" :user="props.state.user" />	
+		<BaseIconButton class="my-2" @click="toggleSidebar()"><IconArrow :class="toggleIcon" /></BaseIconButton>
+		<UserInfo
+			v-if="store.settings.username"
+			:small="!store.settings.sidebar"
+			:username="store.settings.username"
+			:view="store.settings.view"
+		/>	
 	</div>
 	<div v-if="store.settings.sidebar" :class="branchBadge">
 		<span class="pr-2 text-vit-text-muted">Branch:</span>
