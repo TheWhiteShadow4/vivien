@@ -116,7 +116,6 @@
                     <!-- In welchen Java-Packages liegen deine API-Klassen? -->
                     <classPatterns>
                         <classPattern>tws.vivien.dto.*</classPattern>
-                        <!-- Später z.B. auch tws.vivien.dto.* -->
                     </classPatterns>
                     <!-- Wohin soll die TypeScript-Datei generiert werden? -->
                     <outputFile>frontend/src/types/vivien-generated.d.ts</outputFile>
@@ -125,6 +124,10 @@
                     <optionalAnnotations>
                         <annotation>jakarta.annotation.Nullable</annotation>
                     </optionalAnnotations>
+                    <customTypeMappings>
+                        <customTypeMapping>tws.vivien.dto.ServerResult$True:true</customTypeMapping>
+                        <customTypeMapping>tws.vivien.dto.ServerResult$False:false</customTypeMapping>
+                    </customTypeMappings>
                 </configuration>
             </plugin>
         </plugins>

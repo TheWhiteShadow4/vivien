@@ -1,6 +1,12 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-08-30 14:48:32.
+// Generated using typescript-generator version 4.1.1 on 2026-08-31 13:31:21.
+
+export interface CommitRequest {
+    name: string;
+    email: string;
+    message: string;
+}
 
 export interface FileObject {
     url: string;
@@ -41,6 +47,12 @@ export interface ServerError {
     stacktrace: string;
 }
 
+export interface ServerResult {
+    success: boolean;
+    message: string;
+    error: ServerError;
+}
+
 export interface ServerState {
     view: string;
     mode: ServerMode;
@@ -51,6 +63,12 @@ export interface ServerState {
 
 export interface ServerUser {
     name: string;
+}
+
+export interface StageInfo {
+    added: number;
+    removed: number;
+    modified: number;
 }
 
 export interface UserSettings {
@@ -68,6 +86,16 @@ export interface FileObjectMeta {
     srcWidth: number;
     srcHeight: number;
     importProps?: { [index: string]: any };
+}
+
+export interface Success {
+    success: true;
+    message: string;
+}
+
+export interface Failure {
+    success: false;
+    error: ServerError;
 }
 
 export type ElementType = "ROOT" | "FOLDER" | "FILE" | "VIRTUAL";

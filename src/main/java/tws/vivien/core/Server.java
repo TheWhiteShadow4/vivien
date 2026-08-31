@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.util.FileUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import tws.vivien.dto.*;
 import tws.vivien.handlers.IHandler;
@@ -13,10 +14,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class Server
 {
@@ -25,6 +24,7 @@ public class Server
 	public List<Exception> errors = new ArrayList<>();
 	private Repository repository;
 	private Path webRoot;
+	private Map<String, UserStage> userStages = new HashMap<>();
 	//private String clientView = "Admin";
 
 	public Server(Config config)
@@ -113,6 +113,8 @@ public class Server
 			c.routes.post("/api/pull", this::pull);
 			c.routes.post("/api/stash", this::stash);
 			c.routes.post("/api/unstash", this::unstash);
+
+			c.routes.post("/api/upload", this::uploadFiles);
 		});
 		app.start(config.port);
 
@@ -187,8 +189,8 @@ public class Server
 		catch(Exception e)
 		{
 			e.printStackTrace();
-			errors.add(e);
 			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
 			return;
 		}
 
@@ -204,20 +206,48 @@ public class Server
 		ctx.json(state);
 	}
 
+	private void uploadFiles(Context ctx)
+	{
+		String email = ctx.formParam("email");
+		String folderName = ctx.formParam("folderName");
+		if (email == null)
+		{
+			ctx.status(400);
+			ctx.json(new ServerError("Parameter email nicht gesetzt.", null));
+			return;
+		}
+		if (folderName == null)
+		{
+			ctx.status(400);
+			ctx.json(new ServerError("Parameter folderName nicht gesetzt.", null));
+			return;
+		}
+
+		Path folderPath = repository.resolveFolder(folderName);
+
+		UserStage userstage = userStages.computeIfAbsent(email, k -> new UserStage());
+
+		ctx.uploadedFiles("files").forEach(file -> {
+			Path path = folderPath.resolve(file.filename());
+			FileUtil.streamToFile(file.content(), path.toString());
+			userstage.added.add(path);
+		});
+
+		ctx.json(new StageInfo(userstage));
+	}
+
 	private void commit(Context ctx)
 	{
-		String name = ctx.queryParam("name");
-		String email = ctx.queryParam("email");
-		String message = ctx.queryParam("message");
 		try
 		{
-			repository.commit(name, email, message);
+			CommitRequest request = ctx.bodyAsClass(CommitRequest.class);
+			repository.commit(request, userStages.get(request.email));
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			errors.add(e);
 			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
 		}
 	}
 
@@ -230,8 +260,8 @@ public class Server
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			errors.add(e);
 			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
 		}
 	}
 
@@ -244,8 +274,8 @@ public class Server
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			errors.add(e);
 			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
 		}
 	}
 
@@ -258,8 +288,8 @@ public class Server
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			errors.add(e);
 			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
 		}
 	}
 
@@ -272,8 +302,8 @@ public class Server
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			errors.add(e);
 			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
 		}
 	}
 

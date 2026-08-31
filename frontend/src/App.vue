@@ -1,16 +1,18 @@
 <!-- src/App.vue -->
 <script setup lang="ts">
 
-import { ref, onMounted } from 'vue'
-import type { FileObject, RepositoryElement, ServerState } from './types/vivien-generated'
+import { ref, onMounted, onUnmounted } from 'vue'
+import type { FileObject, RepositoryElement, ServerError, ServerState } from './types/vivien-generated'
 import ErrorBannerList from './components/ErrorBannerList.vue'
 import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
 import RepoFileView from './components/views/RepoFileView.vue'
 import ThePreviewPanel from './components/ThePreviewPanel.vue'
-import { fetchWithView } from './client.ts'
+import { checkGitStatus, emitDisconectError, fetchWithView } from './client.ts'
 import { useStore } from './store/index.ts'
 import LoginDialog from './components/dialoge/LoginDialog.vue'
+import CommitDialog from './components/dialoge/CommitDialog.vue'
+import emitter from './mitt.ts'
 
 const store = useStore();
 
@@ -22,6 +24,7 @@ const state = ref<ServerState>({
 })
 
 const isSidebarOpen = ref(true)
+const showCommitDialog = ref(false)
 const isLoading = ref<boolean>(true)
 const networkError = ref<string | null>(null)
 const previewImage = ref<FileObject | null>(null);
@@ -36,42 +39,29 @@ async function checkBackendStatus()
 		const response = await fetchWithView("/api/state")
 
 		if (!response.ok) {
-			throw new Error(`Server antwortete mit Status: ${response.status}`)
+			emitDisconectError(response.statusText);
+			return;
 		}
 
 		// Daten reaktiv in den State schreiben
 		state.value = await response.json()
-	} catch (err: unknown) {
-		console.error("Fehler beim API-Call:", err)
-		networkError.value = "Backend ist nicht erreichbar. Läuft der Vivien Server?"
-	} finally {
-		isLoading.value = false
-	}
-}
 
-async function checkGitStatus()
-{
-	try
-	{
-		const response = await fetchWithView("/api/git")
-
-		if (!response.ok) {
-			throw new Error(`Server antwortete mit Status: ${response.status}`)
-		}
-
-		store.git = await response.json();
+		await checkGitStatus();
 	}
 	catch (err: unknown)
 	{
-		console.error("Fehler beim API-Call:", err)
-		networkError.value = "Backend ist nicht erreichbar. Läuft der Vivien Server?"
+		console.log(err);
+	}
+	finally
+	{
+		isLoading.value = false
 	}
 }
 
 async function updatePreview(el: RepositoryElement | null)
 {
-	// Schön informiert zu werden, aber ohne Objekt passiert nichts.
-	if (el == null) return;
+	// Schön informiert zu werden, aber ohne Datei passiert nichts.
+	if (el == null || el.type != "FILE") return;
 
 	const response = await fetchWithView(`/api/preview?file=${el.path}`);
 	if (response.ok)
@@ -81,11 +71,27 @@ async function updatePreview(el: RepositoryElement | null)
 	}
 }
 
+function onGitCommand(arg: string)
+{
+	console.log("onGitCommand " + arg);
+	if (arg == "commit")
+	{
+		showCommitDialog.value = true;
+	}
+}
+
+function closeCommitDialog() { showCommitDialog.value = false; }
+
 // Lifecycle-Hook: Wird ausgeführt, sobald die Komponente im Browser geladen ist
 onMounted(() => {
 	document.title = "Vivien";
 	checkBackendStatus();
-	checkGitStatus();
+
+	emitter.on("error", (e) => state.value.serverErrors.push(e as ServerError));
+})
+
+onUnmounted(() => {
+	emitter.off("error", (e) => state.value.serverErrors.push(e as ServerError));
 })
 
 </script>
@@ -98,8 +104,11 @@ onMounted(() => {
     <!-- Inhalt unter dem Header -->
     <div class="flex flex-1 min-h-0">
       
-      <!-- Unsere saubere Sidebar -->
-      <TheSidebar :state="state" :is-open="isSidebarOpen" />
+      <TheSidebar
+	  	:state="state"
+		:is-open="isSidebarOpen"
+		@git="onGitCommand($event)"
+		/>
 
       <!-- Hauptbereich -->
       <main class="flex-1 bg-vit-bg p-1 overflow-y-auto min-w-0">
@@ -109,7 +118,6 @@ onMounted(() => {
         />
 
         <RepoFileView 
-          @server-error="(err) => state.serverErrors.push(err)"
 		  @select="(e) => updatePreview(e)"
         />
       </main>
@@ -121,10 +129,14 @@ onMounted(() => {
       <BasePanel variant="info" >Das ist ein Toast<br /><span class="text-vit-text-muted">Zweite Zeile.</span></BasePanel>
 	  <BasePanel variant="warning" >Warning</BasePanel>
 	  </div>-->
-
-	  <LoginDialog v-if="!store.settings.email" />
-
     </div>
+
+	<CommitDialog
+		v-if="showCommitDialog"
+		@submit="closeCommitDialog()"
+		@cancel="closeCommitDialog()"
+	/>
+	<LoginDialog v-if="!store.settings.email" />
   </div>
 </template>
 

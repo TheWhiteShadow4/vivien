@@ -1,13 +1,14 @@
 // src\store\index.ts
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import type { GitBranchStatus, UserSettings } from '@/types/vivien-generated'
+import type { GitBranchStatus, StageInfo, UserSettings } from '@/types/vivien-generated'
 
 
 // Der Name 'settings' ist der eindeutige Identifier des Stores
 export const useStore = defineStore('settings', () => {
 
 	const git = ref<GitBranchStatus>();
+	const stage = ref<StageInfo>();
 
 	// 1. Initialisierung: Versuche aus dem LocalStorage zu laden, sonst nimm Defaults
 	const settings = ref<UserSettings>({
@@ -16,9 +17,9 @@ export const useStore = defineStore('settings', () => {
 		...JSON.parse(localStorage.getItem('vivian_user') || '{}')
 	})
 
-	function updateGit(value: GitBranchStatus) {
+	/*function updateGit(value: GitBranchStatus) {
 		git.value = value
-	}
+	}*/
 
 	// 2. Aktion (Methode) zum Ändern einzelner Werte
 	function updateSetting<K extends keyof UserSettings>(key: K, value: UserSettings[K]) {
@@ -37,7 +38,7 @@ export const useStore = defineStore('settings', () => {
 	// Alles zurückgeben, was in Komponenten/Dateien verfügbar sein soll
 	return {
 		git,
-		updateGit,
+		stage,
 		settings,
 		updateSetting
 	}

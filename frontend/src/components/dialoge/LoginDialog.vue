@@ -9,7 +9,7 @@ import BaseButton from '../base/BaseButton.vue';
 
 const store = useStore();
 
-const emit = defineEmits()
+const emit = defineEmits(["complete"])
 
 const name = ref('')
 const email = ref('')
@@ -17,8 +17,8 @@ const email = ref('')
 // Validierung: Name darf nicht leer sein, E-Mail braucht eine Grundstruktur
 const isNameValid = computed(() => name.value.trim().length > 0)
 const isEmailValid = computed(() => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email.value.trim())
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+	return emailRegex.test(email.value.trim())
 })
 const isFormValid = computed(() => isNameValid.value && isEmailValid.value)
 
@@ -27,51 +27,35 @@ const titleStyles = `text-xl font-bold text-vit-text-main font-sans
 tracking-wide border-b border-vit-border pb-2 mb-4`
 
 function submitLogin() {
-  if (!isFormValid.value) return
+	if (!isFormValid.value) return
 
-  store.updateSetting("username", name.value.trim());
-  store.updateSetting("email", email.value.trim());
-  
-  emit('complete')
+	store.updateSetting("username", name.value.trim());
+	store.updateSetting("email", email.value.trim());
+
+	emit("complete")
 }
 </script>
 
 <template>
-  <div :class="backdropStyles" @click.self>
-    <BasePanel variant="dialog">
-      
-      <h2 :class="titleStyles">Login</h2>
+	<div :class="backdropStyles" @click.self.prevent>
+		<BasePanel variant="dialog">
 
-      <div class="flex flex-col gap-6 w-108">
-        <TextInput
-          v-model="name"
-          type="text"
-          label="Name"
-          placeholder="Name"
-          :variant="name && !isNameValid ? 'failed' : 'default'"
-          @enter="submitLogin"
-        >
-        </TextInput>
+			<h2 :class="titleStyles">Login</h2>
 
-        <TextInput
-          v-model="email"
-          type="text"
-          label="E-Mail-Adresse"
-          placeholder="Email"
-          :variant="email && !isEmailValid ? 'failed' : 'default'"
-          @enter="submitLogin"
-        >
-        </TextInput>
-      </div>
+			<div class="flex flex-col gap-6 w-108">
+				<TextInput v-model="name" type="text" label="Name" placeholder="Name"
+					:variant="name && !isNameValid ? 'failed' : 'default'">
+				</TextInput>
 
-      <div class="mt-6">
-        <BaseButton
-          variant="primary"
-          :disabled="!isFormValid"
-          @click="submitLogin"
-        >Login</BaseButton>
-      </div>
+				<TextInput v-model="email" type="text" label="E-Mail-Adresse" placeholder="Email"
+					:variant="email && !isEmailValid ? 'failed' : 'default'">
+				</TextInput>
+			</div>
 
-    </BasePanel>
-  </div>
+			<div class="mt-6">
+				<BaseButton variant="primary" :disabled="!isFormValid" @click="submitLogin">Login</BaseButton>
+			</div>
+
+		</BasePanel>
+	</div>
 </template>

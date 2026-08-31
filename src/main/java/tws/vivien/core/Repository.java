@@ -8,10 +8,7 @@ import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import tws.vivien.dto.ElementType;
-import tws.vivien.dto.GitBranchStatus;
-import tws.vivien.dto.RemoteGitStatus;
-import tws.vivien.dto.RepositoryElement;
+import tws.vivien.dto.*;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -33,8 +30,9 @@ public class Repository implements Closeable
 		this.rootPath = rootPath;
 		this.gitApi = Git.open(rootPath.toFile());
 		cache = new RepositoryCache(rootPath, gitApi.getRepository());
-		IO.println(cache.toString());
 	}
+
+	public Path getRoot() { return rootPath; }
 
 	public Git getApi()
 	{
@@ -113,7 +111,7 @@ public class Repository implements Closeable
 			element.children = null;//createElements(path, filter);
 		} else {
 			element.type = ElementType.FILE;
-			element.children = new ArrayList<>(); // Der wichtige Schutz gegen null
+			element.children = new ArrayList<>();
 		}
 
 		return element;
@@ -160,12 +158,28 @@ public class Repository implements Closeable
 		return new RemoteGitStatus(trackingStatus.getBehindCount(), trackingStatus.getAheadCount());
 	}
 
-	public void commit(String name, String email, String message) throws Exception
+	public void commit(CommitRequest request, UserStage stage) throws Exception
 	{
-		if (name == null) throw new NullPointerException("name ist null");
-		if (email == null) throw new NullPointerException("email ist null");
-		if (message == null) throw new NullPointerException("message ist null");
-		gitApi.commit().setCommitter(name, email).setMessage(message).call();
+		if (request.name == null) throw new NullPointerException("name ist null");
+		if (request.email == null) throw new NullPointerException("email ist null");
+		if (request.message == null) throw new NullPointerException("message ist null");
+		if (stage == null || stage.isEmpty()) throw new NullPointerException("stage ist leer");
+
+		var add = gitApi.add();
+		var rm = gitApi.rm();
+
+		for(Path path : stage.added)
+		{
+			add.addFilepattern(path.toString().replace("\\", "/"));
+		}
+		for(Path path : stage.removed)
+		{
+			rm.addFilepattern(path.toString().replace("\\", "/"));
+		}
+		if (!stage.added.isEmpty()) add.call();
+		if (!stage.removed.isEmpty()) rm.call();
+
+		gitApi.commit().setAuthor(request.name, request.email).setMessage(request.message).call();
 	}
 
 	public void push() throws Exception
@@ -212,11 +226,21 @@ public class Repository implements Closeable
 		gitApi.close();
 	}
 
-	public Path resolve(String file)
+	public Path resolveFile(String file)
 	{
 		if (file.startsWith("/")) file = file.substring(1);
 		Path path = rootPath.resolve(Path.of(file));
 		if (Files.isRegularFile(path))
+			return path;
+		else
+			return null;
+	}
+
+	public Path resolveFolder(String folder)
+	{
+		if (folder.startsWith("/")) folder = folder.substring(1);
+		Path path = rootPath.resolve(Path.of(folder));
+		if (Files.isDirectory(path))
 			return path;
 		else
 			return null;

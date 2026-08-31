@@ -4,6 +4,7 @@ import IconDownload from '@/icons/IconDownload.vue'
 import { computed } from 'vue'
 import BaseIconButton from './BaseIconButton.vue'
 import IconStar from '@/icons/IconStar.vue'
+import IconClose from '@/icons/IconClose.vue'
 
 const props = defineProps({
   name: { type: String, required: true },
@@ -11,7 +12,7 @@ const props = defineProps({
   selected: { type: Boolean, required: true }
 })
 
-defineEmits(['click-element'])
+defineEmits(['clicked'])
 
 // Visuelle Stile aus dem vit-Theme
 const rowContainer = `w-full flex items-center justify-between p-3
@@ -44,10 +45,16 @@ function favorit()
 {
 
 }
+
+function deleteEntry()
+{
+
+}
+
 </script>
 
 <template>
-  <div :class="[rowContainer, selected ? selectedRowStyle : normalRowStyle]" @click="$emit('click-element')">
+  <div :class="[rowContainer, selected ? selectedRowStyle : normalRowStyle]" @dblclick="$emit('clicked', true)" @click="$emit('clicked', false)">
     <!-- Linke Seite: Icon & Name -->
     <div class="flex items-center gap-4">
       <!-- Visuelles Feedback für den Typ -->
@@ -59,8 +66,11 @@ function favorit()
     </div>
 
 	<div class="flex items-right text-vit-text-main">
-		<BaseIconButton v-if="type == 'FILE'" class="mx-2" @click.stop="download()"><IconDownload/></BaseIconButton>
-		<BaseIconButton class="mx-2" @click.stop="favorit()"><IconStar/></BaseIconButton>
+		<template v-if="selected">
+			<BaseIconButton v-if="type == 'FILE'" class="mx-2" @click.stop="download()"><IconDownload/></BaseIconButton>
+			<BaseIconButton class="mx-2" @click.stop="favorit()"><IconStar/></BaseIconButton>
+			<BaseIconButton class="mx-2" @click.stop="deleteEntry()"><IconClose/></BaseIconButton>
+		</template>
 		
 		<!-- Rechte Seite: Typ-Badge -->
 		<span class="px-3 py-1 ml-8 rounded-vit-radius w-20 text-xs font-mono" :class="typeBadge">

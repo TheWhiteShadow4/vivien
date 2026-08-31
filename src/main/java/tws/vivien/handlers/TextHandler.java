@@ -12,7 +12,7 @@ public class TextHandler implements IHandler
 	@Override
 	public FileObject generatePreview(Path webRoot, Repository repository, Cache _cache, String file) throws Exception
 	{
-		Path path = repository.resolve(file);
+		Path path = repository.resolveFile(file);
 
 		String content = Files.readString(path);
 

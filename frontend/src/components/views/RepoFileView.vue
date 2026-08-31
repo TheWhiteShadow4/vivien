@@ -3,15 +3,20 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
-import type { RepositoryRoot, RepositoryElement } from '@/types/vivien-generated'
-import { fetchWithView } from '@/client.ts';
+import type { RepositoryRoot, RepositoryElement, ServerError, StageInfo } from '@/types/vivien-generated'
+import { emitDisconectError, fetchWithView } from '@/client.ts';
 import TextInput from '../base/TextInput.vue';
 import IconSearch from '@/icons/IconSearch.vue';
 import BaseIconButton from '../base/BaseIconButton.vue';
+import emitter from '@/mitt.ts';
+import IconUpload from '@/icons/IconUpload.vue';
+import IconNewFolder from '@/icons/IconNewFolder.vue';
+import { useStore } from '@/store/index.ts';
+
+const store = useStore();
 
 const emit = defineEmits<{
 	(e: 'select', element: RepositoryElement | null): void
-	(e: 'server-error', errorObj: { message: string; stacktrace: string }): void
 }>()
 
 // Reaktiver Zustand für die API-Daten und Lade-Status
@@ -49,9 +54,9 @@ function selectParent()
 	}
 }
 
-function selectElement(element: RepositoryElement)
+function selectElement(element: RepositoryElement, doppelt: boolean)
 {
-	if (currentFolder.value != null && element.type == 'FOLDER')
+	if (currentFolder.value != null && element.type == 'FOLDER' && doppelt)
 	{
 		if (!element.children)
 		{
@@ -79,13 +84,13 @@ async function fetchSerach(query: string)
 
 		if (!response.ok)
 		{
-			const errorData = await response.json()
-			emit('server-error', errorData)
+			const errorData = await response.json();
+			emitter.emit('error', errorData);
 			return
 		}
 
 		const elementa = await response.json();
-		let serachRoot: RepositoryElement = { name: query, path: "", type: "VIRTUAL" };
+		const serachRoot: RepositoryElement = { name: query, path: "", type: "VIRTUAL" };
 		serachRoot.children = elementa;
 
 		if (currentFolder.value?.type != "VIRTUAL")
@@ -120,9 +125,16 @@ async function fetchRepository(path: string)
 
 		if (!response.ok)
 		{
-			const errorData = await response.json()
-			emit('server-error', errorData)
-			return
+			if (response.status == 500)
+			{
+				const errorData = await response.json();
+				emitter.emit("error", errorData);
+			}
+			else
+			{
+				emitDisconectError(response.statusText);
+			}
+			return;
 		}
 
 		const tree: RepositoryElement = await response.json();
@@ -136,15 +148,6 @@ async function fetchRepository(path: string)
 			tree.parent = currentFolder.value.parent;
 		}
 		navigateToFolder(tree);
-	}
-	catch (error)
-	{
-		// Fängt Netzwerkfehler ab (z.B. Backend komplett offline)
-		console.error('Netzwerkfehler:', error)
-		emit('server-error', {
-			message: 'Der Server konnte nicht erreicht werden.',
-			stacktrace: 'Network disconnected or server backend offline.'
-		})
 	}
 	finally
 	{
@@ -217,6 +220,50 @@ function handleBrowserNavigation(event: PopStateEvent)
 	}
 }
 
+const fileInput = ref<HTMLInputElement | null>(null);
+
+async function handleFileChange(event: Event)
+{
+	if (!currentFolder.value || !store.settings.email) return;
+
+	const target = event.target as HTMLInputElement;
+	if (target.files && target.files.length > 0)
+	{
+		const formData = new FormData()
+
+		formData.append('email', store.settings.email);
+		formData.append('folderName', currentFolder.value.path);
+
+		Array.from(target.files).forEach((file) => {
+			formData.append('files', file)
+		})
+
+		try
+		{
+			const response = await fetch('/api/upload', {
+				method: 'POST',
+				body: formData,
+			})
+
+			if (response.ok)
+			{
+				const result = await response.json() as StageInfo
+				store.stage = result;
+			}
+			else
+			{
+				emitter.emit("error", { message: `Upload fehlgeschlagen: ${response.statusText}` } as ServerError);
+			}
+		} catch (error) {
+			console.error('Netzwerkfehler beim Upload:', error)
+		}
+	}
+}
+
+const openFileBrowser = () => {
+  fileInput.value?.click();
+}
+
 onMounted(() => {
 	const path = window.location.pathname;
 	fetchRepository(path);
@@ -250,6 +297,15 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					<IconSearch />
 				</BaseIconButton>
 				</TextInput>
+				<BaseIconButton><IconNewFolder /></BaseIconButton>
+				<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()"><IconUpload /></BaseIconButton>
+				<input 
+					type="file" 
+					ref="fileInput" 
+					style="display: none"
+					multiple
+					@change="handleFileChange" 
+					/>
 				<span class="w-16 text-right">Status</span>
 			</div>
 
@@ -272,7 +328,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 							name=".."
 							type="FOLDER"
 							:selected="false"
-							@click-element="selectParent()" />
+							@clicked="selectParent()" />
 					</div>
 
 					<!-- Falls das Verzeichnis leer ist -->
@@ -286,7 +342,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 						:name="element.name"
 						:type="element.type"
 						:selected="element == selectedElement"
-						@click-element="selectElement(element)"
+						@clicked="selectElement(element, $event)"
 					/>
 				</template>
 			</div>

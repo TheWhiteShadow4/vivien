@@ -87,8 +87,11 @@ public class Config
 		password = CReader.readString(this, config, "server.password").get();
 
 		var gitUser = CReader.readString(this, config, "git.user").get();
-		var gitPassword = CReader.readString(this, config, "git.password").get();
-		credentials = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
+		if (gitUser != null)
+		{
+			var gitPassword = CReader.readString(this, config, "git.password").get();
+			credentials = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
+		}
 
 		loadEnginePlugin(config);
 

@@ -104,9 +104,6 @@ public class RepositoryCache
 			synchronized (this)
 			{
 				buildInitialCache();
-
-				// 3. Bestehende Watcher-Keys erneuern, falls sich Ordnerstrukturen drastisch geändert haben
-				// (Optionally: watchKeys leer machen und registerRecursive(rootPath) neu aufrufen)
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -114,7 +111,6 @@ public class RepositoryCache
 			// 4. WICHTIG: Alle Events, die sich WÄHREND des Einlesens angestaut haben, ungelesen verwerfen
 			flushPendingEvents();
 
-			// 5. Watcher wieder scharf schalten
 			this.isMuted = false;
 			System.out.println("✅ Cache-Refresh abgeschlossen. Watcher wieder aktiv.");
 		}
@@ -232,7 +228,7 @@ public class RepositoryCache
 					continue;
 				}
 
-				String relativeParentPath = rootPath.relativize(dirPath).toString().replace("\\", "/");
+				String relativeParentPath = normalizeRepositoryPath(rootPath.relativize(dirPath).toString());
 				RepositoryElement parentElement = relativeParentPath.isEmpty() ? rootElement : pathLookup.get(relativeParentPath);
 
 				// Falls der Ordner im Cache noch gar nicht per Lazy-Loading geöffnet wurde,
@@ -247,19 +243,19 @@ public class RepositoryCache
 						String childName = eventPath.getFileName().toString();
 						if (childName.equals(".git")) continue;
 
-						String childRelativePath = relativeParentPath.isEmpty() ? childName : relativeParentPath + "/" + childName;
+						String repoRelPath = relativeParentPath.isEmpty() ? childName : relativeParentPath + "/" + childName;
 
 						// Gezielte Updates ausführen
 						synchronized (this) {
 							if (kind == ENTRY_CREATE) {
 								// 🛑 FILTER: Verhindert, dass zur Laufzeit erstellte Temp-Dateien im Cache landen
-								if (isIgnored(childRelativePath, Files.isDirectory(fullPath))) continue;
+								if (isIgnored(repoRelPath, Files.isDirectory(fullPath))) continue;
 
-								handleCreateEvent(parentElement, fullPath, childName, childRelativePath);
+								handleCreateEvent(parentElement, fullPath, childName, repoRelPath);
 							} else if (kind == ENTRY_DELETE) {
-								handleDeleteEvent(parentElement, childRelativePath);
+								handleDeleteEvent(parentElement, repoRelPath);
 							} else if (kind == ENTRY_MODIFY) {
-								handleModifyEvent(childRelativePath);
+								handleModifyEvent(repoRelPath);
 							}
 						}
 					}
@@ -362,6 +358,14 @@ public class RepositoryCache
 						}
 					}
 				});
+	}
+
+	private String normalizeRepositoryPath(String path)
+	{
+		path = path.replace("\\", "/");
+		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
+		if (!path.startsWith("/")) path = "/" + path;
+		return path;
 	}
 
 	// Dummy-Methode: Hier dockst du deine JGit Status-Prüfung an

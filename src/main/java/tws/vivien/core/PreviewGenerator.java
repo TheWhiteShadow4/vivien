@@ -88,7 +88,7 @@ public class PreviewGenerator
 
 	public FileObject generatePreviewImage(String file) throws Exception
 	{
-		Path path = repository.resolve(file);
+		Path path = repository.resolveFile(file);
 		//GitStatus status = repository.getStatus(path);
 		var gitRepo = repository.getApi().getRepository();
 		String hash = null;

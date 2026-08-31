@@ -20,7 +20,7 @@ public class ImageHandler implements IHandler
 	@Override
 	public FileObject generatePreview(Path webRoot, Repository repository, Cache cache, String file) throws Exception
 	{
-		Path path = repository.resolve(file);
+		Path path = repository.resolveFile(file);
 		//GitStatus status = repository.getStatus(path);
 		var gitRepo = repository.getApi().getRepository();
 		String hash = null;

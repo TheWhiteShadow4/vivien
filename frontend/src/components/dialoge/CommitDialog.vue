@@ -5,74 +5,81 @@ import TextInput from '../base/TextInput.vue'
 import { ref, computed } from 'vue'
 import BasePanel from '../base/BasePanel.vue';
 import BaseButton from '../base/BaseButton.vue';
+import { sendCommit } from '@/client.ts';
+import emitter from '@/mitt.ts';
 
 
 const store = useStore();
 
-const emit = defineEmits()
+const emit = defineEmits(["submit", "cancel"])
 
-const name = ref('')
-const email = ref('')
+const message = ref('');
+const isLoading = ref(false);
 
 // Validierung: Name darf nicht leer sein, E-Mail braucht eine Grundstruktur
-const isNameValid = computed(() => name.value.trim().length > 0)
-const isEmailValid = computed(() => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email.value.trim())
-})
-const isFormValid = computed(() => isNameValid.value && isEmailValid.value)
+const isMessageValid = computed(() => message.value.trim().length > 0)
+const isFormValid = computed(() => store.settings.email && isMessageValid.value)
 
 const backdropStyles = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'
 const titleStyles = `text-xl font-bold text-vit-text-main font-sans
 tracking-wide border-b border-vit-border pb-2 mb-4`
 
-function submitLogin() {
-  if (!isFormValid.value) return
+async function submitCommit()
+{
+	if (!isFormValid.value) return
+	try
+	{
+		isLoading.value = true;
 
-  store.updateSetting("username", name.value.trim());
-  store.updateSetting("email", email.value.trim());
-  
-  emit('complete')
+		const response = await sendCommit(message.value);
+
+		if (!response.ok)
+		{
+			emitter.emit("error", new Error(`Commit fehlgeschlagen: ${response.status}`));
+		}
+		emit("submit")
+	}
+	finally
+	{
+		isLoading.value = false;
+	}
+}
+
+function cancelCommit()
+{
+	emit("cancel");
 }
 </script>
 
 <template>
-  <!-- Der Dialog blendet sich nur ein, wenn keine Identität im LocalStorage liegt -->
-  <div :class="backdropStyles" @click.self>
+  <div :class="backdropStyles" @click.self.prevent>
     <BasePanel variant="dialog">
       
-      <!-- Titel & Info für unversierte Artists -->
-      <h2 :class="titleStyles">Login</h2>
+      <h2 :class="titleStyles">Commit</h2>
 
-      <!-- Eingabemaske unter Verwendung der VitInput-Basis-Komponente -->
       <div class="flex flex-col gap-6 w-108">
         <TextInput
-          v-model="name"
+          v-model="message"
           type="text"
-          label="Name"
-          placeholder="Name"
-          :variant="name && !isNameValid ? 'failed' : 'default'"
-          @enter="submitLogin"
-        >
-        </TextInput>
-
-        <TextInput
-          v-model="email"
-          type="text"
-          label="E-Mail-Adresse"
-          placeholder="Email"
-          :variant="email && !isEmailValid ? 'failed' : 'default'"
-          @enter="submitLogin"
+          label="Nachicht"
+          placeholder="Message"
+          :variant="message && !isMessageValid ? 'failed' : 'default'"
+          @enter="submitCommit"
         >
         </TextInput>
       </div>
 
-      <div class="mt-6">
+      <div class="mt-6 flex justify-between">
         <BaseButton
           variant="primary"
-          :disabled="!isFormValid"
-          @click="submitLogin"
-        >Login</BaseButton>
+          :disabled="!isFormValid || isLoading"
+          @click="submitCommit"
+        >Absenden</BaseButton>
+		 <BaseButton
+          variant="danger"
+          :disabled="isLoading"
+          @click="cancelCommit"
+        >Abbrechen</BaseButton>
       </div>
 
     </BasePanel>

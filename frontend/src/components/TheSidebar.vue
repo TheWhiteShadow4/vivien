@@ -1,6 +1,5 @@
 <!-- src/components/layout/TheSidebar.vue -->
 <script setup lang="ts">
-import type { ServerState } from '@/types/vivien-generated.js';
 import GitControls from './views/GitControls.vue'
 import UserInfo from './UserInfo.vue';
 import BaseIconButton from './base/BaseIconButton.vue';
@@ -10,7 +9,7 @@ import { useStore } from '@/store/index.ts';
 
 const store = useStore();
 
-const props = defineProps<{ state?: ServerState }>()
+const emit = defineEmits(["git"]);
 
 function toggleSidebar()
 {
@@ -18,9 +17,9 @@ function toggleSidebar()
 }
 
 const sidebarContainer = `bg-vit-surface flex flex-col justify-start shrink-0
-duration-100 ease-in overflow-hidden`
-const sidebarMenu = "h-full border-r border-vit-border flex flex-col justify-start"
-const branchBadge = "border border-vit-accent px-4 py-2 mb-6"
+duration-100 ease-in overflow-hidden`;
+const sidebarMenu = "h-full border-r border-vit-border flex flex-col justify-start";
+const branchBadge = "border border-vit-accent px-4 py-2 mb-6";
 const toggleIcon = computed(() => store.settings.sidebar ? "rotate-90" : "rotate-270");
 const headerLayoutStyles  = computed(() => {
   return store.settings.sidebar 
@@ -45,7 +44,10 @@ const headerLayoutStyles  = computed(() => {
 		<span class="font-bold">{{ store.git?.branch }}</span>
 	</div>
 	<div :class="sidebarMenu">
-		<GitControls :variant="store.settings.sidebar ? 'full' : 'small'" />
+		<GitControls
+			:variant="store.settings.sidebar ? 'full' : 'small'"
+			@git="emit('git', $event)"
+			/>
 
 	<!--<div class="flex flex-col gap-3">
         <h3 class="text-xs font-semibold text-vit-text-muted uppercase tracking-wider">Base Buttons</h3>
