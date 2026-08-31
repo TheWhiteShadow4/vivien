@@ -25,7 +25,7 @@ const parsedHtml = computed(() => {
 })
 
 // REGLER 5: Strukturelles Layout (Padding, Scroller)
-const containerStyles = 'w-full h-full overflow-y-auto p-4 bg-vit-surface border border-vit-border shadow-vit-inset'
+const containerStyles = 'p-4 bg-vit-surface border border-vit-border shadow-vit-inset'
 
 // REGLER 1 & 2: Wir stylen die HTML-Tags des Parsers über CSS-Variablen deines Themes
 // Das hält das HTML-Template komplett frei von Klassen-Ketten

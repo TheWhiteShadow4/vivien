@@ -13,7 +13,7 @@ const props = defineProps<{
   imageData: FileObject | null
 }>()
 
-const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col shrink-0 p-1"
+const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full p-1"
 
 const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(props.imageData.metadata.size / 1024) : 0)
 </script>
@@ -29,23 +29,26 @@ const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { m
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
 		</div>
-		<div v-if="imageData">
+		<div v-if="imageData" class="flex flex-col flex-1 min-h-0">
 			<div v-if="imageData.metadata.mimeType.startsWith('image')" class="flex flex-col items-center">
 				<img :src="imageData.url" :width="imageData.metadata.width" :height="imageData.metadata.height" />
 			</div>
 
-			<div v-else-if="imageData.metadata.mimeType == 'text/markdown'" class="flex-1 overflow-auto flex-col items-center">
+			<div v-else-if="imageData.metadata.mimeType == 'text/markdown'"
+			class="flex-1 overflow-auto">
 				<MarkdownView :content="imageData.url" />
 			</div>
 
-			<div v-else-if="imageData.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto flex-col items-center">
+			<div v-else-if="imageData.metadata.mimeType.startsWith('text')"
+			class="flex-1 overflow-auto">
 				<code class="text-s">{{ imageData.url }}</code>
 				
 			</div>
-			<nav class="bg-vit-surface w-full h-48 p-1 border border-vit-border flex gap-4 p-2">
-				<BaseIconButton variant="secondary" size="xl"><IconDownload /></BaseIconButton>
-				<BaseIconButton variant="secondary" size="xl"><IconUpload /></BaseIconButton>
-			</nav>
+
 		</div>	
+		<nav class="bg-vit-surface w-full h-40 p-1 border border-vit-border flex gap-4 p-2">
+			<BaseIconButton variant="secondary" size="xl"><IconDownload /></BaseIconButton>
+			<BaseIconButton variant="secondary" size="xl"><IconUpload /></BaseIconButton>
+		</nav>
 	</article>
 </template>

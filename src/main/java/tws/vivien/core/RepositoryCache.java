@@ -136,7 +136,7 @@ public class RepositoryCache
 	{
 		path = path.replace("\\", "/");
 		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
-		if (path.isEmpty()) return getRoot();
+		if (path.isEmpty() || path.equals("/")) return getRoot();
 		IO.println("getDirectory: Lookup für " + path);
 		var result = pathLookup.get(path);
 		if (result == null) throw new IOException("Element für '" + path + "' nicht gefunden.");
@@ -152,7 +152,7 @@ public class RepositoryCache
 
 		this.rootElement = new RepositoryRoot();
 		this.rootElement.name = "";
-		this.rootElement.path = "/";
+		this.rootElement.path = "";
 		this.rootElement.type = ElementType.ROOT;
 		this.rootElement.gitStatus = GitFileStatus.Clean;
 
@@ -180,7 +180,14 @@ public class RepositoryCache
 			if (name.equals(".git")) continue;
 
 			// Relativen Pfad für dieses Element bauen
-			String childPath = parent.path.endsWith("/") ? parent.path + name : parent.path + "/" + name;
+			String childPath;
+			if (parent.path.isEmpty())
+				childPath = name;
+			else if (parent.path.endsWith("/")){
+				System.err.println("Pfad endet mit /!!! " + parent.path);
+				childPath = parent.path + name;}
+			else
+				childPath = parent.path + "/" + name;
 
 			// 🛑 FILTER: Ignorierte Unity-Ordner/Dateien überspringen
 			if (isIgnored(childPath, file.isDirectory())) {
@@ -364,7 +371,7 @@ public class RepositoryCache
 	{
 		path = path.replace("\\", "/");
 		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
-		if (!path.startsWith("/")) path = "/" + path;
+		if (path.startsWith("/")) path = path.substring(1);
 		return path;
 	}
 

@@ -40,7 +40,6 @@ function selectParent()
 		if (el.type == "FOLDER")
 		{
 			let parentPath = el.path.substring(0, el.path.lastIndexOf("/"));
-			if (parentPath == "") parentPath = "/";
 			console.log("Parent path: " + parentPath);
 
 			const parent = folderCache.get(parentPath);
