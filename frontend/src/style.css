@@ -62,3 +62,13 @@ input::placeholder {
 	color: var(--color-vit-text-muted);
 	opacity: 0.5;
 }
+
+/* Primär Farbverlauf */
+@utility primary-gradient
+{
+	background-image: linear-gradient(
+    	to top, 
+		var(--color-vit-primary), 
+		var(--color-vit-primary2)
+	);
+}

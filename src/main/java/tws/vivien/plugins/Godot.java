@@ -29,7 +29,7 @@ public class Godot implements EnginePlugin
 
 			// Wert ändern und wieder mit Anführungszeichen versehen, da Godot das so erwartet
 			ini.getSection("params").setProperty("texture/filter", "\"1\"");
-			
+
 		}
 		catch(IOException | ConfigurationException e)
 		{
