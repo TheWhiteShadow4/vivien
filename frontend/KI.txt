@@ -4,14 +4,24 @@ Die Anwendung stellt ein Git Repository im Browser da und soll technisch unversi
 die an Hobby Spielen mitwirken, dabei helfen ihre Assets ins Projekt zu bekommen und dort zu bearbeiten.
 
 Was ich bereits habe:
-Backend mit Basic Auth, statischen und dynamischen Routen.
-es kann das Repository Verzeichnis auslesen und dieses gefiltert an den Client senden.
-Das Frontend hat ein Theme und einige Basic Komponenten.
-Es zeigt den Inhalt von jeweils einem Ordner des Repositorys an. Navigieren vor und zurück ist möglich.
-Klickt man auf ein Bild, wird vom Server die Metadaten geladen und eine Vorschau angezeigt.
+Backend mit Basic Auth, statischen und Api Routen.
+es kann das Repository Verzeichnis auslesen, updaten und dieses gefiltert an den Client senden.
+Trackt den Git Status für Dateien, speichert Datei Uploads und führt Commits durch.
+Das Frontend mit Theme, Basic Komponenten, Login, Dateiupload und Commit Dialog.
+Es zeigt den Inhalt von jeweils einem Ordner des Repositorys an mit Lazy loading.
+Navigieren vor und zurück und Durchsuchen ist möglich.
+Wählt man ein Element aus, wird vom Server die Metadaten geladen und eine Vorschau angezeigt (für Bilder und Texte).
+Es gibt ein Store für Usersettings (local Storage), Git Status (untracked, added, changed, added for commit).
+Ein Upload mit Dateiauswahl und Commit Dialog.
+
+TODOs:
+Toolbar unter der Vorschau für weitere Aktionen.
+- Replace Upload: Ähnlich normalem Upload aber garantiertem Überschreiben der gewählten Datei.
+- Download: Herunterladen der gewählten Datei.
+- Check/Uncheck für Git Tracking.
 
 Zielgruppe & Ergonomie:
-- Hauptnutzung auf DESKTOP und TABLET. Ignoriere klassisches Mobile-First für Smartphones!
+- Hauptnutzung auf DESKTOP und TABLET. Ignoriere Mobile-First für Smartphones!
 - Die App nutzt ein festes, klares Layout (wie GitHub Projects oder Google Docs) mit deutlichen Rahmen und Schattierungen.
 - Schriften und interaktive Elemente müssen überdurchschnittlich groß sein (für gute Tablet-Bedienbarkeit) für ein einheitliches Layout.
 
@@ -24,12 +34,20 @@ Bitte halte dich bei der Generierung von Code an folgende Regeln:
 - Hintergründe: 'bg-vit-bg', 'bg-vit-surface'
 - Rahmen: 'border border-vit-border'
 - Texte: 'text-vit-text-main', 'text-vit-text-muted'
-- Aktionen (Pastell-Teal): 'bg-vit-primary text-vit-bg hover:bg-vit-primary-hover'
-- Infos (Pastell-Blau): 'text-vit-secondary' oder 'bg-vit-secondary/10'
-- Highlights (Gelb-Orange): 'text-vit-highlight' oder 'bg-vit-accent'
+- Aktionen: 'bg-vit-primary text-vit-bg hover:bg-vit-primary-hover'
+- Infos: 'text-vit-secondary' oder 'bg-vit-secondary-bg'
+- Highlights: 'text-vit-highlight' oder 'bg-vit-accent'
+- Rückmeldung: 'text-vit-succes' bzw. 'text-vit-failed'
 - Geometrie: 'rounded-vit-radius', 'shadow-vit-shadow'
 
 3. Nutze wenn möglich die existierenden Basis Komponenten:
+- BaseButton: frei stehender Button mit Text
+- BaseIconButton: Button für Icons
+- ListButton: Button für Menü und Listenelemente
+- BasePanel: für z.B. Dialoge
+- BaseRepoElement: Anzeige für eine Datei oder Ordner
+- CounterBadge: kleiner Zähler (Anzahl von Dateien oder Nachichten)
+- TextInput: Text Eingabe für Suche, Login, etc.
 
 4. Nutze das Vue-Muster für Varianten: Wenn eine Komponente (z. B. ein Button oder eine Karte) verschiedene Farben oder Stile haben kann, erstelle ein `const baseStyles` und ein `const variantStyles` Objekt im <script setup>. Setze die Klassen dynamisch über `:class="[baseStyles, variantStyles[variant]]"`.
 
