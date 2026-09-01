@@ -25,7 +25,7 @@ disabled:cursor-not-allowed disabled:shadow-none`
 
 const variantStyles = {
   primary: `bg-vit-primary text-vit-text-main font-bold shadow-vit-inset hover:bg-gradient-to-b
-  active:translate-y-[2px] bg-gradient-to-t from-vit-primary to-vit-primary2`,
+  active:translate-y-[2px] primary-gradient`,
 
   secondary: `bg-vit-secondary/10 border-vit-secondary text-vit-text-main border
   shadow-vit-shadow hover:bg-vit-secondary/50 active:translate-y-[2px]`,

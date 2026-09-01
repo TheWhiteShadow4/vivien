@@ -4,7 +4,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
 import type { RepositoryElement, ServerError, StageInfo } from '@/types/vivien-generated'
-import { emitDisconectError, fetchWithView } from '@/client.ts';
+import { emitDisconectError, fetchWithView, uploadFiles } from '@/client.ts';
 import TextInput from '../base/TextInput.vue';
 import IconSearch from '@/icons/IconSearch.vue';
 import BaseIconButton from '../base/BaseIconButton.vue';
@@ -217,55 +217,32 @@ const fileInput = ref<HTMLInputElement | null>(null);
 
 async function handleFileChange(event: Event)
 {
-	if (!currentFolder.value || !store.settings.email) return;
+	if (!currentFolder.value) return;
 
-	const target = event.target as HTMLInputElement;
-	if (target.files && target.files.length > 0)
-	{
-		const formData = new FormData()
-
-		formData.append('email', store.settings.email);
-		formData.append('folderName', currentFolder.value.path);
-
-		Array.from(target.files).forEach((file) => {
-			formData.append('files', file)
-		})
-
-		try
-		{
-			const response = await fetch('/api/upload', {
-				method: 'POST',
-				body: formData,
-			})
-
-			if (response.ok)
-			{
-				const result = await response.json() as StageInfo
-				store.stage = result;
-				fetchRepository(currentFolder.value.path);
-			}
-			else
-			{
-				emitter.emit("error", { message: `Upload fehlgeschlagen: ${response.statusText}` } as ServerError);
-			}
-		} catch (error) {
-			console.error('Netzwerkfehler beim Upload:', error)
-		}
-	}
+	const success = await uploadFiles(event, currentFolder.value.path);
 }
 
-const openFileBrowser = () => {
-  fileInput.value?.click();
+function openFileBrowser()
+{
+	fileInput.value?.click();
+}
+
+function refreshFolder()
+{
+	if (!currentFolder.value) return;
+	fetchRepository(currentFolder.value.path);
 }
 
 onMounted(() => {
 	const path = window.location.pathname;
 	fetchRepository(path);
-	window.addEventListener('popstate', handleBrowserNavigation)
+	window.addEventListener('popstate', handleBrowserNavigation);
+	emitter.on("refresh-folder", refreshFolder);
 })
 
 onUnmounted(() => {
-  window.removeEventListener('popstate', handleBrowserNavigation)
+	window.removeEventListener('popstate', handleBrowserNavigation);
+	emitter.off("refresh-folder", refreshFolder);
 })
 
 // Strukturierte Design-Klassen aus dem vit-Theme
@@ -292,7 +269,9 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 				</BaseIconButton>
 				</TextInput>
 				<BaseIconButton><IconNewFolder /></BaseIconButton>
-				<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()"><IconUpload /></BaseIconButton>
+				<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()">
+					<IconUpload />
+				</BaseIconButton>
 				<input 
 					type="file" 
 					ref="fileInput" 

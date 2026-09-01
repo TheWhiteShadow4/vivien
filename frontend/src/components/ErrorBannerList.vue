@@ -40,7 +40,7 @@ const removeError = (index: number) => {
         <!-- Kopfzeile des Fehlers -->
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3 p-2">
-            <span class="flex-shrink-0 text-xl">⚠️</span>
+            <span class="shrink-0 text-xl">⚠️</span>
             <div>
 			  <p class="text-vit-text-muted text-xs">Backend-Fehler</p>
               <div class="font-semibold text-sm md:text-base text-vit-text-danger">

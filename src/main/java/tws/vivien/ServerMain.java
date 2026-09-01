@@ -11,7 +11,7 @@ public class ServerMain
 {
 	private Server server;
 
-	static void main()
+	static void main() throws Exception
 	{
 		System.setProperty("org.slf4j.simpleLogger.log.io.javalin", "warn");
 		System.setProperty("org.slf4j.simpleLogger.log.org.eclipse.jetty", "warn");

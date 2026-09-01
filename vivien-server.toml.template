@@ -3,7 +3,10 @@ mode = "hosted" # Wir entwicklen mit hosted, weil dabei der Browser nicht geöff
 
 # Das Git-Repository, auf dem Vivien arbeiten soll
 repo_url = "https://github.com"
+git.user = <GITHUB_User>
+git.password = <GITHUB_PASSWORD>
 repo_path = "./game-repo"
+engine_plugin = "Unity"
 
 [server]
 host = "localhost"
@@ -11,3 +14,11 @@ port = 8080
 security = "lax"
 user = "admin"
 password = "*****"
+upload_formats = "png,jpg,jpeg,tif,tiff,tga,txt,md,json,yaml,wav,mp3,acc,ogg"
+
+[views.admin]
+excludes = [ ".meta" ]
+
+[views.artist]
+includes = [ "*.png", "*.jpg", "*.tga", "*.tif", "*.svg" ]
+excludes = [ ".idea/", ".git/", ".meta" ]

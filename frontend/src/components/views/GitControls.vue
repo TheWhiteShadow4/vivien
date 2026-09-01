@@ -12,7 +12,7 @@ const store = useStore();
 const emit = defineEmits(["git"]);
 
 const gitChangeCount = computed(() => {
-	return store.stage ? (store.stage?.added + store.stage?.removed) : 0;
+	return store.git ? (store.git.added.length + store.git.missing.length) : 0;
 });
 
 

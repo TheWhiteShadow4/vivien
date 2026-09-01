@@ -1,16 +1,15 @@
 <!-- src\components\ThePreviewPanel.vue -->
 <script setup lang="ts">
-import type { FileObject } from '@/types/vivien-generated';
+import type { FileObject, RepositoryElement } from '@/types/vivien-generated';
 import { computed } from 'vue';
 import MarkdownView from './views/MarkdownView.vue';
-import IconDownload from '@/icons/IconDownload.vue';
-import BaseIconButton from './base/BaseIconButton.vue';
-import IconUpload from '@/icons/IconUpload.vue';
+import Toolbar from './views/Toolbar.vue';
 
 //import BaseButton from './base/BaseButton.vue'
 
 const props = defineProps<{
-  imageData: FileObject | null
+	element: RepositoryElement | null
+	imageData: FileObject | null
 }>()
 
 const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full p-1"
@@ -23,12 +22,13 @@ const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { m
 		<div class="flex w-full justify-between p-2 bg-vit-accent-bg/30" role="contentinfo">
 			<template v-if="imageData">
 				<span><span class="text-vit-text-muted">File: </span>{{ imageData.filename }}</span>
-				<span><span class="text-vit-text-muted">Type: </span>{{ imageData.metadata.mimeType }}</span>
+				<!-- <span><span class="text-vit-text-muted">Type: </span>{{ imageData.metadata.mimeType }}</span> -->
 				<span><span class="text-vit-text-muted">Breite: </span>{{ imageData.metadata.srcWidth }}</span>
 				<span><span class="text-vit-text-muted">Höhe: </span>{{ imageData.metadata.srcHeight }}</span>
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
 		</div>
+		<Toolbar v-if="element" :element="element" />
 		<div v-if="imageData" class="flex flex-col flex-1 min-h-0">
 			<div v-if="imageData.metadata.mimeType.startsWith('image')" class="flex flex-col items-center">
 				<img :src="imageData.url" :width="imageData.metadata.width" :height="imageData.metadata.height" />
@@ -45,10 +45,6 @@ const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { m
 				
 			</div>
 
-		</div>	
-		<nav class="bg-vit-surface w-full h-40 p-1 border border-vit-border flex gap-4 p-2">
-			<BaseIconButton variant="secondary" size="xl"><IconDownload /></BaseIconButton>
-			<BaseIconButton variant="secondary" size="xl"><IconUpload /></BaseIconButton>
-		</nav>
+		</div>
 	</article>
 </template>

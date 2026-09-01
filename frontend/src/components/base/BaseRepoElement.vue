@@ -35,25 +35,15 @@ const isFolder = computed(() => props.element.type === 'FOLDER')
 const stateBadge = computed(() => {
 	if (store.git)
 	{
-		if (store.git.added.indexOf(props.element.path) >= 0) return "bg-vit-secondary";
-		if (store.git.changed.indexOf(props.element.path) >= 0) return "bg-vit-accent2";
-		if (store.git.untracked.indexOf(props.element.path) >= 0) return "bg-vit-highlight";
+		if (store.git.added.indexOf(props.element.path) >= 0) return "bg-vit-accent";
+		else if (store.git.changed.indexOf(props.element.path) >= 0) return "bg-vit-accent2";
+		else if (store.git.untracked.indexOf(props.element.path) >= 0) return "bg-vit-highlight";
 	}
 	return "bg-vit-border";
 })
 
 
-function download()
-{
-	
-}
-
 function favorit()
-{
-
-}
-
-function deleteEntry()
 {
 
 }
@@ -76,9 +66,7 @@ function deleteEntry()
 
 	<div class="flex items-center text-vit-text-main">
 		<template v-if="selected">
-			<BaseIconButton v-if="element.type == 'FILE'" class="mx-2" @click.stop="download()"><IconDownload/></BaseIconButton>
 			<BaseIconButton class="mx-2" @click.stop="favorit()"><IconStar/></BaseIconButton>
-			<BaseIconButton class="mx-2" @click.stop="deleteEntry()"><IconClose/></BaseIconButton>
 		</template>
 		
 		<!-- Rechte Seite: Typ-Badge -->

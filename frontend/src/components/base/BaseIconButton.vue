@@ -25,7 +25,7 @@ disabled:opacity-40 disabled:cursor-not-allowed`
 const variantStyles = {
   primary: "bg-gradient-to-t from-vit-primary to-vit-primary2 text-vit-text-main hover:bg-gradient-to-b active:scale-95 shadow-vit-shadow",
   secondary: "bg-vit-secondary/10 text-vit-text-main border border-vit-secondary hover:bg-vit-secondary/50 active:scale-95 shadow-vit-shadow",
-  danger: "bg-vit-danger text-vit-bg hover:border-vit-danger-hover hover:opacity-90 active:scale-95",
+  danger: "bg-vit-btn-danger text-vit-bg hover:border-vit-danger-hover hover:bg-vit-btn-danger-hover active:scale-95",
   normal: "bg-transparent text-vit-text-muted hover:text-vit-text-main hover:border-vit-btn-hover border border-transparent"
 }
 
@@ -34,7 +34,7 @@ const sizeStyles = {
   sm: "w-7 h-7 p-1 text-sm",
   md: "w-9 h-9 p-1.5 text-base",
   lg: "w-12 h-12 p-2 text-lg",
-  xl: "w-18 h-18 p-2 text-xl"
+  xl: "w-20 h-20 p-2 text-xl"
 }
 </script>
 

@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-08-31 13:31:21.
+// Generated using typescript-generator version 4.1.1 on 2026-09-02 00:33:38.
 
 export interface CommitRequest {
     name: string;
@@ -25,6 +25,17 @@ export interface GitBranchStatus {
     conflicts: string[];
 }
 
+export interface GitStageRequest {
+    op: GitStageOperation;
+    email: string;
+    file: string;
+}
+
+export interface ImportSetting {
+    name: string;
+    displayLabel: string;
+}
+
 export interface RemoteGitStatus {
     behindCount: number;
     aheadCount: number;
@@ -36,6 +47,7 @@ export interface RepositoryElement {
     type: ElementType;
     children?: RepositoryElement[];
     gitStatus?: GitFileStatus;
+    parent?: RepositoryElement;
 }
 
 export interface RepositoryRoot extends RepositoryElement {
@@ -100,5 +112,7 @@ export interface Failure {
 export type ElementType = "ROOT" | "FOLDER" | "FILE" | "VIRTUAL";
 
 export type GitFileStatus = "Untracked" | "Clean" | "Added" | "Modified" | "Deleted" | "Conflict";
+
+export type GitStageOperation = "Track" | "Untrack" | "Delete" | "Undelete";
 
 export type ServerMode = "LOCAL" | "HOSTED" | "SETUP" | "SAFE";

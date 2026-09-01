@@ -7,6 +7,7 @@ import BasePanel from '../base/BasePanel.vue';
 import BaseButton from '../base/BaseButton.vue';
 import { sendCommit } from '@/client.ts';
 import emitter from '@/mitt.ts';
+import type { GitBranchStatus } from '@/types/vivien-generated.js';
 
 
 const store = useStore();
@@ -33,7 +34,11 @@ async function submitCommit()
 
 		const response = await sendCommit(message.value);
 
-		if (!response.ok)
+		if (response.ok)
+		{
+			store.git = await response.json() as GitBranchStatus
+		}
+		else
 		{
 			emitter.emit("error", new Error(`Commit fehlgeschlagen: ${response.status}`));
 		}

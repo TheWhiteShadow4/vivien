@@ -28,6 +28,7 @@ const showCommitDialog = ref(false)
 const isLoading = ref<boolean>(true)
 const networkError = ref<string | null>(null)
 const previewImage = ref<FileObject | null>(null);
+const selectedElement = ref<RepositoryElement |null>(null);
 
 async function checkBackendStatus()
 {
@@ -60,8 +61,14 @@ async function checkBackendStatus()
 
 async function updatePreview(el: RepositoryElement | null)
 {
-	// Schön informiert zu werden, aber ohne Datei passiert nichts.
-	if (el == null || el.type != "FILE") return;
+	if (el == null)
+	{
+		selectedElement.value = null;
+		return;
+	}
+	if (el.type != "FILE") return;
+
+	selectedElement.value = el;
 
 	const response = await fetchWithView(`/api/preview?file=${el.path}`);
 	if (response.ok)
@@ -95,10 +102,12 @@ onMounted(() => {
 	checkBackendStatus();
 
 	emitter.on("error", (e) => state.value.serverErrors.push(e as ServerError));
+	emitter.on("refresh-preview", (e) => updatePreview(e as RepositoryElement));
 })
 
 onUnmounted(() => {
 	emitter.off("error", (e) => state.value.serverErrors.push(e as ServerError));
+	emitter.off("refresh-preview", (e) => updatePreview(e as RepositoryElement));
 })
 
 </script>
@@ -129,7 +138,7 @@ onUnmounted(() => {
         />
       </main>
 
-	  <ThePreviewPanel :imageData="previewImage" />
+	  <ThePreviewPanel :element="selectedElement" :imageData="previewImage" />
 
 	  <!--<div class="fixed bottom-6 right-6 z-50 flex flex-row gap-4 max-w-2xl pointer-events-none">
 	  <BasePanel variant="dialog" >Surface</BasePanel>

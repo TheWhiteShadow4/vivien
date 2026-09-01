@@ -5,13 +5,14 @@ import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.util.FileUtil;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import tws.vivien.dto.*;
 import tws.vivien.handlers.IHandler;
 
 import java.awt.*;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -22,34 +23,26 @@ public class Server
 {
 	private final Config config;
 	private final Cache serverCache;
+	private final Repository repository;
+	//private final Map<String, UserStage> userStages = new HashMap<>();
+	private final Path webRoot;
+
 	public List<Exception> persistedErors = new ArrayList<>();
 	public List<Exception> requestErrors = new ArrayList<>();
-	private Repository repository;
-	private Path webRoot;
-	private Map<String, UserStage> userStages = new HashMap<>();
-	//private String clientView = "Admin";
 
-	public Server(Config config)
+	public Server(Config config) throws Exception
 	{
 		this.config = config;
 		this.serverCache = new Cache();
+		this.repository = new Repository(config.repository);
+		this.webRoot = Paths.get("./public").toAbsolutePath();
 	}
 
 	public void start()
 	{
 		IO.println(System.getProperty("user.dir"));
-		webRoot = Paths.get("./public").toAbsolutePath();
 
-		try
-		{
-			this.repository = new Repository(config.repository);
-		}
-		catch(IOException | GitAPIException e)
-		{
-			e.printStackTrace();
-		}
-
-		try
+		/*try
 		{
 			var c = new CommitRequest();
 			c.name = "Anna";
@@ -62,7 +55,7 @@ public class Server
 		catch (Exception e)
 		{
 			e.printStackTrace();
-		}
+		}*/
 
 		Javalin app = Javalin.create(c ->
 		{
@@ -125,13 +118,14 @@ public class Server
 			});
 
 			c.routes.get("/api/git", this::getBranchStatus);
+			c.routes.get("/api/download", this::downloadFile);
 
+			c.routes.post("/api/staged", this::staged);
 			c.routes.post("/api/commit", this::commit);
 			c.routes.post("/api/push", this::push);
 			c.routes.post("/api/pull", this::pull);
 			c.routes.post("/api/stash", this::stash);
 			c.routes.post("/api/unstash", this::unstash);
-
 			c.routes.post("/api/upload", this::uploadFiles);
 		});
 		app.start(config.port);
@@ -227,31 +221,127 @@ public class Server
 	private void uploadFiles(Context ctx)
 	{
 		String email = ctx.formParam("email");
-		String folderName = ctx.formParam("folderName");
+		String fileOrFolder = ctx.formParam("fileOrFolder");
 		if (email == null)
 		{
 			ctx.status(400);
 			ctx.json(new ServerError("Parameter email nicht gesetzt.", null));
 			return;
 		}
-		if (folderName == null)
+		if (fileOrFolder == null)
 		{
 			ctx.status(400);
-			ctx.json(new ServerError("Parameter folderName nicht gesetzt.", null));
+			ctx.json(new ServerError("Parameter fileOrFolder nicht gesetzt.", null));
 			return;
 		}
 
-		Path folderPath = repository.resolveFolder(folderName);
+		Path targetPath = repository.resolve(fileOrFolder);
 
-		UserStage userstage = userStages.computeIfAbsent(email, k -> new UserStage());
+		//UserStage userstage = userStages.computeIfAbsent(email, k -> new UserStage());
+		try
+		{
 
-		ctx.uploadedFiles("files").forEach(file -> {
-			Path fullPath = folderPath.resolve(file.filename());
-			FileUtil.streamToFile(file.content(), fullPath.toString());
-			userstage.added.add(repository.getRelativePath(fullPath));
-		});
+			if (Files.isDirectory(targetPath)) // Multi Upload in Ordner
+			{
+				for (var file : ctx.uploadedFiles("files"))
+				{
+					Path fullPath = targetPath.resolve(file.filename());
+					if (isInvalidUploadFile(file.filename()))
+					{
+						ctx.status(400);
+						ctx.json(new ServerError("Unerlaubter Dateityp '" + file.filename() + "'", null));
+						return;
+					}
+					FileUtil.streamToFile(file.content(), fullPath.toString());
+					repository.trackFile(fullPath);
+				}
+			}
+			else if (Files.isRegularFile(targetPath)) // Single Upload
+			{
+				var file = ctx.uploadedFiles("files").getFirst();
+				if (isInvalidUploadFile(file.filename()))
+				{
+					ctx.status(400);
+					ctx.json(new ServerError("Unerlaubter Dateityp '" + file.filename() + "'", null));
+					return;
+				}
+				FileUtil.streamToFile(file.content(), targetPath.toString());
+				repository.trackFile(targetPath);
+			}
+			getBranchStatus(ctx);
+		}
+		catch(Exception e)
+		{
+			ctx.status(500);
+			requestErrors.add(e);
+		}
+	}
 
-		ctx.json(new StageInfo(userstage));
+	private void downloadFile(Context ctx)
+	{
+		try
+		{
+			String file = ctx.queryParam("file");
+			Path path = repository.resolveFile(file);
+			if (path == null)
+			{
+				ctx.status(404);
+				return;
+			}
+
+			ctx.header("Content-Disposition", "attachment; filename=\"" + path.getFileName().toString() + "\"");
+			ctx.contentType(Files.probeContentType(path));
+
+			// Datei als Stream an die Antwort übergeben
+			ctx.result(Files.newInputStream(path));
+		}
+		catch (Exception e)
+		{
+			requestErrors.add(e);
+			ctx.status(500);
+		}
+	}
+
+	private boolean isInvalidUploadFile(String filename)
+	{
+		return filename.endsWith("gif");
+	}
+
+	private void staged(Context ctx)
+	{
+		try
+		{
+			var request = ctx.bodyAsClass(GitStageRequest.class);
+
+			if (request.email == null) throw new NullPointerException("email ist null");
+			if (request.file == null) throw new NullPointerException("file ist null");
+
+			Path file = repository.resolveFile(request.file);
+			if (!Files.exists(file)) throw new FileNotFoundException(request.file);
+
+			switch (request.op)
+			{
+				case GitStageOperation.Track:
+					repository.trackFile(file);
+					break;
+				case GitStageOperation.Untrack:
+					repository.untrackFile(file);
+					break;
+				case GitStageOperation.Delete:
+					repository.deleteFile(file);
+					break;
+				case GitStageOperation.Undelete:
+					repository.undeleteFile(file);
+					break;
+			}
+			getBranchStatus(ctx);
+		}
+		catch (Exception e)
+		{
+			ctx.status(500);
+			requestErrors.add(e);
+			e.printStackTrace();
+		}
 	}
 
 	private void commit(Context ctx)
@@ -259,7 +349,8 @@ public class Server
 		try
 		{
 			CommitRequest request = ctx.bodyAsClass(CommitRequest.class);
-			repository.commit(request, userStages.get(request.email));
+			repository.commit(request);
+			getBranchStatus(ctx);
 		}
 		catch (Exception e)
 		{

@@ -19,7 +19,8 @@
         <tomlj.version>3.9.0</tomlj.version>
         <slf4j.version>2.0.18</slf4j.version>
         <commons.version>2.15.1</commons.version>
-        <jackson.version>3.2.2</jackson.version>
+        <jackson.version>2.22.2</jackson.version>
+        <imageio.version>3.14.0</imageio.version>
     </properties>
 
     <dependencies>
@@ -65,16 +66,35 @@
         </dependency>
 
         <dependency>
-            <groupId>tools.jackson.core</groupId>
+            <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>tools.jackson.dataformat</groupId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-tga</artifactId>
+            <version>${imageio.version}</version>
+        </dependency>
+
+<!--        <dependency>
+            <groupId>com.madgag</groupId>
+            <artifactId>animated-gif-lib</artifactId>
+            <version>1.4</version>
+            <scope>compile</scope>
+        </dependency>-->
     </dependencies>
 
     <build>

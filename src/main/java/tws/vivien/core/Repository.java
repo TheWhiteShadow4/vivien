@@ -158,14 +158,35 @@ public class Repository implements Closeable
 		return new RemoteGitStatus(trackingStatus.getBehindCount(), trackingStatus.getAheadCount());
 	}
 
-	public void commit(CommitRequest request, UserStage stage) throws Exception
+
+	public void trackFile(Path file) throws Exception
+	{
+		gitApi.add().addFilepattern(getRelativePath(file)).call();
+	}
+
+	public void untrackFile(Path file) throws Exception
+	{
+		gitApi.add().addFilepattern(getRelativePath(file)).call();
+	}
+
+	public void deleteFile(Path file) throws Exception
+	{
+		gitApi.rm().addFilepattern(getRelativePath(file)).call();
+	}
+
+	public void undeleteFile(Path file) throws Exception
+	{
+		gitApi.rm().addFilepattern(getRelativePath(file)).call();
+	}
+
+	public void commit(CommitRequest request) throws Exception
 	{
 		if (request.name == null) throw new NullPointerException("name ist null");
 		if (request.email == null) throw new NullPointerException("email ist null");
 		if (request.message == null) throw new NullPointerException("message ist null");
-		if (stage == null || stage.isEmpty()) throw new NullPointerException("stage ist leer");
+		//if (stage == null || stage.isEmpty()) throw new NullPointerException("stage ist leer");
 
-		var add = gitApi.add();
+		/*var add = gitApi.add();
 		var rm = gitApi.rm();
 
 		for(String pathStr : stage.added)
@@ -177,7 +198,7 @@ public class Repository implements Closeable
 			rm.addFilepattern(pathStr);
 		}
 		if (!stage.added.isEmpty()) add.call();
-		if (!stage.removed.isEmpty()) rm.call();
+		if (!stage.removed.isEmpty()) rm.call();*/
 
 		gitApi.commit().setAuthor(request.name, request.email).setMessage(request.message).call();
 	}
@@ -228,22 +249,17 @@ public class Repository implements Closeable
 
 	public Path resolveFile(String file)
 	{
-		if (file.startsWith("/")) file = file.substring(1);
-		Path path = rootPath.resolve(Path.of(file));
+		Path path = resolve(file);
 		if (Files.isRegularFile(path))
 			return path;
 		else
 			return null;
 	}
 
-	public Path resolveFolder(String folder)
+	public Path resolve(String folder)
 	{
 		if (folder.startsWith("/")) folder = folder.substring(1);
-		Path path = rootPath.resolve(Path.of(folder));
-		if (Files.isDirectory(path))
-			return path;
-		else
-			return null;
+		return rootPath.resolve(Path.of(folder));
 	}
 
 	public String getRelativePath(Path path)
