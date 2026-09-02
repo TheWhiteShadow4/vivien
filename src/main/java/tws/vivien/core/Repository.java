@@ -1,9 +1,11 @@
 package tws.vivien.core;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -138,7 +140,8 @@ public class Repository implements Closeable
 		result.modified = status.hasUncommittedChanges();
 		result.untracked = status.getUntracked();
 		result.added = status.getAdded();
-		result.changed = status.getUncommittedChanges();
+		result.changed = status.getChanged();
+		result.removed = status.getRemoved();
 		result.missing = status.getMissing();
 		result.conflicts = status.getConflicting();
 		return result;
@@ -166,7 +169,7 @@ public class Repository implements Closeable
 
 	public void untrackFile(Path file) throws Exception
 	{
-		gitApi.add().addFilepattern(getRelativePath(file)).call();
+		gitApi.reset().setRef(Constants.HEAD).addPath(getRelativePath(file)).call();
 	}
 
 	public void deleteFile(Path file) throws Exception
@@ -176,7 +179,20 @@ public class Repository implements Closeable
 
 	public void undeleteFile(Path file) throws Exception
 	{
-		gitApi.rm().addFilepattern(getRelativePath(file)).call();
+		gitApi.checkout()
+		   .setStartPoint(Constants.HEAD)
+		   .addPath(getRelativePath(file))
+		   .call();
+	}
+
+	public void checkout(String branch) throws Exception
+	{
+		gitApi.checkout().setName(branch).call();
+	}
+
+	public void reset() throws Exception
+	{
+		gitApi.reset().setRef(Constants.HEAD).setMode(ResetCommand.ResetType.MIXED).call();
 	}
 
 	public void commit(CommitRequest request) throws Exception
@@ -205,22 +221,22 @@ public class Repository implements Closeable
 
 	public void push() throws Exception
 	{
-
+		gitApi.push().call();
 	}
 
-	public void pull() throws Exception
+	public void fetch() throws Exception
 	{
-
+		gitApi.fetch().call();
 	}
 
 	public void stash() throws Exception
 	{
-
+		gitApi.stashCreate().call();
 	}
 
 	public void unstash() throws Exception
 	{
-
+		gitApi.stashApply().call();
 	}
 
 	/*public GitFileStatus getStatus(Path path) throws Exception

@@ -3,7 +3,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
-import type { RepositoryElement, ServerError, StageInfo } from '@/types/vivien-generated'
+import type { RepositoryElement } from '@/types/vivien-generated'
 import { emitDisconectError, fetchWithView, uploadFiles } from '@/client.ts';
 import TextInput from '../base/TextInput.vue';
 import IconSearch from '@/icons/IconSearch.vue';
@@ -11,9 +11,7 @@ import BaseIconButton from '../base/BaseIconButton.vue';
 import emitter from '@/mitt.ts';
 import IconUpload from '@/icons/IconUpload.vue';
 import IconNewFolder from '@/icons/IconNewFolder.vue';
-import { useStore } from '@/store/index.ts';
 
-const store = useStore();
 
 const emit = defineEmits<{
 	(e: 'select', element: RepositoryElement | null): void
@@ -39,7 +37,7 @@ function selectParent()
 		const el = currentFolder.value;
 		if (el.type == "FOLDER")
 		{
-			let parentPath = el.path.substring(0, el.path.lastIndexOf("/"));
+			const parentPath = el.path.substring(0, el.path.lastIndexOf("/"));
 			console.log("Parent path: " + parentPath);
 
 			const parent = folderCache.get(parentPath);
@@ -55,11 +53,6 @@ function selectParent()
 		}
 		emit('select', null);
 	}
-}
-
-function isRoot(el: RepositoryElement): boolean
-{
-	return el.type == 'ROOT';
 }
 
 function selectElement(element: RepositoryElement, doppelt: boolean)
@@ -219,7 +212,7 @@ async function handleFileChange(event: Event)
 {
 	if (!currentFolder.value) return;
 
-	const success = await uploadFiles(event, currentFolder.value.path);
+	await uploadFiles(event, currentFolder.value.path);
 }
 
 function openFileBrowser()

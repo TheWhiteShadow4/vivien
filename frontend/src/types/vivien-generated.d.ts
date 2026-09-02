@@ -1,6 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 4.1.1 on 2026-09-02 00:33:38.
+// Generated using typescript-generator version 4.1.1 on 2026-09-02 15:06:59.
+
+export interface CheckoutRequest {
+    branch: string;
+}
 
 export interface CommitRequest {
     name: string;
@@ -21,6 +25,7 @@ export interface GitBranchStatus {
     untracked: string[];
     added: string[];
     changed: string[];
+    removed: string[];
     missing: string[];
     conflicts: string[];
 }

@@ -7,11 +7,13 @@ import IconMinus from '@/icons/IconMinus.vue';
 import IconUpload from '@/icons/IconUpload.vue';
 import IconDownload from '@/icons/IconDownload.vue';
 import { useStore } from '@/store/index.ts';
-import type { GitBranchStatus, GitStageOperation, RepositoryElement, ServerError, StageInfo } from '@/types/vivien-generated.js';
+import type { GitBranchStatus, GitStageOperation, RepositoryElement, ServerError } from '@/types/vivien-generated.js';
 import { computed, ref } from 'vue';
 import { sendChangeStaged, uploadFiles } from '@/client.ts';
 import emitter from '@/mitt.ts';
 import IconClose from '@/icons/IconClose.vue';
+import IconSync from '@/icons/IconSync.vue';
+import { sendDelete } from '@/services/git.ts';
 
 const store = useStore();
 
@@ -29,9 +31,13 @@ const canUntrack = computed(() => {
 	return store.git && store.git.added.indexOf(props.element.path) != -1;
 });
 
+const isRemoved = computed(() => {
+	return store.git && store.git.removed.indexOf(props.element.path) != -1;
+});
+
 const canDelete = computed(() => {
-	return store.git && store.git.untracked.indexOf(props.element.path) == -1
-					 && store.git.added.indexOf(props.element.path) == -1;
+	return store.git && store.git.missing.indexOf(props.element.path) == -1
+					 && !isRemoved.value ;
 });
 
 async function changeStaged(op: GitStageOperation)
@@ -43,6 +49,41 @@ async function changeStaged(op: GitStageOperation)
 		if (response.ok)
 		{
 			store.git = await response.json() as GitBranchStatus
+		}
+	}
+	catch (err: unknown)
+	{
+		emitter.emit("error", { message: (err as Error).message} as ServerError);
+	}
+	finally
+	{
+		isLoading.value = false
+	}
+}
+
+async function deleteFile()
+{
+	try
+	{
+		if (isLoading.value) return;
+
+		if (canTrack.value)
+		{
+			// Datei ist nicht im Git, wir müssen sie normal löschen.
+			const response = await sendDelete(props.element.path);
+			if (response.ok)
+			{
+				emitter.emit("refresh-folder");
+				emitter.emit("refresh-preview");
+			}
+		}
+		else
+		{
+			const response = await sendChangeStaged(props.element.path, "Delete");
+			if (response.ok)
+			{
+				store.git = await response.json() as GitBranchStatus
+			}
 		}
 	}
 	catch (err: unknown)
@@ -112,7 +153,7 @@ async function handleFileChange(event: Event)
 </script>
 
 <template>
-	<nav class="bg-vit-surface w-full h-32 border border-vit-border flex gap-2 p-2">
+	<nav class="bg-vit-surface w-full h-24 border border-vit-border flex gap-2 p-2">
 		<BaseIconButton
 			v-if="canTrack"
 			@click="changeStaged('Track')"
@@ -135,7 +176,7 @@ async function handleFileChange(event: Event)
 		
 		<BaseIconButton
 			@click="openFileBrowser()"
-			:disabled="isLoading"
+			:disabled="isLoading || isRemoved"
 			variant="normal" size="xl" 
 			class="flex flex-col items-center">
 			<IconUpload />
@@ -144,7 +185,7 @@ async function handleFileChange(event: Event)
 
 		<BaseIconButton
 			@click="download()"
-			:disabled="isLoading"
+			:disabled="isLoading || isRemoved"
 			variant="normal" size="xl"
 			class="flex flex-col items-center">
 			<IconDownload />
@@ -152,11 +193,21 @@ async function handleFileChange(event: Event)
 		</BaseIconButton>
 
 		<BaseIconButton
+			v-if="isRemoved"
+			@click="changeStaged('Undelete')"
+			:disabled="isLoading"
+			variant="normal" size="xl"
+			class="ml-6 flex flex-col items-center">
+			<IconSync />
+			<span class="text-sm">Zurück</span>
+		</BaseIconButton>
+
+		<BaseIconButton
 			v-if="canDelete"
-			@click="changeStaged('Delete')"
+			@click="deleteFile()"
 			:disabled="isLoading"
 			variant="danger" size="xl"
-			class="ml-8 flex flex-col items-center">
+			class="ml-6 flex flex-col items-center">
 			<IconClose />
 			<span class="text-sm">Löschen</span>
 		</BaseIconButton>

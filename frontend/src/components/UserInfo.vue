@@ -2,8 +2,8 @@
 <script setup lang="ts">
 
 const props = defineProps<{
-	username: String,
-	view: String,
+	username: string,
+	view: string,
 	small: boolean
 }>()
 

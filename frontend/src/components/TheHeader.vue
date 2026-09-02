@@ -14,7 +14,7 @@ const headerContainer = "h-14 w-full bg-vit-surface border-b border-vit-border p
     <!-- Logo und Anwendungsname "Vivien" -->
     <div class="flex items-center gap-3">
         <IconVivien />
-	    <h1 class="text-xl font-bold tracking-wide bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+	    <h1 class="text-xl font-bold tracking-wide bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
           Vivien
 		</h1>
     </div>

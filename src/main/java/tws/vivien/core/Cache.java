@@ -11,8 +11,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Cache
 {
 	private final ConcurrentHashMap<String, CacheEntry> entries = new ConcurrentHashMap<>();
+	private final Path cacheFolder;
 
-	public Cache() {}
+	public Path getCacheFolder() { return cacheFolder; }
+
+	public Cache(String path) throws IOException
+	{
+		cacheFolder = Path.of(path).toAbsolutePath();
+		IO.println("Cache: " + cacheFolder);
+		Files.createDirectories(cacheFolder);
+	}
 
 	public CacheEntry get(String hash)
 	{

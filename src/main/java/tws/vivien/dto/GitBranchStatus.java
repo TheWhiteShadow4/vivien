@@ -10,6 +10,7 @@ public class GitBranchStatus
 	public Set<String> untracked;
 	public Set<String> added;
 	public Set<String> changed;
+	public Set<String> removed;
 	public Set<String> missing;
 	public Set<String> conflicts;
 }

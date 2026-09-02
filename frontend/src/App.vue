@@ -13,6 +13,7 @@ import { useStore } from './store/index.ts'
 import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt.ts'
+import { sendFetch } from './services/git.ts'
 
 const store = useStore();
 
@@ -76,14 +77,19 @@ async function updatePreview(el: RepositoryElement | null)
 		const fileObject: FileObject = await response.json();
 		previewImage.value = fileObject;
 	}
+	else
+	{
+		previewImage.value = null;
+	}
 }
 
 function onGitCommand(arg: string)
 {
 	console.log("onGitCommand " + arg);
-	if (arg == "commit")
+	switch (arg)
 	{
-		showCommitDialog.value = true;
+		case "commit": showCommitDialog.value = true; break;
+		case "fetch": sendFetch(); break;
 	}
 }
 

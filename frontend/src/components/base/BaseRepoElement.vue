@@ -1,11 +1,9 @@
 <!-- src/components/base/BaseRepoElement.vue -->
 <script setup lang="ts">
 import type { RepositoryElement } from '@/types/vivien-generated'
-import IconDownload from '@/icons/IconDownload.vue'
 import { computed } from 'vue'
 import BaseIconButton from './BaseIconButton.vue'
 import IconStar from '@/icons/IconStar.vue'
-import IconClose from '@/icons/IconClose.vue'
 import { useStore } from '@/store/index.ts'
 
 const store = useStore();
@@ -38,6 +36,7 @@ const stateBadge = computed(() => {
 		if (store.git.added.indexOf(props.element.path) >= 0) return "bg-vit-accent";
 		else if (store.git.changed.indexOf(props.element.path) >= 0) return "bg-vit-accent2";
 		else if (store.git.untracked.indexOf(props.element.path) >= 0) return "bg-vit-highlight";
+		else if (store.git.removed.indexOf(props.element.path) >= 0) return "bg-red-500";
 	}
 	return "bg-vit-border";
 })

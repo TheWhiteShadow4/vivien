@@ -3,7 +3,6 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import type { GitBranchStatus, StageInfo, UserSettings } from '@/types/vivien-generated'
 
-
 // Der Name 'settings' ist der eindeutige Identifier des Stores
 export const useStore = defineStore('settings', () => {
 
@@ -43,3 +42,5 @@ export const useStore = defineStore('settings', () => {
 		updateSetting
 	}
 })
+
+export type StoreType = ReturnType<typeof useStore>;

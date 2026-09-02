@@ -22,6 +22,8 @@ public class Config
 	public Object cert = null;
 	public String user = null;
 	public String password = null;
+
+	public String remoteGit = null;
 	public UsernamePasswordCredentialsProvider credentials;
 	public Map<String, ConfigView> views = new HashMap<>();
 	public Path repository;
@@ -75,6 +77,8 @@ public class Config
 
 		repository = CReader.readString(this, config, "repo_path").required("")
 							.map(Path::of).get();
+
+		remoteGit = CReader.readString(this, config, "repo_url").get();
 
 		var defaultSecurity = mode == ServerMode.HOSTED ? SecurityMode.STRICT : SecurityMode.LAX;
 		security = CReader.readString(this, config, "server.security")

@@ -67,7 +67,7 @@ public class ImageHandler implements IHandler
 			}
 			else
 			{
-				outputPath = createDefaultCacheEntry(hash, new ByteArrayInputStream(fileBytes), meta);
+				outputPath = createDefaultCacheEntry(webRoot, hash, new ByteArrayInputStream(fileBytes), meta);
 			}
 
 			cache.add(outputPath, hash, meta);
@@ -76,11 +76,11 @@ public class ImageHandler implements IHandler
 		}
 	}
 
-	private Path createDefaultCacheEntry(String hash, InputStream inputStream, FileObject.FileObjectMeta meta) throws IOException
+	private Path createDefaultCacheEntry(Path webRoot, String hash, InputStream inputStream, FileObject.FileObjectMeta meta) throws IOException
 	{
 		String mimeType = "image/jpeg";
 
-		Path outputPath = Path.of("public/cache/" + hash + ".jpg").toAbsolutePath();
+		Path outputPath = webRoot.resolve("cache/" + hash + ".jpg").toAbsolutePath();
 		Files.createDirectories(outputPath.getParent());
 
 		BufferedImage image = ImageIO.read(inputStream);

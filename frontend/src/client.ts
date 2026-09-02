@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { CommitRequest, GitStageOperation, GitStageRequest, ServerError, StageInfo } from './types/vivien-generated';
+import type { GitStageOperation, GitStageRequest, ServerError, StageInfo } from './types/vivien-generated';
 
 /**
  * Ein Wrapper um das native fetch, der automatisch den View Parameter als Header mitsendet. 
@@ -29,22 +29,6 @@ export async function fetchWithView(url: string, options: RequestInit = {}): Pro
 		...options,
 		headers
 	});
-}
-
-export async function sendCommit(message: string): Promise<Response>
-{
-	const store = useStore();
-
-	const options: RequestInit = {
-		method: "POST",
-		headers: {'Content-Type': 'application/json'},
-		body: JSON.stringify({
-			name: store.settings.username,
-			email: store.settings.email,
-			message
-		} as CommitRequest)
-	};
-	return fetch("/api/commit", options);
 }
 
 export async function sendChangeStaged(file: string, op: GitStageOperation): Promise<Response>

@@ -16,12 +16,15 @@ public class ServerMain
 		System.setProperty("org.slf4j.simpleLogger.log.io.javalin", "warn");
 		System.setProperty("org.slf4j.simpleLogger.log.org.eclipse.jetty", "warn");
 
+		String protocol = ServerMain.class.getResource("ServerMain.class").getProtocol();
+		boolean productionMode = "jar".equals(protocol);
+
 		Config config = new Config();
 
-		Server server = new Server(config);
+		Server server = new Server(config, productionMode);
 		if (!config.errors.isEmpty())
 		{
-			server.persistedErors.addAll(config.errors);
+			server.persistedErrors.addAll(config.errors);
 		}
 		server.start();
 

@@ -137,7 +137,6 @@ public class RepositoryCache
 		path = path.replace("\\", "/");
 		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
 		if (path.isEmpty() || path.equals("/")) return getRoot();
-		IO.println("getDirectory: Lookup für " + path);
 		var result = pathLookup.get(path);
 		if (result == null) throw new IOException("Element für '" + path + "' nicht gefunden.");
 		return result;

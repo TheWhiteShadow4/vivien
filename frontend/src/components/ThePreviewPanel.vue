@@ -12,14 +12,14 @@ const props = defineProps<{
 	imageData: FileObject | null
 }>()
 
-const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full p-1"
+const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full"
 
 const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(props.imageData.metadata.size / 1024) : 0)
 </script>
 
 <template>
 	<article :class="previewContainer">
-		<div class="flex w-full justify-between p-2 bg-vit-accent-bg/30" role="contentinfo">
+		<div class="min-h-10 flex w-full justify-between p-2 bg-vit-accent-bg/30" role="contentinfo">
 			<template v-if="imageData">
 				<span><span class="text-vit-text-muted">File: </span>{{ imageData.filename }}</span>
 				<!-- <span><span class="text-vit-text-muted">Type: </span>{{ imageData.metadata.mimeType }}</span> -->

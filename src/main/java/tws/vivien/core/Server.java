@@ -1,6 +1,7 @@
 package tws.vivien.core;
 
 import io.javalin.Javalin;
+import io.javalin.compression.CompressionStrategy;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
@@ -9,14 +10,15 @@ import tws.vivien.dto.*;
 import tws.vivien.handlers.IHandler;
 
 import java.awt.*;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public class Server
@@ -26,16 +28,18 @@ public class Server
 	private final Repository repository;
 	//private final Map<String, UserStage> userStages = new HashMap<>();
 	private final Path webRoot;
+	private final boolean productionMode;
 
-	public List<Exception> persistedErors = new ArrayList<>();
+	public List<Exception> persistedErrors = new ArrayList<>();
 	public List<Exception> requestErrors = new ArrayList<>();
 
-	public Server(Config config) throws Exception
+	public Server(Config config, boolean productionMode) throws Exception
 	{
 		this.config = config;
-		this.serverCache = new Cache();
+		this.serverCache = new Cache("cache");
 		this.repository = new Repository(config.repository);
-		this.webRoot = Paths.get("./public").toAbsolutePath();
+		this.webRoot = Paths.get(".").toAbsolutePath();
+		this.productionMode = productionMode;
 	}
 
 	public void start()
@@ -59,13 +63,26 @@ public class Server
 
 		Javalin app = Javalin.create(c ->
 		{
-			// Sagt Vivien, dass sie im Ordner "public" nach statischen Dateien (HTML/JS) suchen soll
-			//c.staticFiles.add("./public", Location.EXTERNAL);
-			c.staticFiles.add(staticFiles ->
+			c.startup.showJavalinBanner = false;
+			c.http.compressionStrategy = CompressionStrategy.GZIP;
+			// Brotli braucht eine weitere Abhängigkeit
+			//c.http.compressionStrategy = new CompressionStrategy(new Brotli(4), new Gzip(6));
+
+			if (productionMode)
 			{
-				staticFiles.hostedPath = "/";              // URL-Basis im Browser (Root)
-				staticFiles.directory = "public";          // Ordnername (Lass das "./" weg!)
-				staticFiles.location = Location.EXTERNAL;  // Dateisystem statt JAR-Classpath
+				c.spaRoot.addFile("/", "/public/index.html", Location.CLASSPATH);
+				c.staticFiles.add(staticFiles ->
+				  {
+					  staticFiles.hostedPath = "/";
+					  staticFiles.directory = "public";
+					  staticFiles.location = Location.CLASSPATH;
+				  });
+			}
+
+			c.staticFiles.add(staticFiles -> {
+				staticFiles.hostedPath = "/cache";
+				staticFiles.directory = serverCache.getCacheFolder().toString();
+				staticFiles.location = Location.EXTERNAL;
 
 				staticFiles.headers = Map.of("Cache-Control", "public, max-age=86400, immutable");
 			});
@@ -112,7 +129,7 @@ public class Server
 				state.mode = config.mode;
 				state.view = getViewName(ctx);
 				//state.user = new ServerUser(config.user);
-				state.serverErrors = Stream.concat(persistedErors.stream(), requestErrors.stream()).map(ServerError::fromError).toList();
+				state.serverErrors = Stream.concat(persistedErrors.stream(), requestErrors.stream()).map(ServerError::fromError).toList();
 				ctx.json(state);
 				requestErrors.clear();
 			});
@@ -120,10 +137,13 @@ public class Server
 			c.routes.get("/api/git", this::getBranchStatus);
 			c.routes.get("/api/download", this::downloadFile);
 
+			c.routes.post("/api/delete", this::delete);
 			c.routes.post("/api/staged", this::staged);
+			c.routes.post("/api/checkout", this::checkout);
+			c.routes.post("/api/fetch", this::fetch);
+			c.routes.post("/api/reset", this::reset);
 			c.routes.post("/api/commit", this::commit);
 			c.routes.post("/api/push", this::push);
-			c.routes.post("/api/pull", this::pull);
 			c.routes.post("/api/stash", this::stash);
 			c.routes.post("/api/unstash", this::unstash);
 			c.routes.post("/api/upload", this::uploadFiles);
@@ -307,6 +327,23 @@ public class Server
 		return filename.endsWith("gif");
 	}
 
+	private void delete(Context ctx)
+	{
+		try
+		{
+			var request = ctx.bodyAsClass(GitStageRequest.class);
+			Path file = repository.resolve(request.file);
+			IO.println("Delete: " + file);
+			Files.deleteIfExists(file);
+		}
+		catch (Exception e)
+		{
+			ctx.status(500);
+			requestErrors.add(e);
+			e.printStackTrace();
+		}
+	}
+
 	private void staged(Context ctx)
 	{
 		try
@@ -316,8 +353,8 @@ public class Server
 			if (request.email == null) throw new NullPointerException("email ist null");
 			if (request.file == null) throw new NullPointerException("file ist null");
 
-			Path file = repository.resolveFile(request.file);
-			if (!Files.exists(file)) throw new FileNotFoundException(request.file);
+			Path file = repository.resolve(request.file);
+			IO.println("staged " + request.op + " File: " + request.file + " => "+ file);
 
 			switch (request.op)
 			{
@@ -344,12 +381,50 @@ public class Server
 		}
 	}
 
+	private void checkout(Context ctx)
+	{
+		try
+		{
+			var request = ctx.bodyAsClass(CheckoutRequest.class);
+
+			if (request.branch == null) throw new NullPointerException("branch ist null");
+
+			repository.checkout(request.branch);
+			getBranchStatus(ctx);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
+		}
+	}
+
+	private void reset(Context ctx)
+	{
+		try
+		{
+			repository.reset();
+			getBranchStatus(ctx);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
+		}
+	}
+
 	private void commit(Context ctx)
 	{
 		try
 		{
 			CommitRequest request = ctx.bodyAsClass(CommitRequest.class);
 			repository.commit(request);
+			if (config.remoteGit != null)
+			{
+				repository.push();
+			}
 			getBranchStatus(ctx);
 		}
 		catch (Exception e)
@@ -365,6 +440,7 @@ public class Server
 		try
 		{
 			repository.push();
+			getBranchStatus(ctx);
 		}
 		catch (Exception e)
 		{
@@ -374,11 +450,15 @@ public class Server
 		}
 	}
 
-	private void pull(Context ctx)
+	private void fetch(Context ctx)
 	{
 		try
 		{
-			repository.pull();
+			if (config.remoteGit != null)
+			{
+				repository.fetch();
+			}
+			getBranchStatus(ctx);
 		}
 		catch (Exception e)
 		{
@@ -393,6 +473,7 @@ public class Server
 		try
 		{
 			repository.stash();
+			getBranchStatus(ctx);
 		}
 		catch (Exception e)
 		{
@@ -407,6 +488,7 @@ public class Server
 		try
 		{
 			repository.unstash();
+			getBranchStatus(ctx);
 		}
 		catch (Exception e)
 		{

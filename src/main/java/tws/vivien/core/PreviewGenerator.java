@@ -23,6 +23,8 @@ public class PreviewGenerator
 		handler.put("md", TextHandler.class);
 		handler.put("json", TextHandler.class);
 		handler.put("yaml", TextHandler.class);
+		handler.put("xml", TextHandler.class);
+		handler.put("html", TextHandler.class);
 	}
 
 	public static IHandler forFile(String file)
