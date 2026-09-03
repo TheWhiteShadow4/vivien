@@ -1,4 +1,4 @@
-# 🎨 Vivien - Developer Cheat Sheet (Quick Start)
+# Vivien
 
 Gedankenstütze für den täglichen Entwicklungs-Workflow (Java backend + Vue/TS frontend).
 
@@ -15,28 +15,14 @@ npm install
 
 ### 2. Server-Konfiguration anlegen
 Erstelle eine Datei namens `vivien-server.toml` im **Hauptverzeichnis** (neben der `pom.xml`).
-*Hinweis: Wenn sie fehlt oder Syntaxfehler hat, startet Vivien automatisch im `SETUP`-Modus.*
-
-```toml
-# Vivien Server Konfiguration
-mode = "local"
-
-# Das Git-Repository, auf dem Vivien arbeiten soll
-repo_url = "https://github.com"
-local_repo_path = "./game-repo"
-
-[server]
-host = "localhost"
-port = 8080
-security = "lax"
----
+*Hinweis: Verwende dafür die template Datei*
 
 ## 🔄 Täglicher Dev-Workflow (Zwei Server laufen parallel)
 
 ### Schritt 1: Java Backend starten (IntelliJ)
 Starte die `ServerMain.java` einfach über den grünen Play-Button in IntelliJ.
 * Backend läuft auf: `http://localhost:8080`
-* Im `LOCAL`-Modus versucht Java, automatisch den Browser zu öffnen.
+* Im `LOCAL`-Modus versucht Java, automatisch den Browser zu öffnen daher stellen wir mode auf `HOSTED`.
 
 ### Schritt 2: Frontend Dev-Server starten (VS Code)
 Öffne den Unterordner `frontend` in VS Code und starte das Terminal:
@@ -65,18 +51,17 @@ mvn process-classes
 
 ## 📦 Release / Fertiges Tool bauen
 
-Wenn das Tool fertig ist und du eine einzige, ausführbare `.jar` weitergeben willst:
-
-1. **Frontend kompilieren:**
-   ```bash
-   cd frontend
-   npm run build
-   ```
-   *(Kopiere den Inhalt des resultierenden `dist/`-Ordners manuell nach `src/main/resources/public/` – das automatisieren wir später per Maven).*
-
-2. **Fat-JAR in Maven bauen:**
+**Alles in eine Jar kompilieren:**
    Im Hauptverzeichnis:
-   ```bash
-   mvn clean package
-   ```
-   Deine fertige App liegt nun unter `target/vivien-asset-bridge-1.0-SNAPSHOT.jar` und kann per Doppelklick oder `java -jar App.jar` gestartet werden.
+
+Zuerst einen Link zur Node Installation anlegen. Ansonsten wird node im Projekt angelegt.
+
+*Der Pfad muss durch deine Node Installation ersetzt werden. Achtung der Befehl braucht Admin Rechte!*
+```bash
+mklink /D node "C:\Users\<Benutzer>\AppData\Local\nvm\v24.19.0"
+```
+
+```bash
+mvn clean package
+```
+Deine fertige App liegt nun unter `target/Vivien-1.0-SNAPSHOT.jar` und kann per Doppelklick oder `java -jar Vivien-1.0-SNAPSHOT.jar` gestartet werden.

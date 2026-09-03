@@ -57,3 +57,5 @@ frontend/.env.*.local
 /public/
 
 /cache/
+/node
+/frontend/src/types/vivien-generated.d.ts

@@ -105,33 +105,35 @@
                 <version>2.0.2</version>
                 <configuration>
                     <workingDirectory>frontend</workingDirectory>
-                    <installDirectory>target</installDirectory>
+                    <installDirectory>.</installDirectory>
                 </configuration>
                 <executions>
                     <!-- Node und npm lokal installieren (falls nicht vorhanden) -->
                     <execution>
                         <id>install node and npm</id>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <npmVersion>11.17.0</npmVersion>
                             <nodeVersion>v24.19.0</nodeVersion>
                         </configuration>
                     </execution>
                     <!-- npm install ausführen -->
                     <execution>
                         <id>npm install</id>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>install</arguments>
+                            <arguments>ci</arguments>
                         </configuration>
                     </execution>
                     <!-- Frontend builden (erzeugt meist den 'dist' Ordner) -->
                     <execution>
                         <id>npm run build</id>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>npm</goal>
                         </goals>
@@ -171,25 +173,31 @@
             <!-- 3. Fat JAR erstellen (inklusive aller Abhängigkeiten) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>tws.vivien.ServerMain</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>tws.vivien.ServerMain</mainClass>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
