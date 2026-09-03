@@ -3,11 +3,13 @@ package tws.vivien.plugins;
 import tws.vivien.dto.ImportSetting;
 
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Map;
 
 public interface EnginePlugin
 {
-	List<ImportSetting> getImportData(Path file);
+	Map<String, ImportSetting> getImportData(Path file);
 
-	boolean setImportData(Path file, List<ImportSetting> settings);
+	boolean setImportData(Path file, Map<String, ImportSetting> settings);
+
+	void createImportData(Path file);
 }

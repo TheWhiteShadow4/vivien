@@ -14,12 +14,6 @@ Wählt man ein Element aus, wird vom Server die Metadaten geladen und eine Vorsc
 Es gibt ein Store für Usersettings (local Storage), Git Status (untracked, added, changed, added for commit).
 Ein Upload mit Dateiauswahl und Commit Dialog.
 
-TODOs:
-Toolbar unter der Vorschau für weitere Aktionen.
-- Replace Upload: Ähnlich normalem Upload aber garantiertem Überschreiben der gewählten Datei.
-- Download: Herunterladen der gewählten Datei.
-- Check/Uncheck für Git Tracking.
-
 Zielgruppe & Ergonomie:
 - Hauptnutzung auf DESKTOP und TABLET. Ignoriere Mobile-First für Smartphones!
 - Die App nutzt ein festes, klares Layout (wie GitHub Projects oder Google Docs) mit deutlichen Rahmen und Schattierungen.

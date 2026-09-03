@@ -7,17 +7,19 @@ import tws.vivien.dto.ImportSetting;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Map;
 
 public class Godot implements EnginePlugin
 {
 	static String IMPORT_PATTERN = ".import";
 
 	@Override
-	public List<ImportSetting> getImportData(Path file)
+	public Map<String, ImportSetting> getImportData(Path file)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
+		if (!Files.exists(importFile)) return null;
 
 		INIConfiguration ini = new INIConfiguration();
 		try (FileReader reader = new FileReader(importFile.toFile()))
@@ -39,7 +41,7 @@ public class Godot implements EnginePlugin
 	}
 
 	@Override
-	public boolean setImportData(Path file, List<ImportSetting> settings)
+	public boolean setImportData(Path file, Map<String, ImportSetting> settings)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 
@@ -55,5 +57,11 @@ public class Godot implements EnginePlugin
 		}
 
 		return false;
+	}
+
+	@Override
+	public void createImportData(Path file)
+	{
+
 	}
 }
