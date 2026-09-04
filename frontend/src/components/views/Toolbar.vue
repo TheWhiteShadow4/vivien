@@ -32,7 +32,7 @@ const canUntrack = computed(() => {
 });
 
 const isRemoved = computed(() => {
-	return store.git && store.git.removed.indexOf(props.element.path) != -1;
+	return store.git && (store.git.removed.indexOf(props.element.path) != -1 || store.git.missing.indexOf(props.element.path) != -1);
 });
 
 const canDelete = computed(() => {
@@ -49,6 +49,7 @@ async function changeStaged(op: GitStageOperation)
 		if (response.ok)
 		{
 			store.git = await response.json() as GitBranchStatus
+			emitter.emit("refresh-file", props.element.path);
 		}
 	}
 	catch (err: unknown)

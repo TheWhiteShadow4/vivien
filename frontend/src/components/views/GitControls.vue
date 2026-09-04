@@ -11,7 +11,7 @@ import { useGit } from '@/handler/useGit.ts'
 
 const store = useStore();
 
-const emit = defineEmits(["git"]);
+const emit = defineEmits(["git", "bin"]);
 
 const gitStageCount = computed(() => {
 	return store.git ? (store.git.added.length + store.git.changed.length + store.git.removed.length) : 0;
@@ -54,7 +54,6 @@ const { fetch, reset, checkout, isLoading } = useGit();
 			:label="isAdmin ? 'Reset' : 'Zurücksetzen'"
 			:minified="variant == 'small'"
 			:disabled="isLoading || gitChangeCount <= 0"
-			:count="gitChangeCount"
 			@click="reset()">
 			<IconSync />
 		</ListButton>
@@ -98,5 +97,7 @@ const { fetch, reset, checkout, isLoading } = useGit();
 			@click="emit('git', 'unstash')">
 			<IconPushStash />
 		</ListButton>
+
+		<div id="papierkorb"></div>
 	</nav>
 </template>

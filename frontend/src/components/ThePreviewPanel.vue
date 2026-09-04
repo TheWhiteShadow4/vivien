@@ -12,7 +12,7 @@ const props = defineProps<{
 	imageData: FileObject | null
 }>()
 
-const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full"
+const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full w-full"
 
 const filesize = computed(() => props.imageData ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(props.imageData.metadata.size / 1024) : 0)
 </script>

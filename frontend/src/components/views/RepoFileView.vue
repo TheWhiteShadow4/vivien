@@ -1,9 +1,9 @@
 <!-- src/components/views/RepoFileView.vue -->
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
-import type { RepositoryElement } from '@/types/vivien-generated'
+import type { GitBranchStatus, RepositoryElement } from '@/types/vivien-generated'
 import { emitDisconectError, fetchWithView, uploadFiles } from '@/client.ts';
 import TextInput from '../base/TextInput.vue';
 import IconSearch from '@/icons/IconSearch.vue';
@@ -11,7 +11,16 @@ import BaseIconButton from '../base/BaseIconButton.vue';
 import emitter from '@/mitt.ts';
 import IconUpload from '@/icons/IconUpload.vue';
 import IconNewFolder from '@/icons/IconNewFolder.vue';
+import Tooltip from '../base/Tooltip.vue';
+import { useStore } from '@/store/index.ts';
+import ListButton from '../base/ListButton.vue';
+import IconBin from '@/icons/IconBin.vue';
 
+const store = useStore();
+
+const deleteCount = computed(() => {
+	return store.git ? (store.git.missing.length + store.git.removed.length) : 0;
+});
 
 const emit = defineEmits<{
 	(e: 'select', element: RepositoryElement | null): void
@@ -19,7 +28,8 @@ const emit = defineEmits<{
 
 // Reaktiver Zustand für die API-Daten und Lade-Status
 //const repository = ref<RepositoryRoot | null>(null)
-const isLoading = ref(true)
+const isMounted = ref(false);
+const isLoading = ref(true);
 const errorMessage = ref<string | null>(null)
 
 const folderCache: Map<string, RepositoryElement> = new Map([]);
@@ -75,31 +85,71 @@ function selectElement(element: RepositoryElement, doppelt: boolean)
 	}
 }
 
-async function fetchSearch(query: string)
+function gitQuery(query: string): RepositoryElement
 {
+	const serachRoot: RepositoryElement = { name: query, path: "", type: "VIRTUAL", children: [] };
 	try
 	{
-		isLoading.value = true
-		errorMessage.value = null
-
-		const response = await fetchWithView(`/api/repo?q=${query}`)
-
-		if (!response.ok)
+		if (store.git)
 		{
-			const errorData = await response.json();
-			emitter.emit('error', errorData);
-			return
+			for(const field of query.substring(1).split(','))
+			{
+				const key = field.trim() as keyof GitBranchStatus;
+				const list = store.git[key];
+				if (Array.isArray(list))
+				{
+					for(const entry of list)
+					{
+						const name = entry.substring(entry.lastIndexOf("/"));
+						const element: RepositoryElement = { name: name, path: entry, type: "FILE" };
+						serachRoot.children!.push(element);
+					}
+				}
+			}
 		}
+	}
+	catch(err: unknown)
+	{
+		console.log(err);
+	}
+	return serachRoot;
+}
 
-		const elementa = await response.json();
-		const serachRoot: RepositoryElement = { name: query, path: "", type: "VIRTUAL" };
-		serachRoot.children = elementa;
+async function fetchSearch(query: string)
+{
+	searchQuery.value = query;
+
+	try
+	{
+		let serachRoot: RepositoryElement;
+		if (query.startsWith(':'))
+		{
+			serachRoot = gitQuery(query)
+		}
+		else
+		{
+			isLoading.value = true
+			errorMessage.value = null
+
+			const response = await fetchWithView(`/api/repo?q=${query}`)
+
+			if (!response.ok)
+			{
+				const errorData = await response.json();
+				emitter.emit('error', errorData);
+				return
+			}
+
+			const childs = await response.json();
+			serachRoot = { name: query, path: "", type: "VIRTUAL" };
+			serachRoot.children = childs;
+		}
 
 		if (currentFolder.value?.type != "VIRTUAL")
 		{
 			previousFolder.value = currentFolder.value;
 		}
-		navigateToQuery(serachRoot, query)
+		navigateToQuery(serachRoot, query);
 	}
 	finally
 	{
@@ -107,7 +157,7 @@ async function fetchSearch(query: string)
 	}
 }
 
-function clearSerach()
+function clearSearch()
 {
 	if (previousFolder.value != null)
 	{
@@ -140,10 +190,6 @@ async function fetchRepository(path: string)
 		}
 
 		const tree: RepositoryElement = await response.json();
-		/*if (tree.type == "ROOT")
-		{
-			repository.value = tree
-		}*/
 		folderCache.set(tree.path, tree);
 		navigateToFolder(tree);
 	}
@@ -162,7 +208,7 @@ function navigateToFolder(folder: RepositoryElement, isBrowserBackAction = false
 	// Wenn die Aktion VOM Browser (Zurück-Taste) kam, dürfen wir keinen NEUEN Eintrag in die History pushen!
 	if (!isBrowserBackAction)
 	{
-		const url = new URL(`${window.location.origin}${folder.path}`)
+		const url = new URL(`${window.location.origin}/${folder.path}`)
 
 		window.history.pushState(null, folder.path, url.toString())
 	}
@@ -226,16 +272,27 @@ function refreshFolder()
 	fetchRepository(currentFolder.value.path);
 }
 
+function refreshFile(path: string)
+{
+	const d = path.lastIndexOf('/');
+	const folder = (d != -1) ? path.substring(0, d) : "/";
+	fetchRepository(folder);
+}
+
 onMounted(() => {
 	const path = window.location.pathname;
 	fetchRepository(path);
 	window.addEventListener('popstate', handleBrowserNavigation);
 	emitter.on("refresh-folder", refreshFolder);
+	emitter.on("refresh-file", s => refreshFile(s as string));
+	isMounted.value = true;
 })
 
 onUnmounted(() => {
 	window.removeEventListener('popstate', handleBrowserNavigation);
 	emitter.off("refresh-folder", refreshFolder);
+	emitter.off("refresh-file", s => refreshFile(s as string));
+	isMounted.value = false;
 })
 
 // Strukturierte Design-Klassen aus dem vit-Theme
@@ -244,34 +301,49 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 </script>
 
 <template>
-	<div class="flex flex-col gap-4">
+	<div>
+		<Teleport v-if="isMounted" to="#fileview-toolbar">	
+			<TextInput
+				v-model="searchQuery"
+				type="search"
+				placeholder="Repository durchsuchen"
+				@enter="fetchSearch(searchQuery)"
+				@clear="clearSearch()">
+				<BaseIconButton @click="fetchSearch(searchQuery)">
+				<IconSearch />
+			</BaseIconButton>
+			</TextInput>
+			<Tooltip text="Datei-Filter">
+			<BaseIconButton :disabled="true"><IconNewFolder /></BaseIconButton>
+			</Tooltip>
+			<Tooltip text="Dateien hochladen">
+			<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()">
+				<IconUpload />
+			</BaseIconButton>
+			</Tooltip>
+			<input 
+				type="file" 
+				ref="fileInput" 
+				style="display: none"
+				multiple
+				@change="handleFileChange" 
+				/>
+		</Teleport>
+		<Teleport v-if="isMounted" to="#papierkorb">
+			<ListButton
+				color="ghost"
+				label="Papierkorb"
+				:minified="!store.settings.sidebar"
+				:disabled="isLoading && deleteCount > 0"
+				:count="deleteCount"
+				@click="fetchSearch(':missing,removed')">
+				<IconBin />
+			</ListButton>
+		</Teleport>
 		<div :class="tableWrapper">
 			<!-- Tabellen-Kopf -->
 			<div :class="tableHeader">
 				<span>Name</span>
-				
-				<TextInput
-					class="max-w-180 mx-8"
-					v-model="searchQuery"
-					type="search"
-					placeholder="Repository durchsuchen"
-					@enter="fetchSearch(searchQuery)"
-					@clear="clearSerach()">
-					<BaseIconButton @click="fetchSearch(searchQuery)">
-					<IconSearch />
-				</BaseIconButton>
-				</TextInput>
-				<BaseIconButton><IconNewFolder /></BaseIconButton>
-				<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()">
-					<IconUpload />
-				</BaseIconButton>
-				<input 
-					type="file" 
-					ref="fileInput" 
-					style="display: none"
-					multiple
-					@change="handleFileChange" 
-					/>
 				<span class="w-16 text-right">Status</span>
 			</div>
 
@@ -306,6 +378,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 						v-for="el in currentFolder.children"
 						:key="el.name"
 						:element="el"
+						:folder="currentFolder.type == 'VIRTUAL'"
 						:selected="el == selectedElement"
 						@clicked="selectElement(el, $event)"
 					/>

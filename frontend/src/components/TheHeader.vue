@@ -18,7 +18,7 @@ const headerContainer = "h-14 w-full bg-vit-surface border-b border-vit-border p
           Vivien
 		</h1>
     </div>
-
+	<div id="fileview-toolbar" class="w-180 flex items-start mx-4 gap-4"></div>
 
     <ViewTypePanel v-if="props.state" :view="props.state.view" />
   </header>

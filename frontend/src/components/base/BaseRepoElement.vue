@@ -10,7 +10,8 @@ const store = useStore();
 
 const props = defineProps<{
   element: RepositoryElement,
-  label?: string
+  label?: string,
+  folder?: boolean,
   selected: boolean,
 }>();
 
@@ -61,6 +62,7 @@ function favorit()
       </span>
       
       <span :class="[nameStyle, selected ? selectedStyle : normalStyle]">{{ label ? label : element.name }}</span>
+	  <span v-if="folder" class="text-vit-text-muted">(/{{ element.path }})</span>
     </div>
 
 	<div class="flex items-center text-vit-text-main">

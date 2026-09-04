@@ -14,6 +14,7 @@ import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt.ts'
 import { sendFetch } from './services/git.ts'
+import Splitter from './components/base/Splitter.vue'
 
 const store = useStore();
 
@@ -119,47 +120,38 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-screen w-screen flex flex-col overflow-hidden select-none">
-    
-    <TheHeader :state="state" />
+	<div class="h-screen w-screen flex flex-col overflow-hidden select-none">
 
-    <!-- Inhalt unter dem Header -->
-    <div class="flex flex-1 min-h-0">
-      
-      <TheSidebar
-	  	:state="state"
-		:is-open="isSidebarOpen"
-		@git="onGitCommand($event)"
-		/>
+		<TheHeader :state="state" />
 
-      <!-- Hauptbereich -->
-      <main class="flex-1 bg-vit-bg p-1 overflow-y-auto min-w-0">
-        <ErrorBannerList 
-          :errors="state.serverErrors" 
-          @dismiss-error="(index) => state.serverErrors.splice(index, 1)"
-        />
+		<!-- Inhalt unter dem Header -->
+		<div class="flex flex-1 min-h-0">
 
-        <RepoFileView 
-		  @select="(e) => updatePreview(e)"
-        />
-      </main>
+			<TheSidebar :state="state" :is-open="isSidebarOpen" @git="onGitCommand($event)" />
 
-	  <ThePreviewPanel :element="selectedElement" :imageData="previewImage" />
+			<!-- Hauptbereich -->
+			<main class="w-full h-full bg-vit-bg p-1">
+				<Splitter>
+					<template v-slot:links>
+						<RepoFileView @select="(e) => updatePreview(e)" />
+					</template>
+					<template v-slot:rechts>
+						<ThePreviewPanel :element="selectedElement" :imageData="previewImage" />
+					</template>
+				</Splitter>
+			</main>
 
-	  <!--<div class="fixed bottom-6 right-6 z-50 flex flex-row gap-4 max-w-2xl pointer-events-none">
+			<ErrorBannerList :errors="state.serverErrors"
+				@dismiss-error="(index) => state.serverErrors.splice(index, 1)" />
+
+			<!--<div class="fixed bottom-6 right-6 z-50 flex flex-row gap-4 max-w-2xl pointer-events-none">
 	  <BasePanel variant="dialog" >Surface</BasePanel>
       <BasePanel variant="info" >Das ist ein Toast<br /><span class="text-vit-text-muted">Zweite Zeile.</span></BasePanel>
 	  <BasePanel variant="warning" >Warning</BasePanel>
 	  </div>-->
-    </div>
+		</div>
 
-	<CommitDialog
-		v-if="showCommitDialog"
-		@submit="closeCommitDialog(true)"
-		@cancel="closeCommitDialog(false)"
-	/>
-	<LoginDialog v-if="!store.settings.email" />
-  </div>
+		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog(true)" @cancel="closeCommitDialog(false)" />
+		<LoginDialog v-if="!store.settings.email" />
+	</div>
 </template>
-
-<style scoped></style>
