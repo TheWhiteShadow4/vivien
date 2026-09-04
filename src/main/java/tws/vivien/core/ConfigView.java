@@ -1,7 +1,8 @@
 package tws.vivien.core;
 
+import tws.vivien.dto.ElementType;
+
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 public class ConfigView
 {
 	public String name;
+	public String root;
 	public List<String> includes;
 	public List<String> excludes;
 
@@ -20,9 +22,10 @@ public class ConfigView
 		this.excludes = new ArrayList<>();
 	}
 
-	public ConfigView(String name, List<String> includes, List<String> excludes)
+	public ConfigView(String name, String root, List<String> includes, List<String> excludes)
 	{
 		this.name = name;
+		this.root = root;
 		this.includes = includes;
 		this.excludes = excludes;
 	}
@@ -37,6 +40,7 @@ public class ConfigView
 	{
 		return "ConfigView{" +
 				"name='" + name + '\'' +
+				"root='" + root + '\'' +
 				", includes=" + includes +
 				", excludes=" + excludes +
 				'}';
@@ -76,7 +80,7 @@ public class ConfigView
 			String syntaxAndPattern;
 			if (!pattern.startsWith("/"))
 			{
-				syntaxAndPattern = "glob:**/" + pattern;
+				syntaxAndPattern = "glob:**" + pattern;
 			}
 			else
 			{
@@ -86,26 +90,24 @@ public class ConfigView
 			return FileSystems.getDefault().getPathMatcher(syntaxAndPattern);
 		}
 
-		public boolean isIncluded(Path path)
+		public boolean isIncluded(Path path, ElementType type)
 		{
 			// 1. Exclude-Filter prüfen (Sobald ein Exclude-Pattern matcht -> direkt aussortieren)
 			for (PathMatcher matcher : excludeMatchers)
 			{
-				if (matcher.matches(path)) {
-					return false;
-				}
+				if (matcher.matches(path)) return false;
 			}
 
 			// Wenn keine Includes definiert sind, lassen wir standardmäßig alles durch (außer Excludes).
-			if (includeMatchers.isEmpty()) {
-				return true;
-			}
+			if (includeMatchers.isEmpty()) return true;
+
+			if (type == ElementType.FOLDER) return true;
 
 			// Falls Includes definiert sind, MUSS mindestens eines davon matchen
-			for (PathMatcher matcher : includeMatchers) {
-				if (Files.isDirectory(path) || matcher.matches(path)) {
-					return true;
-				}
+
+			for (PathMatcher matcher : includeMatchers)
+			{
+				if (matcher.matches(path)) return true;
 			}
 			return false;
 		}

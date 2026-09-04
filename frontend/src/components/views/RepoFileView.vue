@@ -69,14 +69,16 @@ function selectElement(element: RepositoryElement, doppelt: boolean)
 {
 	if (currentFolder.value != null && element.type == 'FOLDER' && doppelt)
 	{
-		if (!element.children)
+		const child = folderCache.get(element.path);
+		if (child != null)
+		{
+			currentFolder.value = child;
+		}
+		else
 		{
 			fetchRepository(element.path);
 		}
 		selectedElement.value = null;
-		//folderCache.value.set(parentPath);
-		//element.parent = currentFolder.value;
-		//currentFolder.value = element;
 	}
 	else
 	{
@@ -233,7 +235,7 @@ function handleBrowserNavigation(event: PopStateEvent)
 
 	// Versuche den Pfad aus dem State zu lesen, andernfalls direkt aus den Query-Parametern
 	const urlParams = new URLSearchParams(window.location.search)
-	const targetPath = event.state?.path ?? urlParams.get('path') ?? ''
+	const targetPath = event.state?.path ?? urlParams.get('path')?.substring(1) ?? ''
 
 	// Finde das passende Element im RAM-Baum
 	let targetFolder = folderCache.get(targetPath);
@@ -245,7 +247,7 @@ function handleBrowserNavigation(event: PopStateEvent)
 	}
 	else
 	{
-		targetFolder = folderCache.get("/");
+		targetFolder = folderCache.get("");
 		if (!targetFolder) return;
 		// Fallback zur Wurzel, falls der Pfad (z.B. nach externem Löschen) nicht existiert
 		navigateToFolder(targetFolder, true)
@@ -280,7 +282,7 @@ function refreshFile(path: string)
 }
 
 onMounted(() => {
-	const path = window.location.pathname;
+	const path = window.location.pathname.substring(1);
 	fetchRepository(path);
 	window.addEventListener('popstate', handleBrowserNavigation);
 	emitter.on("refresh-folder", refreshFolder);
