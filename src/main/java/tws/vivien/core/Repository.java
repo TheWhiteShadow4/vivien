@@ -8,24 +8,20 @@ import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.jgit.treewalk.FileTreeIterator;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import tws.vivien.dto.*;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Repository implements Closeable
 {
 	private final Path rootPath;
 	private final Git gitApi;
 	private final RepositoryCache cache;
+	private GitBranchStatus branchStatus;
 
 	public Repository(Path rootPath) throws IOException, GitAPIException
 	{
@@ -43,83 +39,26 @@ public class Repository implements Closeable
 
 	public RepositoryElement getView(ConfigView view, String path) throws IOException
 	{
-		return cache.getDirectory(path).flatCopyWithChildren();
-	}
+		RepositoryElement element;
 
-	private List<RepositoryElement> createElements(Path currentPath, ConfigView.ViewFilter filter)
-	{
-		if (!Files.exists(currentPath) || !Files.isDirectory(currentPath))
+		// Reroot
+		/*if (!view.root.isEmpty() && "/".equals(path))
 		{
-			return new ArrayList<>();
+			element = cache.getDirectory(view.root).flatCopyWithChildren();
 		}
-
-		try (Stream<Path> stream = Files.list(currentPath))
+		else*/
 		{
-			return stream
-					.filter(filter::isIncluded)
-					.filter(path -> !isIgnoredByGit(path))
-					.map(s -> mapToElement(s))
-					.collect(Collectors.toList());
+			element = cache.getDirectory(path).flatCopyWithChildren();
 		}
-		catch (IOException e)
+		// Filter
+		if (element.children != null && !element.children.isEmpty())
 		{
-			System.err.println("Fehler beim Lesen des Pfads: " + currentPath + " - " + e.getMessage());
-			return new ArrayList<>();
+			element.children = element.children.stream().filter(e -> view.getFilter().isIncluded(Path.of(e.path), e.type)).toList();
 		}
-	}
-
-	private boolean isIgnoredByGit(Path path)
-	{
-		// Berechne den relativen Pfad zum Repository-Root (z.B. "src/main.js")
-		String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
-
-		// TreeWalk ist der JGit-Standardweg, um Pfade gegen .gitignore-Regeln zu matchen
-		try (TreeWalk treeWalk = new TreeWalk(gitApi.getRepository()))
-		{
-			// Wir hängen einen FileTreeIterator an, der das Arbeitsverzeichnis simuliert
-			treeWalk.addTree(new FileTreeIterator(gitApi.getRepository()));
-			treeWalk.setRecursive(false); // Wir prüfen Ebene für Ebene
-
-			// Laufe durch das Git-Arbeitsverzeichnis, bis wir den gesuchten Pfad finden
-			while (treeWalk.next()) {
-				if (treeWalk.getPathString().equals(relativePath)) {
-					// Hole den internen WorkingTreeIterator für das aktuelle Element
-					FileTreeIterator fti = treeWalk.getTree(0, FileTreeIterator.class);
-					// isEntryIgnored() ohne Parameter prüft das aktuell fokussierte Element
-					return fti != null && fti.isEntryIgnored();
-				}
-
-				// Falls wir in einen Überordner gelaufen sind, betreten wir ihn im TreeWalk
-				if (treeWalk.isSubtree() && relativePath.startsWith(treeWalk.getPathString() + "/")) {
-					treeWalk.enterSubtree();
-				}
-			}
-		} catch (IOException e) {
-			// Im Fehlerfall vorsichtshalber nicht ignorieren
-			System.err.println("Fehler bei der Gitignore-Prüfung für " + relativePath + ": " + e.getMessage());
-		}
-		return false;
-	}
-
-	private RepositoryElement mapToElement(Path path)
-	{
-		RepositoryElement element = new RepositoryElement();
-		element.name = path.getFileName().toString();
-		element.path = rootPath.relativize(path).toString();
-
-		if (Files.isDirectory(path)) {
-			element.type = ElementType.FOLDER;
-			// Rekursion für die nächste Ebene
-			element.children = null;//createElements(path, filter);
-		} else {
-			element.type = ElementType.FILE;
-			element.children = new ArrayList<>();
-		}
-
 		return element;
 	}
 
-	public List<RepositoryElement> searchFiles(String query)
+	public List<RepositoryElement> searchFiles(ConfigView view, String query)
 	{
 		String lowerQuery = query.toLowerCase();
 
@@ -127,6 +66,7 @@ public class Repository implements Closeable
 		return cache.getPathLookup().values().stream()
 				.filter(element -> element.type == ElementType.FILE) // Nur Dateien durchsuchen
 				.filter(element -> element.name.toLowerCase().contains(lowerQuery))
+				.filter(e -> view.getFilter().isIncluded(Path.of(e.path), e.type))
 				.map(RepositoryElement::flatCopy)
 				.toList();
 	}
@@ -144,6 +84,7 @@ public class Repository implements Closeable
 		result.removed = status.getRemoved();
 		result.missing = status.getMissing();
 		result.conflicts = status.getConflicting();
+		this.branchStatus = result;
 		return result;
 	}
 

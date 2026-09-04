@@ -42,4 +42,14 @@ public class RepositoryElement
 			copy.children = Collections.emptyList();
 		return copy;
 	}
+
+
+	@Override
+	public String toString()
+	{
+		return "RepositoryElement{" +
+				"path='" + path + "'(" + type +
+				"), children=" + (children != null ? children.size() : null) +
+				'}';
+	}
 }

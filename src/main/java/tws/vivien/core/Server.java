@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 public class Server
@@ -29,6 +30,8 @@ public class Server
 	//private final Map<String, UserStage> userStages = new HashMap<>();
 	private final Path webRoot;
 	private final boolean productionMode;
+	// Lock um Git Operationen(write) gegenüber kleine Datei Operationen(read) abzusichern.
+	private final ReentrantReadWriteLock gitLock = new ReentrantReadWriteLock();
 
 	public List<Exception> persistedErrors = new ArrayList<>();
 	public List<Exception> requestErrors = new ArrayList<>();
@@ -161,18 +164,20 @@ public class Server
 
 	private void getRepository(Context ctx)
 	{
-		String q = ctx.queryParam("q");
-
-		if (q != null)
-		{
-			ctx.json(repository.searchFiles(q));
-			return;
-		}
-		String viewName = getViewName(ctx);
-		String path = ctx.queryParam("path");
 		try
 		{
+			String q = ctx.queryParam("q");
+			String viewName = getViewName(ctx);
 			ConfigView view = config.getView(viewName);
+
+			if (q != null)
+			{
+				ctx.json(repository.searchFiles(view, q));
+				return;
+			}
+
+			String path = ctx.queryParam("path");
+
 			ctx.header("Cache-Control", "no-cache");
 			ctx.json(repository.getView(view, path));
 		}
@@ -260,7 +265,7 @@ public class Server
 		//UserStage userstage = userStages.computeIfAbsent(email, k -> new UserStage());
 		try
 		{
-
+			gitLock.readLock().lock();
 			if (Files.isDirectory(targetPath)) // Multi Upload in Ordner
 			{
 				for (var file : ctx.uploadedFiles("files"))
@@ -295,6 +300,10 @@ public class Server
 			ctx.status(500);
 			requestErrors.add(e);
 		}
+		finally
+		{
+			gitLock.readLock().unlock();
+		}
 	}
 
 	private void downloadFile(Context ctx)
@@ -309,6 +318,7 @@ public class Server
 				return;
 			}
 
+			gitLock.readLock().lock();
 			ctx.header("Content-Disposition", "attachment; filename=\"" + path.getFileName().toString() + "\"");
 			ctx.contentType(Files.probeContentType(path));
 
@@ -319,6 +329,10 @@ public class Server
 		{
 			requestErrors.add(e);
 			ctx.status(500);
+		}
+		finally
+		{
+			gitLock.readLock().unlock();
 		}
 	}
 
@@ -331,6 +345,7 @@ public class Server
 	{
 		try
 		{
+			gitLock.readLock().lock();
 			var request = ctx.bodyAsClass(GitStageRequest.class);
 			Path file = repository.resolve(request.file);
 			IO.println("Delete: " + file);
@@ -341,6 +356,10 @@ public class Server
 			ctx.status(500);
 			requestErrors.add(e);
 			e.printStackTrace();
+		}
+		finally
+		{
+			gitLock.readLock().unlock();
 		}
 	}
 
@@ -353,6 +372,7 @@ public class Server
 			if (request.email == null) throw new NullPointerException("email ist null");
 			if (request.file == null) throw new NullPointerException("file ist null");
 
+			gitLock.readLock().lock();
 			Path file = repository.resolve(request.file);
 			IO.println("staged " + request.op + " File: " + request.file + " => "+ file);
 
@@ -379,6 +399,10 @@ public class Server
 			requestErrors.add(e);
 			e.printStackTrace();
 		}
+		finally
+		{
+			gitLock.readLock().unlock();
+		}
 	}
 
 	private void checkout(Context ctx)
@@ -389,6 +413,7 @@ public class Server
 
 			if (request.branch == null) throw new NullPointerException("branch ist null");
 
+			gitLock.writeLock().lock();
 			repository.checkout(request.branch);
 			getBranchStatus(ctx);
 		}
@@ -398,12 +423,17 @@ public class Server
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
+		finally
+		{
+			gitLock.writeLock().unlock();
+		}
 	}
 
 	private void reset(Context ctx)
 	{
 		try
 		{
+			gitLock.writeLock().lock();
 			repository.reset();
 			getBranchStatus(ctx);
 		}
@@ -413,6 +443,10 @@ public class Server
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
+		finally
+		{
+			gitLock.writeLock().unlock();
+		}
 	}
 
 	private void commit(Context ctx)
@@ -420,6 +454,8 @@ public class Server
 		try
 		{
 			CommitRequest request = ctx.bodyAsClass(CommitRequest.class);
+
+			gitLock.writeLock().lock();
 			repository.commit(request);
 			if (config.remoteGit != null)
 			{
@@ -432,6 +468,10 @@ public class Server
 			e.printStackTrace();
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
+		}
+		finally
+		{
+			gitLock.writeLock().unlock();
 		}
 	}
 
@@ -472,6 +512,7 @@ public class Server
 	{
 		try
 		{
+			gitLock.writeLock().lock();
 			repository.stash();
 			getBranchStatus(ctx);
 		}
@@ -481,12 +522,17 @@ public class Server
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
+		finally
+		{
+			gitLock.writeLock().unlock();
+		}
 	}
 
 	private void unstash(Context ctx)
 	{
 		try
 		{
+			gitLock.writeLock().lock();
 			repository.unstash();
 			getBranchStatus(ctx);
 		}
@@ -495,6 +541,10 @@ public class Server
 			e.printStackTrace();
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
+		}
+		finally
+		{
+			gitLock.writeLock().unlock();
 		}
 	}
 

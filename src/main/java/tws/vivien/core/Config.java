@@ -119,10 +119,11 @@ public class Config
 					String name = entry.getKey();
 					var viewTable = (com.electronwill.nightconfig.core.Config) entry.getValue();
 					String displayName = (String)viewTable.getOptional("name").orElse(name);
+					String root = (String)viewTable.getOptional("root").orElse("");
 					List<String> includes = viewTable.get("includes");
 					List<String> excludes = viewTable.get("excludes");
 
-					views.put(name, new ConfigView(displayName, includes, excludes));
+					views.put(name, new ConfigView(displayName, root, includes, excludes));
 
 				}
 				catch (Exception e)

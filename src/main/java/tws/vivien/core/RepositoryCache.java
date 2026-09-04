@@ -134,7 +134,6 @@ public class RepositoryCache
 	// Liefert ein spezifisches Unterverzeichnis für das Lazy Loading im Client
 	public RepositoryElement getDirectory(String path) throws IOException
 	{
-		path = path.replace("\\", "/");
 		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
 		if (path.isEmpty() || path.equals("/")) return getRoot();
 		var result = pathLookup.get(path);
@@ -197,7 +196,6 @@ public class RepositoryCache
 			child.name = file.getName();
 			child.path = childPath;
 			child.type = file.isDirectory() ? ElementType.FOLDER : ElementType.FILE;
-			child.children = null; // null für lazy loading
 			child.gitStatus = determineGitStatus(child.path); // Hier deine JGit-Status Logik nutzen
 
 			childrenList.add(child);
