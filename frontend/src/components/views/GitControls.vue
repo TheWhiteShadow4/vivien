@@ -13,16 +13,20 @@ const store = useStore();
 
 const emit = defineEmits(["git", "bin"]);
 
+// Änderungen nicht in der Stage
+const gitChangeCount = computed(() => {
+	return store.git ? (store.git.untracked.length + store.git.modified.length + store.git.missing.length) : 0;
+});
 
+// Änderungen in der Stage
 const gitStageCount = computed(() => {
 	return store.git ? (store.git.added.length + store.git.changed.length + store.git.removed.length) : 0;
 });
+
 const canCommitPush = computed(() => {
-	return gitStageCount.value > 0 || store.git && store.git.remote.aheadCount > 0;
+	return gitStageCount.value > 0 || store.git?.remote && store.git.remote.aheadCount > 0;
 });
-const gitChangeCount = computed(() => {
-	return store.git ? (store.git.added.length + store.git.changed.length + store.git.removed.length) : 0;
-});
+
 const isAdmin = computed(() => store.settings.view == "admin");
 
 
@@ -35,36 +39,45 @@ withDefaults(defineProps<Props>(), {
 })
 
 const { pull, reset, checkout, isLoading } = useGit();
+
+function commitPush()
+{
+	if (gitStageCount.value > 0)
+		emit('git', 'commit');
+	else
+		emit('git', 'push')
+}
+
 </script>
 
 
 <template>
 	<nav class="flex flex-col gap-2">
-		<ListButton
+<!-- 		<ListButton
 			v-if="isAdmin && store.git"
 			variant="normal"
 			color="normal"
 			label="Checkout"
 			:minified="variant == 'small'"
-			:disabled="isLoading || gitChangeCount <= 0"
+			:disabled="isLoading || (gitChangeCount + gitStageCount) <= 0"
 			@click="checkout(store.git.branch)">
 			<IconGitPull />
-		</ListButton>
+		</ListButton> -->
 
 		<ListButton
 			v-if="store.git"
-			:variant="gitChangeCount ? 'secondary' : 'normal'"
+			:variant="(gitChangeCount + gitStageCount) > 0 ? 'secondary' : 'normal'"
 			color="accent3"
 			:label="isAdmin ? 'Reset' : 'Zurücksetzen'"
 			:minified="variant == 'small'"
-			:disabled="isLoading || gitChangeCount <= 0"
+			:disabled="isLoading || (gitChangeCount + gitStageCount) <= 0"
 			@click="reset()">
 			<IconSync />
 		</ListButton>
 
 		<ListButton
 			color="accent"
-			:label="isAdmin ? 'Pull' : 'Aktualisieren'"
+			:label="isAdmin ? 'Fetch/Pull' : 'Aktualisieren'"
 			:minified="variant == 'small'"
 			:disabled="isLoading"
 			@click="pull()">
@@ -78,7 +91,7 @@ const { pull, reset, checkout, isLoading } = useGit();
 			:minified="variant == 'small'"
 			:disabled="isLoading || !canCommitPush"
 			:count="gitStageCount"
-			@click="emit('git', 'commit')">
+			@click="commitPush()">
 			<IconGitCommit />
 		</ListButton>
 

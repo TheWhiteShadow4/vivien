@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Cache
 {
-	private ConcurrentHashMap<String, CacheEntry> entries = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, CacheEntry> entries = new ConcurrentHashMap<>();
 	private final Path cacheFolder;
 
 	public Path getCacheFolder() { return cacheFolder; }
@@ -18,7 +18,6 @@ public class Cache
 	public Cache(String path) throws IOException
 	{
 		cacheFolder = Path.of(path).toAbsolutePath();
-		IO.println("Cache: " + cacheFolder);
 		Files.createDirectories(cacheFolder);
 
 		/*Path cacheMeta = cacheFolder.resolve(".cache");

@@ -2,7 +2,10 @@ package tws.vivien.core;
 
 
 import com.electronwill.nightconfig.core.file.FileConfig;
+import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tws.vivien.plugins.EnginePlugin;
 
 import java.io.File;
@@ -14,6 +17,8 @@ import java.util.function.Function;
 
 public class Config
 {
+	private static final Logger LOG = LoggerFactory.getLogger(Config.class);
+
 	private static final String CONFIG_FILE_NAME = "vivien-server.toml";
 
 	public Path webRoot;
@@ -32,6 +37,7 @@ public class Config
 
 	public String gitRemote = null;
 	public String gitBranch = null;
+	public MergeStrategy mergeStrategy;
 	public UsernamePasswordCredentialsProvider credentials;
 	public Map<String, ConfigView> views = new HashMap<>();
 	public Path repository;
@@ -83,6 +89,7 @@ public class Config
 
 		gitRemote = CReader.readString(this, config, "git.remote").get();
 		gitBranch = CReader.readString(this, config, "git.branch").get();
+		mergeStrategy = CReader.readString(this, config, "git.resolve").map(this::mapMergeStrategy).withDefault(MergeStrategy.OURS).get();
 
 		var defaultSecurity = mode == ServerMode.HOSTED ? SecurityMode.STRICT : SecurityMode.LAX;
 		security = CReader.readString(this, config, "server.security")
@@ -114,9 +121,22 @@ public class Config
 		loadViews(config);
 
 		loadEnginePlugin(config);
-
 		validateRepository(repository);
-		IO.println("Repository Pfad: " + repository);
+	}
+
+	private MergeStrategy mapMergeStrategy(String value)
+	{
+		return switch (value.toUpperCase())
+		{
+			case "OURS" -> MergeStrategy.OURS;
+			case "THEIRS" -> MergeStrategy.THEIRS;
+			case "RESOLVE" -> MergeStrategy.RESOLVE;
+			default ->
+			{
+				errors.add(new ConfigException("git.resolve", value));
+				yield MergeStrategy.OURS;
+			}
+		};
 	}
 
 	private void loadViews(FileConfig config)
@@ -143,7 +163,6 @@ public class Config
 					errors.add(new ConfigException(entry.getKey(), e));
 				}
 			}
-			IO.println(views);
 		}
 	}
 
@@ -174,7 +193,7 @@ public class Config
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				LOG.error("Engine Plugin nicht geladen", e);
 			}
 		}
 	}
@@ -187,7 +206,7 @@ public class Config
 		}
 		if (!Files.isDirectory(repository))
 		{
-			throw new RuntimeException("Repository Pfad '" + repository.toString() + "' nicht gefunden.");
+			throw new RuntimeException("Repository Pfad '" + repository + "' nicht gefunden.");
 		}
 	}
 
@@ -220,7 +239,7 @@ public class Config
 			}
 			catch(Exception e)
 			{
-				e.printStackTrace();
+				LOG.error("Ungültiger Parameter {}", configName, e);
 				reader.error = new ConfigException(configName, Objects.toString(toml.get(configName)), e);
 			}
 			reader.value = reader.inputValue;
@@ -257,7 +276,7 @@ public class Config
 				{
 					if (error == null)
 					{
-						e.printStackTrace();
+						LOG.error("Ungültiger Parameter {}", configName, e);
 						error = new ConfigException(configName, Objects.toString(inputValue), e);
 					}
 				}

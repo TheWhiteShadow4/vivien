@@ -1,7 +1,7 @@
 import emitter from "@/mitt";
-import { sendCheckout, sendCommit, sendDelete, sendFetch, sendPull, sendReset } from "@/services/git";
+import { sendCheckout, sendCommit, sendDelete, sendPull, sendReset } from "@/services/git";
 import { useStore, type StoreType } from "@/store";
-import type { GitBranchStatus } from "@/types/vivien-generated";
+import type { GitBranchStatus, ServerError } from "@/types/vivien-generated";
 import { ref, type Ref } from "vue";
 
 export function useGit()
@@ -10,7 +10,6 @@ export function useGit()
     const isLoading = ref(false);
 
 	const checkout = (branch: string) => doCheckout(store, isLoading, branch);
-	const fetch = () => doFetch(store, isLoading);
 	const commit = (message: string) => doCommit(store, isLoading, message);
 	const reset = () => doReset(store, isLoading);
 	const pull = () => doPull(store, isLoading);
@@ -18,7 +17,6 @@ export function useGit()
 
 	return {
 		checkout,
-		fetch,
 		commit,
 		reset,
 		pull,
@@ -41,34 +39,8 @@ async function doCheckout(store: StoreType, isLoading: Ref<boolean>, branch: str
 		}
 		else
 		{
-			emitter.emit("error", new Error(`Checkout fehlgeschlagen: ${response.status}`));
-		}
-	}
-	catch(err: unknown)
-	{
-		emitter.emit("error", err as Error);
-	}
-	finally
-	{
-		isLoading.value = false;
-	}
-}
-
-async function doFetch(store: StoreType, isLoading: Ref<boolean>)
-{
-	try
-	{
-		isLoading.value = true;
-
-		const response = await sendFetch();
-
-		if (response.ok)
-		{
-			store.git = await response.json() as GitBranchStatus
-		}
-		else
-		{
-			emitter.emit("error", new Error(`Fetch fehlgeschlagen: ${response.status}`));
+			const error = await response.json() as ServerError;
+			emitter.emit("error", error);
 		}
 	}
 	catch(err: unknown)
@@ -95,7 +67,8 @@ async function doPull(store: StoreType, isLoading: Ref<boolean>)
 		}
 		else
 		{
-			emitter.emit("error", new Error(`Fetch fehlgeschlagen: ${response.status}`));
+			const error = await response.json() as ServerError;
+			emitter.emit("error", error);
 		}
 	}
 	catch(err: unknown)
@@ -122,7 +95,8 @@ async function doReset(store: StoreType, isLoading: Ref<boolean>)
 		}
 		else
 		{
-			emitter.emit("error", new Error(`Reset fehlgeschlagen: ${response.status}`));
+			const error = await response.json() as ServerError;
+			emitter.emit("error", error);
 		}
 	}
 	catch(err: unknown)
@@ -154,7 +128,8 @@ async function doCommit(store: StoreType, isLoading: Ref<boolean>, message: stri
 		}
 		else
 		{
-			emitter.emit("error", new Error(`Commit fehlgeschlagen: ${response.status}`));
+			const error = await response.json() as ServerError;
+			emitter.emit("error", error);
 		}
 	}
 	catch(err: unknown)
@@ -181,7 +156,8 @@ async function doDelete(store: StoreType, isLoading: Ref<boolean>, file: string)
 		}
 		else
 		{
-			emitter.emit("error", new Error(`Löschen fehlgeschlagen: ${response.status}`));
+			const error = await response.json() as ServerError;
+			emitter.emit("error", error);
 		}
 	}
 	catch(err: unknown)

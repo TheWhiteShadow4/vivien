@@ -13,8 +13,8 @@ import { useStore } from './store/index.ts'
 import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt.ts'
-import { sendFetch } from './services/git.ts'
 import Splitter from './components/base/Splitter.vue'
+import { useGit } from './handler/useGit.ts'
 
 const store = useStore();
 
@@ -85,13 +85,15 @@ async function updatePreview(el: RepositoryElement | null)
 	}
 }
 
+const { commit } = useGit();
+
 function onGitCommand(arg: string)
 {
 	console.log("onGitCommand " + arg);
 	switch (arg)
 	{
 		case "commit": showCommitDialog.value = true; break;
-		case "fetch": sendFetch(); break;
+		case "push": commit(""); break;
 	}
 }
 

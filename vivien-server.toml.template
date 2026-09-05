@@ -5,6 +5,7 @@ mode = "hosted" # Wir entwickeln mit hosted, weil dabei der Browser nicht geöff
 repo_url = "https://github.com"
 git.user = <Git_USER>
 git.token = <GIT_TOKEN>
+git.resolve = "ours"
 repo_path = "./game-repo"
 engine_plugin = "Unity"
 

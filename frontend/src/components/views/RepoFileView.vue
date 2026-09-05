@@ -279,11 +279,16 @@ function refreshFolder()
 	fetchRepository(currentFolder.value ? currentFolder.value.path : "");
 }
 
-function refreshFile(path: string)
+async function refreshFile(path: string)
 {
 	const d = path.lastIndexOf('/');
 	const folder = (d != -1) ? path.substring(0, d) : "/";
-	fetchRepository(folder);
+	await fetchRepository(folder);
+	const el = currentFolder.value?.children?.find(e => e.path == path);
+	if (el != null)
+	{
+		selectedElement.value = el;
+	}
 }
 
 onMounted(() => {

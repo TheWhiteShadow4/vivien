@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { GitStageOperation, GitStageRequest, ServerError, StageInfo } from './types/vivien-generated';
+import type { GitBranchStatus, GitStageOperation, GitStageRequest, ServerError, StageInfo } from './types/vivien-generated';
 
 
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
@@ -98,7 +98,7 @@ export async function uploadFiles(event: Event, fileOrFolder: string): Promise<b
 
 			if (response.ok)
 			{
-				store.stage = await response.json() as StageInfo
+				store.git = await response.json() as GitBranchStatus
 				emitter.emit("refresh-folder");
 				return true;
 			}

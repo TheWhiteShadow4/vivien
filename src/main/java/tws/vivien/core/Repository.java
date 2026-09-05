@@ -6,6 +6,10 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tws.vivien.dto.*;
 
 import java.io.Closeable;
@@ -16,6 +20,8 @@ import java.util.List;
 
 public class Repository implements Closeable
 {
+	private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
+
 	private final Path rootPath;
 	private final Git gitApi;
 	private final RepositoryCache cache;
@@ -36,6 +42,11 @@ public class Repository implements Closeable
 	}
 
 	public RepositoryCache getCache() { return cache; }
+
+	public GitBranchStatus getCachedStatus()
+	{
+		return branchStatus;
+	}
 
 	public RepositoryElement getView(ConfigView view, String path) throws IOException
 	{
@@ -82,10 +93,11 @@ public class Repository implements Closeable
 		if (config.gitRemote != null)
 			result.remote = getRemoteStatus(config, result.branch);
 
-		result.modified = status.hasUncommittedChanges();
+		result.uncommited = status.hasUncommittedChanges();
 		result.untracked = status.getUntracked();
 		result.added = status.getAdded();
-		result.changed = status.getChanged();
+		result.changed = status.getChanged(); // Änderungen in der Stage
+		result.modified = status.getModified(); // Änderungen NICHT in der Stage
 		result.removed = status.getRemoved();
 		result.missing = status.getMissing();
 		result.conflicts = status.getConflicting();
@@ -108,21 +120,25 @@ public class Repository implements Closeable
 
 	public void trackFile(Path file) throws Exception
 	{
+		LOG.info("git add {}", file);
 		gitApi.add().addFilepattern(getRelativePath(file)).call();
 	}
 
 	public void untrackFile(Path file) throws Exception
 	{
+		LOG.info("git reset {}", file);
 		gitApi.reset().setRef(Constants.HEAD).addPath(getRelativePath(file)).call();
 	}
 
 	public void deleteFile(Path file) throws Exception
 	{
+		LOG.info("git rm {}", file);
 		gitApi.rm().addFilepattern(getRelativePath(file)).call();
 	}
 
 	public void undeleteFile(Path file) throws Exception
 	{
+		LOG.info("git checkout --HEAD {}", file);
 		gitApi.checkout()
 		   .setStartPoint(Constants.HEAD)
 		   .addPath(getRelativePath(file))
@@ -131,12 +147,14 @@ public class Repository implements Closeable
 
 	public void checkout(String branch) throws Exception
 	{
+		LOG.info("git checkout branch {}", branch);
 		gitApi.checkout().setName(branch).call();
 	}
 
 	public void reset() throws Exception
 	{
-		gitApi.reset().setRef(Constants.HEAD).setMode(ResetCommand.ResetType.MIXED).call();
+		LOG.info("git reset --HEAD");
+		gitApi.reset().setRef(Constants.HEAD).setMode(ResetCommand.ResetType.HARD).call();
 	}
 
 	public void commit(CommitRequest request) throws Exception
@@ -160,31 +178,51 @@ public class Repository implements Closeable
 		if (!stage.added.isEmpty()) add.call();
 		if (!stage.removed.isEmpty()) rm.call();*/
 
+		LOG.info("git commit -m {}", request.message);
 		gitApi.commit().setAuthor(request.name, request.email).setMessage(request.message).call();
 	}
 
-	public void push(Config config) throws Exception
+	public RemoteRefUpdate.Status push(Config config) throws Exception
 	{
-		gitApi.push().setCredentialsProvider(config.credentials).call();
+		LOG.info("git push");
+		var results = gitApi.push().setCredentialsProvider(config.credentials).call();
+		for(PushResult result : results)
+		{
+			var iter = result.getRemoteUpdates().iterator();
+			if (iter.hasNext())
+			{
+				RemoteRefUpdate update = iter.next();
+				return update.getStatus();
+			}
+		}
+		return null;
 	}
 
 	public void pull(Config config) throws Exception
 	{
-		gitApi.push().setCredentialsProvider(config.credentials).call();
+		LOG.info("git pull");
+		var result = gitApi.pull().setCredentialsProvider(config.credentials).setStrategy(config.mergeStrategy) .call();
+		if (!result.isSuccessful())
+		{
+			throw new Exception("Pull fehlgeschlagen");
+		}
 	}
 
 	public void fetch(Config config) throws Exception
 	{
+		LOG.info("git fetch");
 		gitApi.fetch().setCredentialsProvider(config.credentials).call();
 	}
 
 	public void stash() throws Exception
 	{
+		LOG.info("git stashCreate");
 		gitApi.stashCreate().call();
 	}
 
 	public void unstash() throws Exception
 	{
+		LOG.info("git stashApply");
 		gitApi.stashApply().call();
 	}
 

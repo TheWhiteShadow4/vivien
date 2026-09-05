@@ -23,12 +23,18 @@ const props = defineProps<{
 
 const isLoading = ref<boolean>(false)
 
-const canTrack = computed(() => {
+const isUntracked = computed(() => {
 	return store.git && store.git.untracked.indexOf(props.element.path) != -1;
 });
 
+const canAddToStage = computed(() => {
+	return store.git && (store.git.untracked.indexOf(props.element.path) != -1
+				|| store.git.modified.indexOf(props.element.path) != -1);
+});
+
 const canUntrack = computed(() => {
-	return store.git && store.git.added.indexOf(props.element.path) != -1;
+	return store.git && (store.git.added.indexOf(props.element.path) != -1
+				|| store.git.changed.indexOf(props.element.path) != -1);
 });
 
 const isRemoved = computed(() => {
@@ -68,7 +74,7 @@ async function deleteFile()
 	{
 		if (isLoading.value) return;
 
-		if (canTrack.value)
+		if (isUntracked.value)
 		{
 			// Datei ist nicht im Git, wir müssen sie normal löschen.
 			const response = await sendDelete(props.element.path);
@@ -156,7 +162,7 @@ async function handleFileChange(event: Event)
 <template>
 	<nav class="bg-vit-surface w-full h-24 border border-vit-border flex gap-4 p-2">
 		<BaseIconButton
-			v-if="canTrack"
+			v-if="canAddToStage"
 			@click="changeStaged('Track')"
 			:disabled="isLoading"
 			variant="normal" size="xl"

@@ -6,6 +6,9 @@ import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.util.FileUtil;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tws.vivien.dto.*;
 import tws.vivien.handlers.IHandler;
 
@@ -24,6 +27,8 @@ import java.util.stream.Stream;
 
 public class Server
 {
+	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+
 	private final Config config;
 	private final Cache serverCache;
 	private final Repository repository;
@@ -45,7 +50,8 @@ public class Server
 
 	public void start()
 	{
-		IO.println(System.getProperty("user.dir"));
+		LOG.debug("Working Directory: {}", System.getProperty("user.dir"));
+		LOG.debug("Cache Directory: {}", serverCache.getCacheFolder());
 
 		/*try
 		{
@@ -142,10 +148,8 @@ public class Server
 			c.routes.post("/api/delete", this::delete);
 			c.routes.post("/api/staged", this::staged);
 			c.routes.post("/api/checkout", this::checkout);
-			c.routes.post("/api/fetch", this::fetch);
 			c.routes.post("/api/reset", this::reset);
 			c.routes.post("/api/commit", this::commit);
-			c.routes.post("/api/push", this::push);
 			c.routes.post("/api/pull", this::pull);
 			c.routes.post("/api/stash", this::stash);
 			c.routes.post("/api/unstash", this::unstash);
@@ -153,7 +157,7 @@ public class Server
 		});
 		app.start(config.port);
 
-		System.out.println("Vivien läuft auf http://localhost:" + config.port);
+		System.out.println("Vivien läuft auf " + config.serverHost + ":" + config.port);
 	}
 
 	public void shutdown() throws IOException
@@ -182,6 +186,7 @@ public class Server
 		}
 		catch (IOException e)
 		{
+			LOG.error("getRepository", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
@@ -215,6 +220,7 @@ public class Server
 		}
 		catch (Exception e)
 		{
+			LOG.error("getPreview", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
@@ -229,7 +235,7 @@ public class Server
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("getBranchStatus", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 			return;
@@ -241,7 +247,7 @@ public class Server
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("getBranchStatus", e);
 			requestErrors.add(e);
 		}
 		ctx.json(state);
@@ -266,7 +272,6 @@ public class Server
 
 		Path targetPath = repository.resolve(fileOrFolder);
 
-		//UserStage userstage = userStages.computeIfAbsent(email, k -> new UserStage());
 		try
 		{
 			gitLock.readLock().lock();
@@ -301,8 +306,9 @@ public class Server
 		}
 		catch(Exception e)
 		{
+			LOG.error("uploadFiles", e);
 			ctx.status(500);
-			requestErrors.add(e);
+			ctx.json(ServerError.fromError(e));
 		}
 		finally
 		{
@@ -331,6 +337,7 @@ public class Server
 		}
 		catch (Exception e)
 		{
+			LOG.error("uploadFiles", e);
 			requestErrors.add(e);
 			ctx.status(500);
 		}
@@ -352,14 +359,14 @@ public class Server
 			gitLock.readLock().lock();
 			var request = ctx.bodyAsClass(GitStageRequest.class);
 			Path file = repository.resolve(request.file);
-			IO.println("Delete: " + file);
+			LOG.info("Delete: {}", file);
 			Files.deleteIfExists(file);
 		}
 		catch (Exception e)
 		{
+			LOG.error("delete", e);
 			ctx.status(500);
-			requestErrors.add(e);
-			e.printStackTrace();
+			ctx.json(ServerError.fromError(e));
 		}
 		finally
 		{
@@ -399,9 +406,9 @@ public class Server
 		}
 		catch (Exception e)
 		{
+			LOG.error("staged", e);
 			ctx.status(500);
 			requestErrors.add(e);
-			e.printStackTrace();
 		}
 		finally
 		{
@@ -423,7 +430,7 @@ public class Server
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("checkout", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
@@ -443,7 +450,7 @@ public class Server
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("reset", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
@@ -460,16 +467,27 @@ public class Server
 			CommitRequest request = ctx.bodyAsClass(CommitRequest.class);
 
 			gitLock.writeLock().lock();
-			repository.commit(request);
+			var status = repository.getCachedStatus();
+			if (status == null) status = repository.getBranchStatus(config);
+
+			if (status.changed.size() > 0) // Haben wir Änderungen in der Stage
+			{
+				repository.commit(request);
+			}
 			if (config.gitRemote != null)
 			{
-				repository.push(config);
+				var result = repository.push(config);
+				if (result == RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)
+				{
+					ctx.status(409);
+					ctx.json(new ServerError("Speichern fehlgeschlagen. Aktualisierung erforderlich.", null));
+				}
 			}
 			getBranchStatus(ctx);
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("commit", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
@@ -479,7 +497,7 @@ public class Server
 		}
 	}
 
-	private void push(Context ctx)
+	/*private void push(Context ctx)
 	{
 		try
 		{
@@ -491,41 +509,33 @@ public class Server
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
-	}
+	}*/
 
 	private void pull(Context ctx)
 	{
 		try
 		{
-			if (config.gitRemote != null)
-			{
-				repository.pull(config);
-			}
-			getBranchStatus(ctx);
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			ctx.status(500);
-			ctx.json(ServerError.fromError(e));
-		}
-	}
-
-	private void fetch(Context ctx)
-	{
-		try
-		{
+			gitLock.writeLock().lock();
 			if (config.gitRemote != null)
 			{
 				repository.fetch(config);
+				repository.pull(config);
+				getBranchStatus(ctx);
 			}
-			getBranchStatus(ctx);
+			else
+			{
+				ctx.json(repository.getCachedStatus());
+			}
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("pull", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
+		}
+		finally
+		{
+			gitLock.writeLock().unlock();
 		}
 	}
 
@@ -539,7 +549,7 @@ public class Server
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("stash", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
@@ -559,7 +569,7 @@ public class Server
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("unstash", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}

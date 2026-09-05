@@ -36,8 +36,10 @@ const stateBadge = computed(() => {
 	{
 		if (store.git.added.indexOf(props.element.path) >= 0) return "bg-vit-accent";
 		else if (store.git.changed.indexOf(props.element.path) >= 0) return "bg-vit-accent2";
+		else if (store.git.modified.indexOf(props.element.path) >= 0) return "bg-vit-highlight";
 		else if (store.git.untracked.indexOf(props.element.path) >= 0) return "bg-vit-highlight";
 		else if (store.git.removed.indexOf(props.element.path) >= 0) return "bg-red-500";
+		else if (store.git.missing.indexOf(props.element.path) >= 0) return "bg-red-500";
 	}
 	return "bg-vit-border";
 })

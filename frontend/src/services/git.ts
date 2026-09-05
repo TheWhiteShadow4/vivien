@@ -13,14 +13,6 @@ export async function sendCheckout(branch: string): Promise<Response>
 	return fetchWithView("/api/checkout", options);
 }
 
-export async function sendFetch(): Promise<Response>
-{
-	const options: RequestInit = {
-		method: "POST"
-	};
-	return fetchWithView("/api/fetch", options);
-}
-
 export async function sendPull(): Promise<Response>
 {
 	const options: RequestInit = {
