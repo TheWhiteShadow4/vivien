@@ -9,7 +9,7 @@ import { useStore } from '@/store/index.ts';
 
 const store = useStore();
 
-const emit = defineEmits(["git"]);
+const emit = defineEmits(["git", "user"]);
 
 function toggleSidebar()
 {
@@ -37,6 +37,7 @@ const headerLayoutStyles  = computed(() => {
 			:small="!store.settings.sidebar"
 			:username="store.settings.username"
 			:view="store.settings.view"
+			@click="emit('user')"
 		/>	
 	</div>
 	<div v-if="store.settings.sidebar" :class="branchBadge">

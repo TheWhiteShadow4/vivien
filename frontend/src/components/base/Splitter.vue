@@ -7,7 +7,7 @@ import 'splitpanes/dist/splitpanes.css'
 </script>
 
 <template>
-<Splitpanes class="h-full" vertical>
+<splitpanes class="h-full" vertical>
 	<Pane min-size="20">
 		<slot name="links" />
 	</pane>

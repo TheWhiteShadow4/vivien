@@ -11,7 +11,5 @@ public class ServerState
 	public ServerMode mode;
 	@Nullable
 	public String branch;
-	@Nullable
-	public ServerUser user;
 	public List<ServerError> serverErrors;
 }

@@ -1,10 +1,13 @@
 package tws.vivien.dto;
 
+import jakarta.annotation.Nullable;
+
 import java.util.Set;
 
 public class GitBranchStatus
 {
 	public String branch;
+	@Nullable
 	public RemoteGitStatus remote;
 	public boolean modified;
 	public Set<String> untracked;

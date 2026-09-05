@@ -1,6 +1,6 @@
 package tws.vivien.core;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Cache
 {
-	private final ConcurrentHashMap<String, CacheEntry> entries = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<String, CacheEntry> entries = new ConcurrentHashMap<>();
 	private final Path cacheFolder;
 
 	public Path getCacheFolder() { return cacheFolder; }
@@ -20,6 +20,19 @@ public class Cache
 		cacheFolder = Path.of(path).toAbsolutePath();
 		IO.println("Cache: " + cacheFolder);
 		Files.createDirectories(cacheFolder);
+
+		/*Path cacheMeta = cacheFolder.resolve(".cache");
+		if (Files.isRegularFile(cacheMeta))
+		{
+			try (ObjectInputStream stream = new ObjectInputStream(new FileInputStream(cacheMeta.toFile())))
+			{
+				entries = (ConcurrentHashMap<String, CacheEntry>) stream.readObject();
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}*/
 	}
 
 	public CacheEntry get(String hash)
@@ -44,6 +57,15 @@ public class Cache
 			Cleanup(Duration.ofMinutes(10));
 		}
 		entries.put(hash, new CacheEntry(path, metadata));
+
+		/*try(ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(cacheFolder.resolve(".cache").toFile())))
+		{
+			stream.writeObject(entries);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}*/
 	}
 
 	public void Cleanup(Duration maxAccessTime)
@@ -78,7 +100,7 @@ public class Cache
 		}
 	}
 
-	public static class CacheEntry
+	public static class CacheEntry implements Serializable
 	{
 		public Path path;
 		public Object metadata;

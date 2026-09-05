@@ -1,8 +1,6 @@
 package tws.vivien.dto;
 
-import jakarta.annotation.Nullable;
-
-import java.util.Map;
+import java.io.Serializable;
 
 public class FileObject
 {
@@ -17,7 +15,7 @@ public class FileObject
 		this.metadata = metadata;
 	}
 
-	public static class FileObjectMeta
+	public static class FileObjectMeta implements Serializable
 	{
 		public String mimeType;
 		public int size;
@@ -25,7 +23,5 @@ public class FileObject
 		public int height;
 		public int srcWidth;
 		public int srcHeight;
-		@Nullable
-		public Map<String, Object> importProps;
 	}
 }

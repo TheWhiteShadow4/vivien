@@ -9,7 +9,7 @@ import IconDownload from '@/icons/IconDownload.vue';
 import { useStore } from '@/store/index.ts';
 import type { GitBranchStatus, GitStageOperation, RepositoryElement, ServerError } from '@/types/vivien-generated.js';
 import { computed, ref } from 'vue';
-import { sendChangeStaged, uploadFiles } from '@/client.ts';
+import { fetchWithView, sendChangeStaged, uploadFiles } from '@/client.ts';
 import emitter from '@/mitt.ts';
 import IconClose from '@/icons/IconClose.vue';
 import IconSync from '@/icons/IconSync.vue';
@@ -104,7 +104,7 @@ async function download()
 	{
 		if (isLoading.value) return;
 
-		const response = await fetch(`/api/download?file=${props.element.path}`);
+		const response = await fetchWithView(`/api/download?file=${props.element.path}`);
 
 		if (response.ok)
 		{
@@ -154,7 +154,7 @@ async function handleFileChange(event: Event)
 </script>
 
 <template>
-	<nav class="bg-vit-surface w-full h-24 border border-vit-border flex gap-2 p-2">
+	<nav class="bg-vit-surface w-full h-24 border border-vit-border flex gap-4 p-2">
 		<BaseIconButton
 			v-if="canTrack"
 			@click="changeStaged('Track')"
@@ -198,7 +198,7 @@ async function handleFileChange(event: Event)
 			@click="changeStaged('Undelete')"
 			:disabled="isLoading"
 			variant="normal" size="xl"
-			class="ml-6 flex flex-col items-center">
+			class="flex flex-col items-center">
 			<IconSync />
 			<span class="text-sm">Zurück</span>
 		</BaseIconButton>
@@ -208,7 +208,7 @@ async function handleFileChange(event: Event)
 			@click="deleteFile()"
 			:disabled="isLoading"
 			variant="danger" size="xl"
-			class="ml-6 flex flex-col items-center">
+			class="flex flex-col items-center">
 			<IconClose />
 			<span class="text-sm">Löschen</span>
 		</BaseIconButton>

@@ -30,7 +30,7 @@ const normalStyle = "font-medium"
 const selectedStyle = "font-bold"
 
 // Typ-spezifische Farben und Icons
-const isFolder = computed(() => props.element.type === 'FOLDER')
+const isFolder = computed(() => props.element.type !== 'FILE')
 const stateBadge = computed(() => {
 	if (store.git)
 	{

@@ -61,6 +61,10 @@ function selectParent()
 				fetchRepository(parentPath);
 			}
 		}
+		else if (el.type == "VIRTUAL")
+		{
+			clearSearch();
+		}
 		emit('select', null);
 	}
 }
@@ -161,6 +165,7 @@ async function fetchSearch(query: string)
 
 function clearSearch()
 {
+	searchQuery.value = "";
 	if (previousFolder.value != null)
 	{
 		currentFolder.value = previousFolder.value;
@@ -170,6 +175,7 @@ function clearSearch()
 // Funktion zum asynchronen Laden der Daten vom Server
 async function fetchRepository(path: string)
 {
+	if (store.settings.username == null) return;
 	try
 	{
 		isLoading.value = true
@@ -270,8 +276,7 @@ function openFileBrowser()
 
 function refreshFolder()
 {
-	if (!currentFolder.value) return;
-	fetchRepository(currentFolder.value.path);
+	fetchRepository(currentFolder.value ? currentFolder.value.path : "");
 }
 
 function refreshFile(path: string)
@@ -298,94 +303,92 @@ onUnmounted(() => {
 })
 
 // Strukturierte Design-Klassen aus dem vit-Theme
-const tableWrapper = "w-full border border-vit-border rounded-vit-radius bg-vit-surface shadow-vit-shadow overflow-hidden"
+const tableWrapper = "w-full h-full flex flex-col border border-vit-border rounded-vit-radius bg-vit-surface shadow-vit-shadow"
 const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex justify-between items-center text-sm font-semibold text-vit-text-muted"
 </script>
 
 <template>
-	<div>
-		<Teleport v-if="isMounted" to="#fileview-toolbar">	
-			<TextInput
-				v-model="searchQuery"
-				type="search"
-				placeholder="Repository durchsuchen"
-				@enter="fetchSearch(searchQuery)"
-				@clear="clearSearch()">
-				<BaseIconButton @click="fetchSearch(searchQuery)">
-				<IconSearch />
-			</BaseIconButton>
-			</TextInput>
-			<Tooltip text="Datei-Filter">
-			<BaseIconButton :disabled="true"><IconNewFolder /></BaseIconButton>
-			</Tooltip>
-			<Tooltip text="Dateien hochladen">
-			<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()">
-				<IconUpload />
-			</BaseIconButton>
-			</Tooltip>
-			<input 
-				type="file" 
-				ref="fileInput" 
-				style="display: none"
-				multiple
-				@change="handleFileChange" 
-				/>
-		</Teleport>
-		<Teleport v-if="isMounted" to="#papierkorb">
-			<ListButton
-				color="ghost"
-				label="Papierkorb"
-				:minified="!store.settings.sidebar"
-				:disabled="isLoading && deleteCount > 0"
-				:count="deleteCount"
-				@click="fetchSearch(':missing,removed')">
-				<IconBin />
-			</ListButton>
-		</Teleport>
-		<div :class="tableWrapper">
-			<!-- Tabellen-Kopf -->
-			<div :class="tableHeader">
-				<span>Name</span>
-				<span class="w-16 text-right">Status</span>
+	<Teleport v-if="isMounted" to="#fileview-toolbar">	
+		<TextInput
+			v-model="searchQuery"
+			type="search"
+			placeholder="Repository durchsuchen"
+			@enter="fetchSearch(searchQuery)"
+			@clear="clearSearch()">
+			<BaseIconButton @click="fetchSearch(searchQuery)">
+			<IconSearch />
+		</BaseIconButton>
+		</TextInput>
+		<Tooltip text="Datei-Filter">
+		<BaseIconButton :disabled="true"><IconNewFolder /></BaseIconButton>
+		</Tooltip>
+		<Tooltip text="Dateien hochladen">
+		<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()">
+			<IconUpload />
+		</BaseIconButton>
+		</Tooltip>
+		<input 
+			type="file" 
+			ref="fileInput" 
+			style="display: none"
+			multiple
+			@change="handleFileChange" 
+			/>
+	</Teleport>
+	<Teleport v-if="isMounted" to="#papierkorb">
+		<ListButton
+			color="ghost"
+			label="Papierkorb"
+			:minified="!store.settings.sidebar"
+			:disabled="isLoading && deleteCount > 0"
+			:count="deleteCount"
+			@click="fetchSearch(':missing,removed')">
+			<IconBin />
+		</ListButton>
+	</Teleport>
+	<div :class="tableWrapper">
+		<!-- Tabellen-Kopf -->
+		<div :class="tableHeader">
+			<span>Name</span>
+			<span class="w-16 text-right">Status</span>
+		</div>
+
+		<!-- Liste der Elemente -->
+		<div class="flex-1 overflow-auto">
+			<!-- Lade-Zustand -->
+			<div v-if="isLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
+				Repository wird geladen...
 			</div>
 
-			<!-- Liste der Elemente -->
-			<div class="flex flex-col">
-				<!-- Lade-Zustand -->
-				<div v-if="isLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
-					Repository wird geladen...
-				</div>
+			<!-- Fehler-Zustand -->
+			<div v-else-if="errorMessage" class="p-8 text-center text-red-500 font-medium">
+				{{ errorMessage }}
+			</div>
 
-				<!-- Fehler-Zustand -->
-				<div v-else-if="errorMessage" class="p-8 text-center text-red-500 font-medium">
-					{{ errorMessage }}
-				</div>
-
-				<!-- Render der einzelnen Zeilen (nur wenn Daten vorhanden) -->
-				<template v-else-if="currentFolder">
-					<div v-if="currentFolder?.type != 'ROOT'">
-						<BaseRepoElement
-							label=".."
-							:element="currentFolder"
-							:selected="false"
-							@clicked="selectParent()" />
-					</div>
-
-					<!-- Falls das Verzeichnis leer ist -->
-					<div v-if="currentFolder.children && currentFolder.children.length === 0"
-						class="p-8 text-center text-vit-text-muted">
-						Hier ist nix drin.
-					</div>
+			<!-- Render der einzelnen Zeilen (nur wenn Daten vorhanden) -->
+			<template v-else-if="currentFolder">
+				<div v-if="currentFolder?.type != 'ROOT'">
 					<BaseRepoElement
-						v-for="el in currentFolder.children"
-						:key="el.name"
-						:element="el"
-						:folder="currentFolder.type == 'VIRTUAL'"
-						:selected="el == selectedElement"
-						@clicked="selectElement(el, $event)"
-					/>
-				</template>
-			</div>
+						label=".."
+						:element="currentFolder"
+						:selected="false"
+						@clicked="selectParent()" />
+				</div>
+
+				<!-- Falls das Verzeichnis leer ist -->
+				<div v-if="currentFolder.children && currentFolder.children.length === 0"
+					class="p-8 text-center text-vit-text-muted">
+					Hier ist nix drin.
+				</div>
+				<BaseRepoElement
+					v-for="el in currentFolder.children"
+					:key="el.name"
+					:element="el"
+					:folder="currentFolder.type == 'VIRTUAL'"
+					:selected="el == selectedElement"
+					@clicked="selectElement(el, $event)"
+				/>
+			</template>
 		</div>
 	</div>
 </template>

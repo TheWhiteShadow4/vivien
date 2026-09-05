@@ -10,11 +10,11 @@ import tws.vivien.dto.*;
 import tws.vivien.handlers.IHandler;
 
 import java.awt.*;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,6 @@ public class Server
 	private final Cache serverCache;
 	private final Repository repository;
 	//private final Map<String, UserStage> userStages = new HashMap<>();
-	private final Path webRoot;
 	private final boolean productionMode;
 	// Lock um Git Operationen(write) gegenüber kleine Datei Operationen(read) abzusichern.
 	private final ReentrantReadWriteLock gitLock = new ReentrantReadWriteLock();
@@ -41,7 +40,6 @@ public class Server
 		this.config = config;
 		this.serverCache = new Cache("cache");
 		this.repository = new Repository(config.repository);
-		this.webRoot = Paths.get(".").toAbsolutePath();
 		this.productionMode = productionMode;
 	}
 
@@ -107,14 +105,15 @@ public class Server
 			// Der Before-Filter für geschützte Routen
 			c.routes.before("/api/*", ctx ->
 			{
-				if (config.user != null)
+				if (config.password != null)
 				{
 					var credentials = ctx.basicAuthCredentials();
-					if (credentials != null
-							&& Objects.equals(config.user, credentials.getUsername())
-							&& Objects.equals(config.password, credentials.getPassword()))
+					if (credentials != null && Objects.equals(config.password, credentials.getPassword()))
 					{
-						return; // Zugriff erlaubt, Filter wird verlassen
+						if (config.validUsers == null || config.validUsers.contains(credentials.getUsername()))
+						{
+							return; // OK
+						}
 					}
 					// Der Header 'WWW-Authenticate' sagt dem Browser, dass es Basic Auth ist
 					ctx.header("WWW-Authenticate", "Basic realm=\"Protected Area\"");
@@ -147,6 +146,7 @@ public class Server
 			c.routes.post("/api/reset", this::reset);
 			c.routes.post("/api/commit", this::commit);
 			c.routes.post("/api/push", this::push);
+			c.routes.post("/api/pull", this::pull);
 			c.routes.post("/api/stash", this::stash);
 			c.routes.post("/api/unstash", this::unstash);
 			c.routes.post("/api/upload", this::uploadFiles);
@@ -158,8 +158,7 @@ public class Server
 
 	public void shutdown() throws IOException
 	{
-		if (repository != null)
-			repository.close();
+		repository.close();
 	}
 
 	private void getRepository(Context ctx)
@@ -206,8 +205,13 @@ public class Server
 				return;
 			}
 
-			FileObject obj = handler.generatePreview(webRoot, repository, serverCache, file);
+			FileObject obj = handler.generatePreview(config, repository, serverCache, file);
 			ctx.json(obj);
+		}
+		catch(FileNotFoundException e)
+		{
+			ctx.status(410);
+			ctx.json(ServerError.fromError(e));
 		}
 		catch (Exception e)
 		{
@@ -221,7 +225,7 @@ public class Server
 		GitBranchStatus state;
 		try
 		{
-			state = repository.getBranchStatus();
+			state = repository.getBranchStatus(config);
 		}
 		catch(Exception e)
 		{
@@ -457,9 +461,9 @@ public class Server
 
 			gitLock.writeLock().lock();
 			repository.commit(request);
-			if (config.remoteGit != null)
+			if (config.gitRemote != null)
 			{
-				repository.push();
+				repository.push(config);
 			}
 			getBranchStatus(ctx);
 		}
@@ -479,7 +483,24 @@ public class Server
 	{
 		try
 		{
-			repository.push();
+			repository.push(config);
+			getBranchStatus(ctx);
+		}
+		catch (Exception e)
+		{
+			ctx.status(500);
+			ctx.json(ServerError.fromError(e));
+		}
+	}
+
+	private void pull(Context ctx)
+	{
+		try
+		{
+			if (config.gitRemote != null)
+			{
+				repository.pull(config);
+			}
 			getBranchStatus(ctx);
 		}
 		catch (Exception e)
@@ -494,9 +515,9 @@ public class Server
 	{
 		try
 		{
-			if (config.remoteGit != null)
+			if (config.gitRemote != null)
 			{
-				repository.fetch();
+				repository.fetch(config);
 			}
 			getBranchStatus(ctx);
 		}

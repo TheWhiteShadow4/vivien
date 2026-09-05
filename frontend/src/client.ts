@@ -3,28 +3,21 @@ import { useStore } from '@/store'
 import emitter from './mitt';
 import type { GitStageOperation, GitStageRequest, ServerError, StageInfo } from './types/vivien-generated';
 
-/**
- * Ein Wrapper um das native fetch, der automatisch den View Parameter als Header mitsendet. 
- */
+
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
 {
-	// 1. Store innerhalb der Funktion aufrufen (wichtig, da Pinia beim App-Start bereit sein muss)
 	const store = useStore();
 
-	// 2. Bestehende Header beibehalten oder neue Headers-Instanz erstellen
 	const headers = new Headers(options.headers);
 
-	// 3. Variablen aus dem Store als Custom-Header injizieren
 	headers.set('X-App-View', store.settings.view);
-	//headers.set('X-App-User', store.settings.username)
+	headers.set('Authorization', `Basic ${store.settings.credentials}`);
 
-	// Falls du JSON sendest, kannst du das hier auch direkt als Standard setzen:
-	if (!headers.has('Content-Type') && (options.method === 'POST' || options.method === 'PUT'))
+	if (!headers.has('Content-Type') && (options.method === 'POST'))
 	{
 		headers.set('Content-Type', 'application/json');
 	}
 
-	// 4. Das originale fetch mit den erweiterten Optionen ausführen
 	return fetch(url, {
 		...options,
 		headers
@@ -37,14 +30,13 @@ export async function sendChangeStaged(file: string, op: GitStageOperation): Pro
 
 	const options: RequestInit = {
 		method: "POST",
-		headers: {'Content-Type': 'application/json'},
 		body: JSON.stringify({
 			op: op,
 			email: store.settings.email,
 			file: file
 		} as GitStageRequest)
 	};
-	return fetch("/api/staged", options);
+	return fetchWithView("/api/staged", options);
 }
 
 export function emitDisconectError(status: string)
@@ -99,6 +91,7 @@ export async function uploadFiles(event: Event, fileOrFolder: string): Promise<b
 		try
 		{
 			const response = await fetch('/api/upload', {
+				headers: {'Authorization': `Basic ${store.settings.credentials}`},
 				method: 'POST',
 				body: formData,
 			})

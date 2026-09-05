@@ -1,7 +1,15 @@
 // src\store\index.ts
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import type { GitBranchStatus, StageInfo, UserSettings } from '@/types/vivien-generated'
+import type { GitBranchStatus, StageInfo } from '@/types/vivien-generated'
+
+export interface UserSettings {
+    username?: string;
+    email?: string;
+    credentials?: string;
+    view: string;
+    sidebar: boolean;
+}
 
 // Der Name 'settings' ist der eindeutige Identifier des Stores
 export const useStore = defineStore('settings', () => {
@@ -11,7 +19,7 @@ export const useStore = defineStore('settings', () => {
 
 	// 1. Initialisierung: Versuche aus dem LocalStorage zu laden, sonst nimm Defaults
 	const settings = ref<UserSettings>({
-		view: 'admin',
+		view: 'artist',
 		sidebar: true,
 		...JSON.parse(localStorage.getItem('vivian_user') || '{}')
 	})

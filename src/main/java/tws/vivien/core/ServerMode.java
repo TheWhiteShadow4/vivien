@@ -9,7 +9,6 @@ public enum ServerMode
 
 	public static ServerMode fromString(String value)
 	{
-		if (value == null) return null;
 		return ServerMode.valueOf(value.trim().toUpperCase());
 	}
 }

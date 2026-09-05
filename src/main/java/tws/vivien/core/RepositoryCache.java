@@ -3,7 +3,6 @@ package tws.vivien.core;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.ignore.IgnoreNode;
 import tws.vivien.dto.ElementType;
-import tws.vivien.dto.GitFileStatus;
 import tws.vivien.dto.RepositoryElement;
 import tws.vivien.dto.RepositoryRoot;
 
@@ -131,14 +130,16 @@ public class RepositoryCache
 		return this.rootElement;
 	}
 
-	// Liefert ein spezifisches Unterverzeichnis für das Lazy Loading im Client
-	public RepositoryElement getDirectory(String path) throws IOException
+	public RepositoryElement getDirectory(String path)
 	{
 		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
 		if (path.isEmpty() || path.equals("/")) return getRoot();
-		var result = pathLookup.get(path);
-		if (result == null) throw new IOException("Element für '" + path + "' nicht gefunden.");
-		return result;
+		return pathLookup.get(path);
+	}
+
+	public RepositoryElement getFile(String path)
+	{
+		return pathLookup.get(path);
 	}
 
 	/**
@@ -152,7 +153,6 @@ public class RepositoryCache
 		this.rootElement.name = "";
 		this.rootElement.path = "";
 		this.rootElement.type = ElementType.ROOT;
-		this.rootElement.gitStatus = GitFileStatus.Clean;
 
 		// Wir scannen initial nur die Root-Ebene für das Lazy-Prinzip vor
 		scanDirectoryFromDisk(this.rootElement);
@@ -196,7 +196,6 @@ public class RepositoryCache
 			child.name = file.getName();
 			child.path = childPath;
 			child.type = file.isDirectory() ? ElementType.FOLDER : ElementType.FILE;
-			child.gitStatus = determineGitStatus(child.path); // Hier deine JGit-Status Logik nutzen
 
 			childrenList.add(child);
 			pathLookup.put(child.path, child);
@@ -290,8 +289,6 @@ public class RepositoryCache
 		newElement.path = relativePath;
 		newElement.type = isDir ? ElementType.FOLDER : ElementType.FILE;
 		newElement.children = null;
-		//newElement.parent = parent;
-		newElement.gitStatus = determineGitStatus(relativePath);
 
 		// Atomar in die Strukturen einfügen
 		parent.children.add(newElement);
@@ -320,9 +317,8 @@ public class RepositoryCache
 	private void handleModifyEvent(String relativePath) {
 		RepositoryElement element = pathLookup.get(relativePath);
 		if (element != null) {
-			// Datei wurde geändert (z.B. Photoshop-Speicherung von Artists)
-			element.gitStatus = determineGitStatus(relativePath);
-			// Hier optional: Metadaten-Cache für Bilder zurücksetzen!
+			// Datei wurde geändert
+			//element.gitStatus = determineGitStatus(relativePath);
 		}
 	}
 
@@ -370,12 +366,6 @@ public class RepositoryCache
 		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
 		if (path.startsWith("/")) path = path.substring(1);
 		return path;
-	}
-
-	// Dummy-Methode: Hier dockst du deine JGit Status-Prüfung an
-	private GitFileStatus determineGitStatus(String relativePath)
-	{
-		return GitFileStatus.Clean;
 	}
 
 	@Override
@@ -434,10 +424,10 @@ public class RepositoryCache
 			sb.append("📄 ").append(displayName);
 		}
 
-		if (element.gitStatus != null && element.gitStatus != GitFileStatus.Clean)
+		/*if (element.gitStatus != null && element.gitStatus != GitFileStatus.Clean)
 		{
 			sb.append(" (").append(element.gitStatus).append(")");
-		}
+		}*/
 		sb.append("\n");
 
 		// Rekursion für geladene Ordner

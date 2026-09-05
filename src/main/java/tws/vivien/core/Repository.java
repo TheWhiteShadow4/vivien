@@ -6,8 +6,6 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.RemoteConfig;
 import tws.vivien.dto.*;
 
 import java.io.Closeable;
@@ -37,19 +35,21 @@ public class Repository implements Closeable
 		return gitApi;
 	}
 
+	public RepositoryCache getCache() { return cache; }
+
 	public RepositoryElement getView(ConfigView view, String path) throws IOException
 	{
-		RepositoryElement element;
+		RepositoryElement element = cache.getDirectory(path);
+		if (element == null) throw new IOException("Element für '" + path + "' nicht gefunden.");
+
+		element = element.flatCopyWithChildren();
 
 		// Reroot
 		/*if (!view.root.isEmpty() && "/".equals(path))
 		{
 			element = cache.getDirectory(view.root).flatCopyWithChildren();
-		}
-		else*/
-		{
-			element = cache.getDirectory(path).flatCopyWithChildren();
-		}
+		}*/
+
 		// Filter
 		if (element.children != null && !element.children.isEmpty())
 		{
@@ -71,12 +71,17 @@ public class Repository implements Closeable
 				.toList();
 	}
 
-	public GitBranchStatus getBranchStatus() throws Exception
+	public GitBranchStatus getBranchStatus(Config config) throws Exception
 	{
 		Status status = gitApi.status().call();
+		var repo = gitApi.getRepository();
 
 		var result = new GitBranchStatus();
-		result.branch = gitApi.getRepository().getBranch();
+		result.branch = repo.getBranch();
+
+		if (config.gitRemote != null)
+			result.remote = getRemoteStatus(config, result.branch);
+
 		result.modified = status.hasUncommittedChanges();
 		result.untracked = status.getUntracked();
 		result.added = status.getAdded();
@@ -90,15 +95,13 @@ public class Repository implements Closeable
 
 	public RemoteGitStatus getRemoteStatus(Config config, String branch) throws Exception
 	{
-		List<RemoteConfig> remotes = RemoteConfig.getAllRemoteConfigs(gitApi.getRepository().getConfig());
-		if (remotes.isEmpty()) return null;
+		//List<RemoteConfig> remotes = RemoteConfig.getAllRemoteConfigs(gitApi.getRepository().getConfig());
+		//if (remotes.isEmpty()) return null;
 
-		FetchResult _result = gitApi.fetch().setCredentialsProvider(config.credentials).call();
+		//FetchResult _result = gitApi.fetch().setCredentialsProvider(config.credentials).call();
 		var trackingStatus = BranchTrackingStatus.of(gitApi.getRepository(), branch);
-
 		if (trackingStatus == null) return null;
 
-		// Commits, die dem Server fehlen und Commits, die noch nicht gepusht sind
 		return new RemoteGitStatus(trackingStatus.getBehindCount(), trackingStatus.getAheadCount());
 	}
 
@@ -160,14 +163,19 @@ public class Repository implements Closeable
 		gitApi.commit().setAuthor(request.name, request.email).setMessage(request.message).call();
 	}
 
-	public void push() throws Exception
+	public void push(Config config) throws Exception
 	{
-		gitApi.push().call();
+		gitApi.push().setCredentialsProvider(config.credentials).call();
 	}
 
-	public void fetch() throws Exception
+	public void pull(Config config) throws Exception
 	{
-		gitApi.fetch().call();
+		gitApi.push().setCredentialsProvider(config.credentials).call();
+	}
+
+	public void fetch(Config config) throws Exception
+	{
+		gitApi.fetch().setCredentialsProvider(config.credentials).call();
 	}
 
 	public void stash() throws Exception

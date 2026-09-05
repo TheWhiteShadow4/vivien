@@ -1,5 +1,5 @@
 import emitter from "@/mitt";
-import { sendCheckout, sendCommit, sendDelete, sendFetch, sendReset } from "@/services/git";
+import { sendCheckout, sendCommit, sendDelete, sendFetch, sendPull, sendReset } from "@/services/git";
 import { useStore, type StoreType } from "@/store";
 import type { GitBranchStatus } from "@/types/vivien-generated";
 import { ref, type Ref } from "vue";
@@ -13,6 +13,7 @@ export function useGit()
 	const fetch = () => doFetch(store, isLoading);
 	const commit = (message: string) => doCommit(store, isLoading, message);
 	const reset = () => doReset(store, isLoading);
+	const pull = () => doPull(store, isLoading);
 	const $delete = (file: string) => doDelete(store, isLoading, file);
 
 	return {
@@ -20,6 +21,7 @@ export function useGit()
 		fetch,
 		commit,
 		reset,
+		pull,
 		$delete,
 		isLoading,
 	};
@@ -59,6 +61,33 @@ async function doFetch(store: StoreType, isLoading: Ref<boolean>)
 		isLoading.value = true;
 
 		const response = await sendFetch();
+
+		if (response.ok)
+		{
+			store.git = await response.json() as GitBranchStatus
+		}
+		else
+		{
+			emitter.emit("error", new Error(`Fetch fehlgeschlagen: ${response.status}`));
+		}
+	}
+	catch(err: unknown)
+	{
+		emitter.emit("error", err as Error);
+	}
+	finally
+	{
+		isLoading.value = false;
+	}
+}
+
+async function doPull(store: StoreType, isLoading: Ref<boolean>)
+{
+	try
+	{
+		isLoading.value = true;
+
+		const response = await sendPull();
 
 		if (response.ok)
 		{

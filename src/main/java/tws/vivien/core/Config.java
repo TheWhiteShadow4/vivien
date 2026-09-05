@@ -8,6 +8,7 @@ import tws.vivien.plugins.EnginePlugin;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 
@@ -15,6 +16,7 @@ public class Config
 {
 	private static final String CONFIG_FILE_NAME = "vivien-server.toml";
 
+	public Path webRoot;
 	public ServerMode mode;
 	public SecurityMode security;
 	public String serverHost = "localhost";
@@ -22,8 +24,14 @@ public class Config
 	public Object cert = null;
 	public String user = null;
 	public String password = null;
+	public List<String> validFileformats;
+	public List<String> validUsers;
 
-	public String remoteGit = null;
+	public String previewFormat;
+	public float previewCompression;
+
+	public String gitRemote = null;
+	public String gitBranch = null;
 	public UsernamePasswordCredentialsProvider credentials;
 	public Map<String, ConfigView> views = new HashMap<>();
 	public Path repository;
@@ -33,6 +41,7 @@ public class Config
 
 	public Config()
 	{
+		webRoot = Paths.get(".").toAbsolutePath();
 		File configFile = new File(CONFIG_FILE_NAME);
 
 		if (!configFile.exists()) {
@@ -44,12 +53,6 @@ public class Config
 		{
 			FileConfig reader = FileConfig.of(configFile);
 			reader.load();
-			//TomlParseResult result = TomlParser.parse(configFile.toPath());
-			/*if (reader.hasErrors())
-			{
-				System.err.println("❌ FEHLER beim Parsen der " + CONFIG_FILE_NAME + ": " + result.errors());
-				initSafeConfig();
-			}*/
 			readConfig(reader);
 		}
 		catch (Exception e)
@@ -78,30 +81,39 @@ public class Config
 		repository = CReader.readString(this, config, "repo_path").required("")
 							.map(Path::of).get();
 
-		remoteGit = CReader.readString(this, config, "repo_url").get();
+		gitRemote = CReader.readString(this, config, "git.remote").get();
+		gitBranch = CReader.readString(this, config, "git.branch").get();
 
 		var defaultSecurity = mode == ServerMode.HOSTED ? SecurityMode.STRICT : SecurityMode.LAX;
 		security = CReader.readString(this, config, "server.security")
 						  .map(SecurityMode::fromString).withDefault(defaultSecurity).get();
 
 		serverHost = CReader.readString(this, config, "server.host").withDefault(serverHost).get();
-		port = CReader.readInt(this, config, "server.port").withDefault(port).get();
+		port = CReader.<Integer>read(this, config, "server.port").withDefault(port).get();
 
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
-		var gitUser = CReader.readString(this, config, "git.user").get();
-		if (gitUser != null)
+		previewFormat = CReader.readString(this, config, "preview.format").get();
+		previewCompression = CReader.<Double>read(this, config, "preview.compression")
+				.map(Double::floatValue).withDefault(0.5f).get();
+
+		validFileformats = CReader.readString(this, config, "server.formats")
+				.map(s -> Arrays.stream(s.split(",")).map(String::trim).toList()).get();
+
+
+
+		var gitToken = CReader.readString(this, config, "git.token").get();
+		if (gitToken != null)
 		{
-			var gitPassword = CReader.readString(this, config, "git.password").get();
-			credentials = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
+			//var gitUser = CReader.readString(this, config, "git.user").get();
+			credentials = new UsernamePasswordCredentialsProvider("access_token", gitToken);
 		}
 
-		loadEnginePlugin(config);
-
+		loadUsers(config);
 		loadViews(config);
 
-		//errors.add(new ConfigException("waifu", "pantsu", null));
+		loadEnginePlugin(config);
 
 		validateRepository(repository);
 		IO.println("Repository Pfad: " + repository);
@@ -132,6 +144,18 @@ public class Config
 				}
 			}
 			IO.println(views);
+		}
+	}
+
+	private void loadUsers(FileConfig config)
+	{
+		try
+		{
+			validUsers = config.get("server.users");
+		}
+		catch (Exception e)
+		{
+			errors.add(new ConfigException("server.users", e));
 		}
 	}
 
@@ -185,9 +209,9 @@ public class Config
 			return reader;
 		}
 
-		public static CReader<Integer, Integer> readInt(Config config, FileConfig toml, String configName)
+		public static <S> CReader<S, S> read(Config config, FileConfig toml, String configName)
 		{
-			CReader<Integer, Integer> reader = new CReader<>();
+			CReader<S, S> reader = new CReader<>();
 			reader.config = config;
 			reader.configName = configName;
 			try
@@ -223,20 +247,25 @@ public class Config
 		public <R> CReader<S, R> map(Function<T, R> func)
 		{
 			R mappedValue = null;
-			try
+			if (value != null)
 			{
-				mappedValue = func.apply(value);
-			}
-			catch(Exception e)
-			{
-				if (error == null)
+				try
 				{
-					e.printStackTrace();
-					error = new ConfigException(configName, Objects.toString(inputValue), e);
+					mappedValue = func.apply(value);
+				}
+				catch (Exception e)
+				{
+					if (error == null)
+					{
+						e.printStackTrace();
+						error = new ConfigException(configName, Objects.toString(inputValue), e);
+					}
 				}
 			}
-			@SuppressWarnings("unchecked")
-			var result = (CReader<S, R>) this;
+			var result = new CReader<S, R>();
+			result.config = config;
+			result.configName = configName;
+			result.inputValue = inputValue;
 			result.value = mappedValue;
 			return result;
 		}

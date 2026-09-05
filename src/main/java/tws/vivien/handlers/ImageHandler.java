@@ -5,24 +5,34 @@ import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectInserter;
 import tws.vivien.core.Cache;
+import tws.vivien.core.Config;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.FileObject;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 
 public class ImageHandler implements IHandler
 {
+	static String MIME_TYPE = "image/jpeg";
+
 	@Override
-	public FileObject generatePreview(Path webRoot, Repository repository, Cache cache, String file) throws Exception
+	public FileObject generatePreview(Config config, Repository repository, Cache cache, String file) throws Exception
 	{
 		Path path = repository.resolveFile(file);
+		if (path == null) throw new FileNotFoundException();
 
 		//GitStatus status = repository.getStatus(path);
 		var gitRepo = repository.getApi().getRepository();
@@ -50,7 +60,7 @@ public class ImageHandler implements IHandler
 		if (cacheEntry != null)
 		{
 			var meta = (FileObject.FileObjectMeta) cacheEntry.metadata;
-			return new FileObject(pathToUrl(webRoot, cacheEntry.path), path.getFileName().toString(), meta);
+			return new FileObject(pathToUrl(config.webRoot, cacheEntry.path), path.getFileName().toString(), meta);
 		}
 		else
 		{
@@ -60,29 +70,16 @@ public class ImageHandler implements IHandler
 			FileObject.FileObjectMeta meta = new FileObject.FileObjectMeta();
 			meta.size = fileBytes.length;
 
-			if (path.toString().endsWith(".gif"))
-			{
-				throw new UnsupportedOperationException("Gif is not supported");
-				//outputPath = createGifCacheEntry(hash, new ByteArrayInputStream(fileBytes), meta);
-			}
-			else
-			{
-				outputPath = createDefaultCacheEntry(webRoot, hash, new ByteArrayInputStream(fileBytes), meta);
-			}
+			outputPath = createDefaultCacheEntry(config, hash, new ByteArrayInputStream(fileBytes), meta);
 
 			cache.add(outputPath, hash, meta);
 
-			return new FileObject(pathToUrl(webRoot, outputPath), path.getFileName().toString(), meta);
+			return new FileObject(pathToUrl(config.webRoot, outputPath), path.getFileName().toString(), meta);
 		}
 	}
 
-	private Path createDefaultCacheEntry(Path webRoot, String hash, InputStream inputStream, FileObject.FileObjectMeta meta) throws IOException
+	private Path createDefaultCacheEntry(Config config, String hash, InputStream inputStream, FileObject.FileObjectMeta meta) throws IOException
 	{
-		String mimeType = "image/jpeg";
-
-		Path outputPath = webRoot.resolve("cache/" + hash + ".jpg").toAbsolutePath();
-		Files.createDirectories(outputPath.getParent());
-
 		BufferedImage image = ImageIO.read(inputStream);
 		int width = image.getWidth();
 		int height = image.getHeight();
@@ -90,8 +87,23 @@ public class ImageHandler implements IHandler
 		float f = Math.max(width, height) / 512f;
 		int w = Math.round(width / f);
 		int h = Math.round(height / f);
-		BufferedImage desBufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		Graphics2D g2 = desBufferedImage.createGraphics();
+
+		String format = config.previewFormat;
+		BufferedImage dstBufferedImage;
+		if (image.getColorModel().hasAlpha() && !"jpg".equals(format))
+		{
+			dstBufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		}
+		else
+		{
+			dstBufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		}
+		if (format == null) format = dstBufferedImage.getColorModel().hasAlpha() ? "png": "jpg";
+
+		Path outputPath = config.webRoot.resolve("cache/" + hash + "." + format).toAbsolutePath();
+		Files.createDirectories(outputPath.getParent());
+
+		Graphics2D g2 = dstBufferedImage.createGraphics();
 
 		if (width > 512 || height > 512)
 			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -99,18 +111,38 @@ public class ImageHandler implements IHandler
 			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 		g2.drawImage(image, 0, 0, w, h, null);
 		g2.dispose();
-		if (!ImageIO.write(desBufferedImage, "jpg", outputPath.toFile()))
-		{
-			throw new IOException("File format not supported");
-		}
 
-		meta.mimeType = mimeType;
+		writeImage(dstBufferedImage, outputPath, format, config.previewCompression);
+
+		meta.mimeType = MIME_TYPE;
 		meta.width = w;
 		meta.height = h;
 		meta.srcWidth = width;
 		meta.srcHeight = height;
 
 		return outputPath;
+	}
+
+	private void writeImage(BufferedImage image, Path file, String format, float compression) throws IOException
+	{
+		Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName(format);
+		if (!writers.hasNext()) {
+			throw new IllegalStateException("Kein Image Writer gefunden!");
+		}
+		ImageWriter writer = writers.next();
+
+		ImageWriteParam param = writer.getDefaultWriteParam();
+		if (param.canWriteCompressed())
+		{
+			param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+			param.setCompressionQuality(compression);
+		}
+
+		try (ImageOutputStream out = ImageIO.createImageOutputStream(file.toFile()))
+		{
+			writer.setOutput(out);
+			writer.write(null, new IIOImage(image, null, null), param);
+		}
 	}
 
 	/*private Path createGifCacheEntry(String hash, InputStream inputStream, FileObject.FileObjectMeta meta) throws IOException

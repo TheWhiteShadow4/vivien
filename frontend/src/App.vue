@@ -19,7 +19,6 @@ import Splitter from './components/base/Splitter.vue'
 const store = useStore();
 
 const state = ref<ServerState>({
-	user: undefined,
 	view: 'Loading',
 	mode: 'SETUP',
 	serverErrors: []
@@ -27,6 +26,7 @@ const state = ref<ServerState>({
 
 const isSidebarOpen = ref(true)
 const showCommitDialog = ref(false)
+const showLoginDialog = ref(false)
 const isLoading = ref<boolean>(true)
 const networkError = ref<string | null>(null)
 const previewImage = ref<FileObject | null>(null);
@@ -34,6 +34,7 @@ const selectedElement = ref<RepositoryElement |null>(null);
 
 async function checkBackendStatus()
 {
+	if (store.settings.username == null) return;
 	try
 	{
 		isLoading.value = true
@@ -103,10 +104,27 @@ function closeCommitDialog(needRefresh: boolean)
 	}
 }
 
+function closeLoginDialog(needRefresh: boolean)
+{
+	showLoginDialog.value = false;
+	if (needRefresh)
+	{
+		checkBackendStatus();
+		emitter.emit("refresh-folder");
+	}
+}
+
 // Lifecycle-Hook: Wird ausgeführt, sobald die Komponente im Browser geladen ist
 onMounted(() => {
 	document.title = "Vivien";
-	checkBackendStatus();
+	if (store.settings.username == null || store.settings.email == null)
+	{
+		showLoginDialog.value = true;
+	}
+	else
+	{
+		checkBackendStatus();
+	}
 
 	emitter.on("error", (e) => state.value.serverErrors.push(e as ServerError));
 	emitter.on("refresh-preview", (e) => updatePreview(e as RepositoryElement));
@@ -127,7 +145,7 @@ onUnmounted(() => {
 		<!-- Inhalt unter dem Header -->
 		<div class="flex flex-1 min-h-0">
 
-			<TheSidebar :state="state" :is-open="isSidebarOpen" @git="onGitCommand($event)" />
+			<TheSidebar :state="state" :is-open="isSidebarOpen" @git="onGitCommand($event)" @user="showLoginDialog = true" />
 
 			<!-- Hauptbereich -->
 			<main class="w-full h-full bg-vit-bg p-1">
@@ -152,6 +170,6 @@ onUnmounted(() => {
 		</div>
 
 		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog(true)" @cancel="closeCommitDialog(false)" />
-		<LoginDialog v-if="!store.settings.email" />
+		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
 	</div>
 </template>

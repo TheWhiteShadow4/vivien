@@ -21,12 +21,12 @@ async function submitCommit()
 {
 	if (!isFormValid.value) return
 	await commit(message.value);
-	emit("submit");
+	emit("submit"); // App.vue
 }
 
 function cancelCommit()
 {
-	emit("cancel");
+	emit("cancel"); // App.vue
 }
 
 onMounted(() => 

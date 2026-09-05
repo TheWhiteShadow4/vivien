@@ -13,8 +13,12 @@ const store = useStore();
 
 const emit = defineEmits(["git", "bin"]);
 
+
 const gitStageCount = computed(() => {
 	return store.git ? (store.git.added.length + store.git.changed.length + store.git.removed.length) : 0;
+});
+const canCommitPush = computed(() => {
+	return gitStageCount.value > 0 || store.git && store.git.remote.aheadCount > 0;
 });
 const gitChangeCount = computed(() => {
 	return store.git ? (store.git.added.length + store.git.changed.length + store.git.removed.length) : 0;
@@ -30,7 +34,7 @@ withDefaults(defineProps<Props>(), {
   variant: "full",
 })
 
-const { fetch, reset, checkout, isLoading } = useGit();
+const { pull, reset, checkout, isLoading } = useGit();
 </script>
 
 
@@ -60,19 +64,19 @@ const { fetch, reset, checkout, isLoading } = useGit();
 
 		<ListButton
 			color="accent"
-			:label="isAdmin ? 'Fetch' : 'Aktualisieren'"
+			:label="isAdmin ? 'Pull' : 'Aktualisieren'"
 			:minified="variant == 'small'"
 			:disabled="isLoading"
-			@click="fetch()">
+			@click="pull()">
 			<IconGitPull />
 		</ListButton>
 
 		<ListButton
-			:variant="gitStageCount ? 'primary' : 'normal'"
+			:variant="canCommitPush ? 'primary' : 'normal'"
 			color="accent2"
 			:label="isAdmin ? 'Commit/Push' : 'Speichern'"
 			:minified="variant == 'small'"
-			:disabled="isLoading || gitStageCount <= 0"
+			:disabled="isLoading || !canCommitPush"
 			:count="gitStageCount"
 			@click="emit('git', 'commit')">
 			<IconGitCommit />

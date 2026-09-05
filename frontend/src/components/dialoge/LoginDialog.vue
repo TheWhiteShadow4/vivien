@@ -9,10 +9,11 @@ import BaseButton from '../base/BaseButton.vue';
 
 const store = useStore();
 
-const emit = defineEmits(["complete"])
+const emit = defineEmits(["submit", "cancel"])
 
-const name = ref('')
-const email = ref('')
+const name = ref(store.settings.username ?? '')
+const email = ref(store.settings.email ?? '')
+const password = ref('')
 
 // Validierung: Name darf nicht leer sein, E-Mail braucht eine Grundstruktur
 const isNameValid = computed(() => name.value.trim().length > 0)
@@ -21,18 +22,28 @@ const isEmailValid = computed(() => {
 	return emailRegex.test(email.value.trim())
 })
 const isFormValid = computed(() => isNameValid.value && isEmailValid.value)
+const canCancelt = computed(() => store.settings.username != null && store.settings.email != null)
 
 const backdropStyles = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'
 const titleStyles = `text-xl font-bold text-vit-text-main font-sans
 tracking-wide border-b border-vit-border pb-2 mb-4`
 
-function submitLogin() {
+function submitLogin()
+{
 	if (!isFormValid.value) return
 
-	store.updateSetting("username", name.value.trim());
+	const tname = name.value.trim();
+
+	store.updateSetting("username", tname);
 	store.updateSetting("email", email.value.trim());
 
-	emit("complete")
+	if (password.value.length > 0)
+	{
+		const credentials = btoa(`${tname}:${password.value}`)
+		store.updateSetting("credentials", credentials);
+	}
+	
+	emit("submit"); // App.vue
 }
 </script>
 
@@ -43,17 +54,22 @@ function submitLogin() {
 			<h2 :class="titleStyles">Login</h2>
 
 			<div class="flex flex-col gap-6 w-108">
-				<TextInput v-model="name" type="text" label="Name" placeholder="Name"
+				<TextInput v-model="name" type="text" label="Anzeige Name" placeholder=""
 					:variant="name && !isNameValid ? 'failed' : 'default'">
 				</TextInput>
 
-				<TextInput v-model="email" type="text" label="E-Mail-Adresse" placeholder="Email"
+				<TextInput v-model="email" type="text" label="E-Mail-Adresse" placeholder=""
 					:variant="email && !isEmailValid ? 'failed' : 'default'">
+				</TextInput>
+
+				<TextInput v-model="password" type="password" label="Server Passwort" placeholder=""
+					:variant="password ? 'failed' : 'default'">
 				</TextInput>
 			</div>
 
-			<div class="mt-6">
+			<div class="mt-6 flex justify-between">
 				<BaseButton variant="primary" :disabled="!isFormValid" @click="submitLogin">Login</BaseButton>
+				<BaseButton v-if="canCancelt" variant="danger" @click="emit('cancel')">Abbrechen</BaseButton>
 			</div>
 
 		</BasePanel>
