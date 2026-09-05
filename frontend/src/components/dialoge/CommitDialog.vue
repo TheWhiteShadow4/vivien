@@ -4,7 +4,7 @@ import { useStore } from '@/store';
 import { ref, computed, onMounted } from 'vue'
 import BasePanel from '../base/BasePanel.vue';
 import BaseButton from '../base/BaseButton.vue';
-import { useGit } from '@/handler/useGit.ts';
+import { useGit } from '@/handler/useGit';
 import TextArea from '../base/TextArea.vue';
 
 const store = useStore();

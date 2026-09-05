@@ -2,12 +2,12 @@
 <script setup lang="ts">
 import IconGitCommit from '@/icons/IconGitCommit.vue'
 import IconPushStash from '@/icons/IconPushStash.vue'
-import { useStore } from '@/store/index.ts'
+import { useStore } from '@/store/index'
 import { computed } from 'vue'
 import ListButton from '../base/ListButton.vue'
 import IconGitPull from '@/icons/IconGitPull.vue'
 import IconSync from '@/icons/IconSync.vue'
-import { useGit } from '@/handler/useGit.ts'
+import { useGit } from '@/handler/useGit'
 
 const store = useStore();
 

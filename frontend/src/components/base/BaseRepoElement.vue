@@ -4,7 +4,7 @@ import type { RepositoryElement } from '@/types/vivien-generated'
 import { computed } from 'vue'
 import BaseIconButton from './BaseIconButton.vue'
 import IconStar from '@/icons/IconStar.vue'
-import { useStore } from '@/store/index.ts'
+import { useStore } from '@/store/index'
 
 const store = useStore();
 

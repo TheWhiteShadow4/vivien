@@ -8,13 +8,13 @@ import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
 import RepoFileView from './components/views/RepoFileView.vue'
 import ThePreviewPanel from './components/ThePreviewPanel.vue'
-import { checkGitStatus, emitDisconectError, fetchWithView } from './client.ts'
-import { useStore } from './store/index.ts'
+import { checkGitStatus, emitDisconectError, fetchWithView } from './client'
+import { useStore } from './store/index'
 import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
-import emitter from './mitt.ts'
+import emitter from './mitt'
 import Splitter from './components/base/Splitter.vue'
-import { useGit } from './handler/useGit.ts'
+import { useGit } from './handler/useGit'
 
 const store = useStore();
 

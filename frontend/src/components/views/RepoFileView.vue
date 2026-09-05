@@ -4,15 +4,15 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import BaseRepoElement from '../base/BaseRepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
 import type { GitBranchStatus, RepositoryElement } from '@/types/vivien-generated'
-import { emitDisconectError, fetchWithView, uploadFiles } from '@/client.ts';
+import { emitDisconectError, fetchWithView, uploadFiles } from '@/client';
 import TextInput from '../base/TextInput.vue';
 import IconSearch from '@/icons/IconSearch.vue';
 import BaseIconButton from '../base/BaseIconButton.vue';
-import emitter from '@/mitt.ts';
+import emitter from '@/mitt';
 import IconUpload from '@/icons/IconUpload.vue';
 import IconNewFolder from '@/icons/IconNewFolder.vue';
 import Tooltip from '../base/Tooltip.vue';
-import { useStore } from '@/store/index.ts';
+import { useStore } from '@/store/index';
 import ListButton from '../base/ListButton.vue';
 import IconBin from '@/icons/IconBin.vue';
 

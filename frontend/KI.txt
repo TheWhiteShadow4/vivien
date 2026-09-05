@@ -1,18 +1,20 @@
 Ich arbeite an einer Single-Page Application mit Vue 3 mit Typescript (v6), Pinia Store und Tailwind CSS (v4).
 Mein Backend Server läuft mit Javalin (v7.2) mit JGit (v7.7).
-Die Anwendung stellt ein Git Repository im Browser da und soll technisch unversierten Arists,
+Die Anwendung stellt ein Git Repository im Browser da und soll technisch unversierten Artists,
 die an Hobby Spielen mitwirken, dabei helfen ihre Assets ins Projekt zu bekommen und dort zu bearbeiten.
 
 Was ich bereits habe:
-Backend mit Basic Auth, statischen und Api Routen.
+Backend mit User spezifischem Basic Auth, statischen und Api Routen.
 es kann das Repository Verzeichnis auslesen, updaten und dieses gefiltert an den Client senden.
-Trackt den Git Status für Dateien, speichert Datei Uploads und führt Commits durch.
-Das Frontend mit Theme, Basic Komponenten, Login, Dateiupload und Commit Dialog.
+Trackt den Git Status für Dateien, speichert Datei Uploads und führt Fetchs, Pulls, Commits, Push und einfache Merges durch.
+Cache vom Repository Verzeichnis mit FileWatcher und Thumbnail Cache für Vorschubilder.
+Das Frontend mit Theme, Basic Komponenten, Login, Dateiupload/Download und Commit/Push Dialog.
 Es zeigt den Inhalt von jeweils einem Ordner des Repositorys an mit Lazy loading.
-Navigieren vor und zurück und Durchsuchen ist möglich.
+Navigieren vor und zurück und Durchsuchen ist möglich. Pfade werden in der Browser Hirtorie eingetragen.
 Wählt man ein Element aus, wird vom Server die Metadaten geladen und eine Vorschau angezeigt (für Bilder und Texte).
 Es gibt ein Store für Usersettings (local Storage), Git Status (untracked, added, changed, added for commit).
 Ein Upload mit Dateiauswahl und Commit Dialog.
+Funktion um Dateien zu löschen oder gelöschte Dateien wiederherzustellen.
 
 Zielgruppe & Ergonomie:
 - Hauptnutzung auf DESKTOP und TABLET. Ignoriere Mobile-First für Smartphones!

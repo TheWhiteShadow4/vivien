@@ -6,14 +6,14 @@ import BaseIconButton from '../base/BaseIconButton.vue';
 import IconMinus from '@/icons/IconMinus.vue';
 import IconUpload from '@/icons/IconUpload.vue';
 import IconDownload from '@/icons/IconDownload.vue';
-import { useStore } from '@/store/index.ts';
+import { useStore } from '@/store/index';
 import type { GitBranchStatus, GitStageOperation, RepositoryElement, ServerError } from '@/types/vivien-generated.js';
 import { computed, ref } from 'vue';
-import { fetchWithView, sendChangeStaged, uploadFiles } from '@/client.ts';
-import emitter from '@/mitt.ts';
+import { fetchWithView, sendChangeStaged, uploadFiles } from '@/client';
+import emitter from '@/mitt';
 import IconClose from '@/icons/IconClose.vue';
 import IconSync from '@/icons/IconSync.vue';
-import { sendDelete } from '@/services/git.ts';
+import { sendDelete } from '@/services/git';
 
 const store = useStore();
 

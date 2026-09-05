@@ -5,7 +5,7 @@ import UserInfo from './UserInfo.vue';
 import BaseIconButton from './base/BaseIconButton.vue';
 import IconArrow from '@/icons/IconArrow.vue';
 import { computed } from 'vue';
-import { useStore } from '@/store/index.ts';
+import { useStore } from '@/store/index';
 
 const store = useStore();
 

@@ -1,8 +1,11 @@
 # Vivien
 
-Gedankenstütze für den täglichen Entwicklungs-Workflow (Java backend + Vue/TS frontend).
+**Vivien ist eine Webanwendung zur vereinfachten Arbeit mit git Repositories.**
 
----
+Die Anwendung stellt ein Git Repository im Browser dar und soll technisch unversierten Artists,
+die an Hobby Spielen mitwirken, dabei helfen ihre Assets ins Projekt zu bekommen und dort zu bearbeiten.
+
+![image](Screenshot%20App.jpg)
 
 ## 🛠️ Erstmaliges Setup (nach dem Auschecken)
 
