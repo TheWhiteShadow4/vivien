@@ -5,12 +5,15 @@ import tws.vivien.core.Config;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.FileObject;
 
+import javax.inject.Inject;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class TextHandler implements IHandler
 {
+	@Inject public TextHandler() {}
+
 	@Override
 	public FileObject generatePreview(Config _config, Repository repository, Cache _cache, String file) throws Exception
 	{

@@ -21,6 +21,7 @@
         <commons.version>2.15.1</commons.version>
         <jackson.version>2.22.2</jackson.version>
         <imageio.version>3.14.0</imageio.version>
+        <dagger.version>2.60.1</dagger.version>
     </properties>
 
     <dependencies>
@@ -89,12 +90,12 @@
             <version>${imageio.version}</version>
         </dependency>
 
-<!--        <dependency>
-            <groupId>com.madgag</groupId>
-            <artifactId>animated-gif-lib</artifactId>
-            <version>1.4</version>
-            <scope>compile</scope>
-        </dependency>-->
+        <!-- Dependency Injection Lib -->
+        <dependency>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger</artifactId>
+            <version>${dagger.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -144,7 +145,7 @@
                 </executions>
             </plugin>
 
-            <!-- 2. Gebautes Frontend in die Java-Ressourcen kopieren -->
+            <!-- Gebautes Frontend in die Java-Ressourcen kopieren -->
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.5.0</version>
@@ -168,6 +169,25 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Java Source kompilieren + Dagger Code Generierung -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.16.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.dagger</groupId>
+                            <artifactId>dagger-compiler</artifactId>
+                            <version>${dagger.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
             </plugin>
 
             <!-- 3. Fat JAR erstellen (inklusive aller Abhängigkeiten) -->

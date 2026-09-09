@@ -1,11 +1,6 @@
 package tws.vivien;
 
-import tws.vivien.core.Config;
 import tws.vivien.core.Server;
-import tws.vivien.core.ServerMode;
-
-import java.awt.*;
-import java.net.URI;
 
 public class ServerMain
 {
@@ -19,31 +14,7 @@ public class ServerMain
 		String protocol = ServerMain.class.getResource("ServerMain.class").getProtocol();
 		boolean productionMode = "jar".equals(protocol);
 
-		Config config = new Config();
-
-		Server server = new Server(config, productionMode);
-		if (!config.errors.isEmpty())
-		{
-			server.persistedErrors.addAll(config.errors);
-		}
+		Server server = new Server(productionMode);
 		server.start();
-
-		if (config.mode != ServerMode.HOSTED)
-		{
-			server.openBrowser();
-		}
-	}
-
-	private static void openBrowser(String url)
-	{
-		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE))
-		{
-			try {
-				Desktop.getDesktop().browse(new URI(url));
-				System.out.println("Standard-Browser wurde automatisch geöffnet.");
-			} catch (Exception e) {
-				System.err.println("Browser konnte nicht automatisch geöffnet werden: " + e.getMessage());
-			}
-		}
 	}
 }

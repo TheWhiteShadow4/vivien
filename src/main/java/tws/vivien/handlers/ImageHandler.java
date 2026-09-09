@@ -14,6 +14,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import javax.inject.Inject;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -27,6 +28,8 @@ import java.util.Iterator;
 public class ImageHandler implements IHandler
 {
 	static String MIME_TYPE = "image/jpeg";
+
+	@Inject public ImageHandler() {}
 
 	@Override
 	public FileObject generatePreview(Config config, Repository repository, Cache cache, String file) throws Exception

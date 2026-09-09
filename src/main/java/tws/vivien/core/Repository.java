@@ -3,7 +3,6 @@ package tws.vivien.core;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.PushResult;
@@ -12,12 +11,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.dto.*;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * Git repository für Vivien.
+ * Stellt Methoden für Git Operationen bereit.
+ * <h2>Cache</h2>
+ * Das Repository hat einen Verzeichnis-Cache, der bei Start vollständig aufgebaut und aktuell gehalten wird.
+ */
+@Singleton
 public class Repository implements Closeable
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
@@ -27,11 +35,19 @@ public class Repository implements Closeable
 	private final RepositoryCache cache;
 	private GitBranchStatus branchStatus;
 
-	public Repository(Path rootPath) throws IOException, GitAPIException
+	@Inject
+	public Repository(Config config)
 	{
-		this.rootPath = rootPath;
-		this.gitApi = Git.open(rootPath.toFile());
-		cache = new RepositoryCache(rootPath, gitApi.getRepository());
+		try
+		{
+			this.rootPath = config.repository;
+			this.gitApi = Git.open(rootPath.toFile());
+			cache = new RepositoryCache(rootPath, gitApi.getRepository());
+		}
+		catch(IOException e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 
 	public Path getRoot() { return rootPath; }

@@ -1,6 +1,5 @@
 package tws.vivien.core;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.ignore.IgnoreNode;
 import tws.vivien.dto.ElementType;
 import tws.vivien.dto.RepositoryElement;
@@ -18,20 +17,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
+/**
+ * Der Cache liest einmalig bei Serverstart das gesamte Git Repository ein.
+ * Verwendet einen WatchService, um den Cache aktuell zu halten.
+ * Bei größeren Git Events wie Checkout oder Pull, werden alle
+ * inkrementellen Ereignisse verworfen und der Cache neu aufgebaut.
+ * Dateien und Verzeichnisse in der <code>.gitignore</code> werden hier ebenfalls ignoriert.
+ * Ändert sich diese Datei, kann ein manuelle Rebuild erforderlich sein.
+ */
 public class RepositoryCache
 {
 	private final Path rootPath;
 	private final IgnoreNode gitIgnore = new IgnoreNode();
 	private volatile boolean isMuted = false;
 
-	// Die Wurzel des In-Memory Baums
 	private RepositoryRoot rootElement;
 
-	// Der Turbo-Lookup für gezielte Updates: Pfad -> Element-Referenz
-	private final ConcurrentHashMap<String, RepositoryElement> pathLookup = new ConcurrentHashMap<>(500);
+	private final ConcurrentHashMap<String, RepositoryElement> pathLookup = new ConcurrentHashMap<>(1024);
 
 	// WatchKeys zu Pfaden mappen, um zu wissen, welcher Ordner gefeuert hat
-	private final ConcurrentHashMap<WatchKey, Path> watchKeys = new ConcurrentHashMap<>(500);
+	private final ConcurrentHashMap<WatchKey, Path> watchKeys = new ConcurrentHashMap<>(256);
 	private final WatchService watchService;
 
 	public synchronized RepositoryRoot getRootElement() {
@@ -42,7 +47,7 @@ public class RepositoryCache
 		return Collections.unmodifiableMap(this.pathLookup);
 	}
 
-	public RepositoryCache(Path rootPath, org.eclipse.jgit.lib.Repository jgitRepo) throws IOException, GitAPIException
+	public RepositoryCache(Path rootPath, org.eclipse.jgit.lib.Repository jgitRepo) throws IOException
 	{
 		this.rootPath = rootPath.toAbsolutePath().normalize();
 		this.watchService = FileSystems.getDefault().newWatchService();
@@ -145,7 +150,7 @@ public class RepositoryCache
 	/**
 	 * Baut den initialen In-Memory Baum auf (Ordner starten mit children = null wegen Lazy Loading)
 	 */
-	private void buildInitialCache() throws GitAPIException
+	private void buildInitialCache()
 	{
 		this.pathLookup.clear();
 

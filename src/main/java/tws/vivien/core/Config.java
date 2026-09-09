@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.plugins.EnginePlugin;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 
+@Singleton
 public class Config
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Config.class);
@@ -45,6 +48,7 @@ public class Config
 
 	public List<ConfigException> errors = new ArrayList<>();
 
+	@Inject
 	public Config()
 	{
 		webRoot = Paths.get(".").toAbsolutePath();
