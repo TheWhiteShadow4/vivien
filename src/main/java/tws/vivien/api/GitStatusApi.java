@@ -21,6 +21,8 @@ public class GitStatusApi implements Api
 	@Inject public Repository repository;
 	@Inject public ErrorBacklog errorBacklog;
 
+	@Inject public GitStatusApi() {}
+
 	@Override
 	public void handle(Context ctx)
 	{

@@ -15,6 +15,7 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -25,14 +26,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 
+@Singleton
 public class ImageHandler implements IHandler
 {
 	static String MIME_TYPE = "image/jpeg";
 
+	@Inject public Config config;
+	@Inject public Repository repository;
+	@Inject public Cache cache;
+
 	@Inject public ImageHandler() {}
 
 	@Override
-	public FileObject generatePreview(Config config, Repository repository, Cache cache, String file) throws Exception
+	public FileObject generatePreview(String file) throws Exception
 	{
 		Path path = repository.resolveFile(file);
 		if (path == null) throw new FileNotFoundException();

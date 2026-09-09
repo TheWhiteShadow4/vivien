@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Cache;
 import tws.vivien.core.Config;
-import tws.vivien.core.PreviewGenerator;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.FileObject;
 import tws.vivien.dto.ServerError;
@@ -27,7 +26,6 @@ public class PreviewApi implements Api
 	public PreviewApi(Map<String, IHandler> handlerMap)
 	{
 		this.handlerMap = handlerMap;
-		IO.println(handlerMap.size());
 	}
 
 	@Inject public Config config;
@@ -45,14 +43,15 @@ public class PreviewApi implements Api
 
 		try
 		{
-			IHandler handler = PreviewGenerator.forFile(file);
+
+			IHandler handler = forFile(file);
 			if (handler == null)
 			{
 				ctx.status(404);
 				return;
 			}
 
-			FileObject obj = handler.generatePreview(config, repository, cache, file);
+			FileObject obj = handler.generatePreview(file);
 			ctx.json(obj);
 		}
 		catch(FileNotFoundException e)
@@ -66,5 +65,11 @@ public class PreviewApi implements Api
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
+	}
+
+	public IHandler forFile(String file)
+	{
+		String fileExt = file.substring(file.lastIndexOf(".")+1).toLowerCase();
+		return handlerMap.get(fileExt);
 	}
 }

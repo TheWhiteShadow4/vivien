@@ -70,6 +70,21 @@
         </executions>
       </plugin>
       <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.16.0</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.google.dagger</groupId>
+              <artifactId>dagger-compiler</artifactId>
+              <version>${dagger.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.6.2</version>
         <executions>
@@ -136,6 +151,7 @@
     <slf4j.version>2.0.18</slf4j.version>
     <maven.compiler.source>25</maven.compiler.source>
     <imageio.version>3.14.0</imageio.version>
+    <dagger.version>2.60.1</dagger.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <tomlj.version>3.9.0</tomlj.version>
     <jackson.version>2.22.2</jackson.version>

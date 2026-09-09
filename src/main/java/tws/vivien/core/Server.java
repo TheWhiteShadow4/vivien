@@ -2,28 +2,15 @@ package tws.vivien.core;
 
 import io.javalin.Javalin;
 import io.javalin.compression.CompressionStrategy;
-import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
-import io.javalin.util.FileUtil;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.dto.*;
-import tws.vivien.handlers.IHandler;
 
 import java.awt.*;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Stream;
 
 public class Server
 {
@@ -31,28 +18,22 @@ public class Server
 
 	private final Config config;
 	private final Cache serverCache;
-	private final Repository repository;
 	private final ServerComponent component;
 	private final boolean productionMode;
-
-	// Lock um Git Operationen(write) gegenüber kleine Datei Operationen(read) abzusichern.
-	private final ReentrantReadWriteLock gitLock;
-
-	public List<Exception> persistedErrors = new ArrayList<>();
-	public List<Exception> requestErrors = new ArrayList<>();
-	private final ErrorBacklog errorBacklog;
 
 	public Server(boolean productionMode) throws Exception
 	{
 		this.productionMode = productionMode;
 
 		var module = new DependencyModule("cache");
-		this.component = DaggerServerComponent.builder().dependencyModule(module).build();
+		this.component = DaggerServerComponent.builder()
+				.dependencyModule(module)
+				.previewModule(new PreviewModule())
+				.build();
+
 		this.config = component.config();
-		this.repository = component.repository();
-		this.gitLock = component.gitLock();
 		this.serverCache = component.serverCache();
-		this.errorBacklog = component.errorBacklog();
+		var errorBacklog = component.errorBacklog();
 
 		if (!config.errors.isEmpty())
 		{
@@ -136,14 +117,14 @@ public class Server
 			c.routes.get("/api/download", ctx -> component.downloadApi().handle(ctx));
 
 			c.routes.post("/api/delete", ctx -> component.deleteApi().handle(ctx));
-			c.routes.post("/api/staged", this::staged);
-			c.routes.post("/api/checkout", this::checkout);
-			c.routes.post("/api/reset", this::reset);
-			c.routes.post("/api/commit", this::commit);
-			c.routes.post("/api/pull", this::pull);
-			c.routes.post("/api/stash", this::stash);
-			c.routes.post("/api/unstash", this::unstash);
-			c.routes.post("/api/upload", this::uploadFiles);
+			c.routes.post("/api/staged", ctx -> component.stageApi().handle(ctx));
+			c.routes.post("/api/checkout", ctx -> component.checkoutApi().handle(ctx));
+			c.routes.post("/api/reset", ctx -> component.resetApi().handle(ctx));
+			c.routes.post("/api/commit", ctx -> component.commitApi().handle(ctx));
+			c.routes.post("/api/pull", ctx -> component.pullApi().handle(ctx));
+			c.routes.post("/api/stash", ctx -> component.stashApi().handle(ctx));
+			c.routes.post("/api/unstash", ctx -> component.unstashApi().handle(ctx));
+			c.routes.post("/api/upload", ctx -> component.uploadApi().handle(ctx));
 		});
 		app.start(config.port);
 
@@ -152,18 +133,6 @@ public class Server
 		{
 			openBrowser();
 		}
-	}
-
-	public void shutdown() throws IOException
-	{
-		repository.close();
-	}
-
-	private String getViewName(Context ctx)
-	{
-		String view = ctx.header("X-App-View");
-		if (view == null) view = "admin";
-		return view;
 	}
 
 	public void openBrowser()

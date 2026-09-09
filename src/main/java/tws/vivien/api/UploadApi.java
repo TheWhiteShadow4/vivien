@@ -25,6 +25,7 @@ public class UploadApi implements Api
 	@Inject public Repository repository;
 	@Inject public ReentrantReadWriteLock gitLock;
 	@Inject public ErrorBacklog errorBacklog;
+	@Inject public GitStatusApi gitStatusApi;
 
 	@Inject public UploadApi() {}
 
