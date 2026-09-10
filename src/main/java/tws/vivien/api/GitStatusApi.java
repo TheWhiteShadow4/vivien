@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
 import tws.vivien.core.ErrorBacklog;
 import tws.vivien.core.Repository;
+import tws.vivien.core.Server;
 import tws.vivien.dto.GitBranchStatus;
 import tws.vivien.dto.ServerError;
 
@@ -46,7 +47,7 @@ public class GitStatusApi implements Api
 		catch(Exception e)
 		{
 			LOG.error("Request teilweise fehlgeschlagen", e);
-			errorBacklog.addRequestError(e);
+			errorBacklog.addRequestError(Server.getUserName(ctx), e);
 		}
 		ctx.json(state);
 	}

@@ -6,6 +6,11 @@ import tws.vivien.api.*;
 import javax.inject.Singleton;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * Das hier ist die Registry für alle Dependency Injection Klassen, die über Dagger verwaltet werden.
+ * Die Module stellen Methoden zur Objekt-Erzeugung bereit, wenn der Default Konstruktor nicht ausreicht.
+ * Fast alle Klassen sind als Singleton ausgeführt, da sie Stateless arbeiten oder einen Shared State besitzen.
+ */
 @Singleton
 @Component(modules = {DependencyModule.class, PreviewModule.class})
 public interface ServerComponent

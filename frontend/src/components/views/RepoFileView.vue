@@ -1,7 +1,7 @@
 <!-- src/components/views/RepoFileView.vue -->
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import BaseRepoElement from '../base/BaseRepoElement.vue'
+import RepoElement from './RepoElement.vue'
 // Importiere die generierten Typen aus deiner d.ts-Datei
 import type { GitBranchStatus, RepositoryElement } from '@/types/vivien-generated'
 import { emitDisconectError, fetchWithView, uploadFiles } from '@/client';
@@ -373,7 +373,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			<!-- Render der einzelnen Zeilen (nur wenn Daten vorhanden) -->
 			<template v-else-if="currentFolder">
 				<div v-if="currentFolder?.type != 'ROOT'">
-					<BaseRepoElement
+					<RepoElement
 						label=".."
 						:element="currentFolder"
 						:selected="false"
@@ -385,7 +385,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					class="p-8 text-center text-vit-text-muted">
 					Hier ist nix drin.
 				</div>
-				<BaseRepoElement
+				<RepoElement
 					v-for="el in currentFolder.children"
 					:key="el.name"
 					:element="el"

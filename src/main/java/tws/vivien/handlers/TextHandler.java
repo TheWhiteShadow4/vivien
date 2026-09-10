@@ -29,6 +29,14 @@ public class TextHandler implements IHandler
 		{
 			mimeType = "text/markdown";
 		}
+		else if (file.toLowerCase().endsWith("yaml"))
+		{
+			mimeType = "text/yaml";
+		}
+		else if (file.toLowerCase().endsWith("json"))
+		{
+			mimeType = "text/json";
+		}
 		else
 		{
 			mimeType = "text/plain";

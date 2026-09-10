@@ -2,6 +2,7 @@ package tws.vivien.core;
 
 import io.javalin.Javalin;
 import io.javalin.compression.CompressionStrategy;
+import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.staticfiles.Location;
 import org.slf4j.Logger;
@@ -15,6 +16,10 @@ import java.util.Objects;
 public class Server
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+
+	public static final String APP_VIEW = "X-App-View";
+	public static final String APP_USER = "X-App-User";
+	public static final String DEFAULT_USER = "global";
 
 	private final Config config;
 	private final Cache serverCache;
@@ -84,30 +89,8 @@ public class Server
 						}
 					}));
 
-			// Der Before-Filter für geschützte Routen
-			c.routes.before("/api/*", ctx ->
-			{
-				if (config.password != null)
-				{
-					try
-					{
-						var credentials = ctx.basicAuthCredentials();
-						if (credentials != null && Objects.equals(config.password, credentials.getPassword()))
-						{
-							if (config.validUsers == null || config.validUsers.contains(credentials.getUsername()))
-							{
-								return; // OK
-							}
-						}
-					}
-					catch(Exception e)
-					{
-						// Der Header 'WWW-Authenticate' sagt dem Browser, dass es Basic Auth ist
-						ctx.header("WWW-Authenticate", "Basic realm=\"Protected Area\"");
-						ctx.status(HttpStatus.UNAUTHORIZED).result("Zugriff verweigert");
-					}
-				}
-			});
+			// Basic Auth Absicherung
+			c.routes.before("/api/*", this::authFilter);
 
 			c.routes.get("/api/state", ctx -> component.serverStateApi().handle(ctx));
 			c.routes.get("/api/repo", ctx -> component.repositoryApi().handle(ctx));
@@ -135,6 +118,34 @@ public class Server
 		}
 	}
 
+	private void authFilter(Context ctx)
+	{
+		if (config.password != null)
+		{
+			try
+			{
+				var credentials = ctx.basicAuthCredentials();
+				if (credentials != null && Objects.equals(config.password, credentials.getPassword()))
+				{
+					if (config.validUsers == null) return;
+					if (config.validUsers.contains(credentials.getUsername()))
+					{
+						if (ctx.header(APP_USER) == null) ctx.header(APP_USER, credentials.getUsername());
+						return;
+					}
+				}
+			}
+			catch(Exception _) {}
+
+			ctx.header("WWW-Authenticate", "Basic realm=\"Protected Area\"");
+			ctx.status(HttpStatus.UNAUTHORIZED).result("Zugriff verweigert");
+		}
+		else
+		{
+			if (ctx.header(APP_USER) == null) ctx.header(APP_USER, DEFAULT_USER);
+		}
+	}
+
 	public void openBrowser()
 	{
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE))
@@ -146,5 +157,25 @@ public class Server
 				System.err.println("Browser konnte nicht automatisch geöffnet werden: " + e.getMessage());
 			}
 		}
+	}
+
+	/**
+	 * Liest den Benutzer View aus dem Header aus.
+	 */
+	public static String getViewName(Context ctx)
+	{
+		String view = ctx.header(APP_VIEW);
+		if (view == null) view = "admin";
+		return view;
+	}
+
+	/**
+	 * Liest den Benutzer Name aus dem Header aus.
+	 */
+	public static String getUserName(Context ctx)
+	{
+		String view = ctx.header(APP_USER);
+		if (view == null) view = DEFAULT_USER;
+		return view;
 	}
 }

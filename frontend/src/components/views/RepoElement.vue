@@ -2,9 +2,9 @@
 <script setup lang="ts">
 import type { RepositoryElement } from '@/types/vivien-generated'
 import { computed } from 'vue'
-import BaseIconButton from './BaseIconButton.vue'
 import IconStar from '@/icons/IconStar.vue'
 import { useStore } from '@/store/index'
+import BaseIconButton from '@/base/BaseIconButton.vue';
 
 const store = useStore();
 

@@ -30,14 +30,14 @@ public class ErrorBacklog
 		return List.copyOf(systemErrors);
 	}
 
-	public void addRequestError(Exception error)
+	public void addRequestError(String user, Exception error)
 	{
-		requestErrors.computeIfAbsent("all", k -> new ArrayList<>()).add(error);
+		requestErrors.computeIfAbsent(user, k -> new ArrayList<>()).add(error);
 	}
 
-	public List<Exception> readRequestErrors()
+	public List<Exception> readRequestErrors(String user)
 	{
-		var list = requestErrors.remove("all");
+		var list = requestErrors.remove(user);
 		return list != null ? list : Collections.emptyList();
 	}
 }

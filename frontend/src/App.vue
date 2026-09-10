@@ -173,5 +173,6 @@ onUnmounted(() => {
 
 		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog(true)" @cancel="closeCommitDialog(false)" />
 		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
+		<div id="tooltip" class="relative"></div>
 	</div>
 </template>

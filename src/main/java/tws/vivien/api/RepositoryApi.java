@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
 import tws.vivien.core.ConfigView;
 import tws.vivien.core.Repository;
+import tws.vivien.core.Server;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
@@ -27,7 +28,7 @@ public class RepositoryApi
 		try
 		{
 			String q = ctx.queryParam("q");
-			String viewName = getViewName(ctx);
+			String viewName = Server.getViewName(ctx);
 			ConfigView view = config.getView(viewName);
 
 			if (q != null)
@@ -47,12 +48,5 @@ public class RepositoryApi
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}
-	}
-
-	private static String getViewName(Context ctx)
-	{
-		String view = ctx.header("X-App-View");
-		if (view == null) view = "admin";
-		return view;
 	}
 }

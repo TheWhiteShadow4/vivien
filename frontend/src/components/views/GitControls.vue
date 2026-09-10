@@ -8,6 +8,7 @@ import ListButton from '../base/ListButton.vue'
 import IconGitPull from '@/icons/IconGitPull.vue'
 import IconSync from '@/icons/IconSync.vue'
 import { useGit } from '@/handler/useGit'
+import Tooltip from '@/base/Tooltip.vue'
 
 const store = useStore();
 
@@ -38,7 +39,7 @@ withDefaults(defineProps<Props>(), {
   variant: "full",
 })
 
-const { pull, reset, checkout, isLoading } = useGit();
+const { pull, reset, isLoading } = useGit();
 
 function commitPush()
 {
@@ -75,6 +76,7 @@ function commitPush()
 			<IconSync />
 		</ListButton>
 
+		<Tooltip text="Aktualisieren">
 		<ListButton
 			color="accent"
 			:label="isAdmin ? 'Fetch/Pull' : 'Aktualisieren'"
@@ -83,6 +85,7 @@ function commitPush()
 			@click="pull()">
 			<IconGitPull />
 		</ListButton>
+		</Tooltip>
 
 		<ListButton
 			:variant="canCommitPush ? 'primary' : 'normal'"
