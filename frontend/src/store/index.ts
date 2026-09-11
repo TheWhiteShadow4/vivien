@@ -4,11 +4,18 @@ import { defineStore } from 'pinia'
 import type { GitBranchStatus, StageInfo } from '@/types/vivien-generated'
 
 export interface UserSettings {
-    username?: string;
-    email?: string;
-    credentials?: string;
-    view: string;
-    sidebar: boolean;
+	username?: string;
+	email?: string;
+	credentials?: string;
+	view: string;
+	sidebar: boolean;
+}
+
+export interface EditorFile {
+	path: string
+	content: string
+	originalContent: string
+	isDirty: boolean
 }
 
 // Der Name 'settings' ist der eindeutige Identifier des Stores
@@ -52,3 +59,38 @@ export const useStore = defineStore('settings', () => {
 })
 
 export type StoreType = ReturnType<typeof useStore>;
+
+
+export const useEditorStore = defineStore('codemirror', {
+	state: () => ({
+		openFiles: [] as EditorFile[],
+		activePath: null as string | null,
+	}),
+	getters: {
+		activeFile: (state) => state.openFiles.find(f => f.path === state.activePath)
+	},
+	actions: {
+		openFile(path: string, content: string) {
+			// Prüfen, ob die Datei bereits geöffnet ist
+			const existing = this.openFiles.find(f => f.path === path)
+
+			if (!existing) {
+				this.openFiles.push({
+					path,
+					content,
+					originalContent: content,
+					isDirty: false
+				})
+			}
+			// Die Datei als aktiv markieren
+			this.activePath = path
+		},
+		updateContent(path: string, newContent: string) {
+			const file = this.openFiles.find(f => f.path === path)
+			if (file) {
+				file.content = newContent
+				file.isDirty = file.content !== file.originalContent
+			}
+		}
+	}
+})

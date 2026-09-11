@@ -156,7 +156,7 @@ onUnmounted(() => {
 						<RepoFileView @select="(e) => updatePreview(e)" />
 					</template>
 					<template v-slot:rechts>
-						<ThePreviewPanel :element="selectedElement" :imageData="previewImage" />
+						<ThePreviewPanel :element="selectedElement" :fileObject="previewImage" />
 					</template>
 				</Splitter>
 			</main>
@@ -173,6 +173,5 @@ onUnmounted(() => {
 
 		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog(true)" @cancel="closeCommitDialog(false)" />
 		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
-		<div id="tooltip" class="relative"></div>
 	</div>
 </template>

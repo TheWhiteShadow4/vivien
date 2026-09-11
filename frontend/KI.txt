@@ -9,12 +9,15 @@ es kann das Repository Verzeichnis auslesen, updaten und dieses gefiltert an den
 Trackt den Git Status für Dateien, speichert Datei Uploads und führt Fetchs, Pulls, Commits, Push und einfache Merges durch.
 Cache vom Repository Verzeichnis mit FileWatcher und Thumbnail Cache für Vorschubilder.
 Das Frontend mit Theme, Basic Komponenten, Login, Dateiupload/Download und Commit/Push Dialog.
-Es zeigt den Inhalt von jeweils einem Ordner des Repositorys an mit Lazy loading.
+Das UI besteht aus zwei Spalten, die flexibel skaliert werden können.
+Die rechte Spalte zeigt den Inhalt von jeweils einem Ordner des Repositorys an mit Lazy loading.
 Navigieren vor und zurück und Durchsuchen ist möglich. Pfade werden in der Browser Hirtorie eingetragen.
-Wählt man ein Element aus, wird vom Server die Metadaten geladen und eine Vorschau angezeigt (für Bilder und Texte).
-Es gibt ein Store für Usersettings (local Storage), Git Status (untracked, added, changed, added for commit).
+Wählt man ein Element aus, wird vom Server die Metadaten geladen und eine Vorschau in der zweiten Spalte angezeigt (für Bilder und Texte).
+Es gibt ein Store für Usersettings (local Storage), Git Status (untracked, added, changed, ect).
 Ein Upload mit Dateiauswahl und Commit Dialog.
 Funktion um Dateien zu löschen oder gelöschte Dateien wiederherzustellen.
+
+Geplant: Texteditor mit CodeMirror 6.
 
 Zielgruppe & Ergonomie:
 - Hauptnutzung auf DESKTOP und TABLET. Ignoriere Mobile-First für Smartphones!
@@ -41,7 +44,7 @@ Bitte halte dich bei der Generierung von Code an folgende Regeln:
 - BaseIconButton: Button für Icons
 - ListButton: Button für Menü und Listenelemente
 - BasePanel: für z.B. Dialoge
-- BaseRepoElement: Anzeige für eine Datei oder Ordner
+- RepoElement: Anzeige für eine Datei oder Ordner
 - CounterBadge: kleiner Zähler (Anzahl von Dateien oder Nachichten)
 - TextInput: Text Eingabe für Suche, Login, etc.
 
