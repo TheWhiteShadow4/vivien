@@ -3,7 +3,8 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import type { GitBranchStatus, StageInfo } from '@/types/vivien-generated'
 
-export interface UserSettings {
+export interface UserSettings
+{
 	username?: string;
 	email?: string;
 	credentials?: string;
@@ -11,10 +12,13 @@ export interface UserSettings {
 	sidebar: boolean;
 }
 
-export interface EditorFile {
-	path: string
+export type EditorTypes = "text/json" | "text/yaml";
+
+export interface EditorFile
+{
+	path: string,
 	content: string
-	originalContent: string
+	type: EditorTypes
 	isDirty: boolean
 }
 
@@ -63,33 +67,36 @@ export type StoreType = ReturnType<typeof useStore>;
 
 export const useEditorStore = defineStore('codemirror', {
 	state: () => ({
-		openFiles: [] as EditorFile[],
+		openFiles: {} as Record<string, EditorFile>,
 		activePath: null as string | null,
 	}),
 	getters: {
-		activeFile: (state) => state.openFiles.find(f => f.path === state.activePath)
+		activeFile: (state) => state.activePath ? state.openFiles[state.activePath] : null
 	},
 	actions: {
-		openFile(path: string, content: string) {
+		openFile(path: string, content: string, type: EditorTypes): EditorFile
+		{
 			// Prüfen, ob die Datei bereits geöffnet ist
-			const existing = this.openFiles.find(f => f.path === path)
+			const existing = !!this.openFiles[path];
 
-			if (!existing) {
-				this.openFiles.push({
+			if (!existing)
+			{
+				this.openFiles[path] = {
 					path,
 					content,
-					originalContent: content,
+					type,
 					isDirty: false
-				})
+				};
 			}
 			// Die Datei als aktiv markieren
-			this.activePath = path
+			this.activePath = path;
+			return this.openFiles[path]!;
 		},
 		updateContent(path: string, newContent: string) {
-			const file = this.openFiles.find(f => f.path === path)
-			if (file) {
-				file.content = newContent
-				file.isDirty = file.content !== file.originalContent
+			const file = this.openFiles[path];
+			if (file)
+			{
+				file.content = newContent;
 			}
 		}
 	}

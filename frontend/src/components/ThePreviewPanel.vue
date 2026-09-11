@@ -1,11 +1,11 @@
 <!-- src\components\ThePreviewPanel.vue -->
 <script setup lang="ts">
 import type { FileObject, RepositoryElement } from '@/types/vivien-generated';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import MarkdownView from './views/MarkdownView.vue';
 import Toolbar from './views/Toolbar.vue';
 import CodeView from '@/components/views/CodeView.vue';
-import { useEditorStore } from '@/store';
+import { useEditorStore, type EditorFile, type EditorTypes } from '@/store';
 
 const editorStore = useEditorStore();
 
@@ -14,8 +14,39 @@ const props = defineProps<{
 	fileObject: FileObject | null
 }>()
 
-const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full w-full"
+const codeEditorFile = ref<EditorFile | null>(null);
 
+watch(() => props.element, (element, oldElement) => {
+	if (element != null)
+	{
+		const editorFile = editorStore.$state.openFiles[element.path];
+		if (editorFile != null)
+		{
+			codeEditorFile.value = editorFile;
+			return;
+		}
+	}
+}, { immediate: true })
+
+function isValidEditorType(mimeType: string | undefined): mimeType is EditorTypes {
+	return mimeType === "text/json" || mimeType === "text/yaml";
+	// Alternativ, wenn die Liste länger wird:
+	// return ["text/json", "text/yaml"].includes(mimeType as any);
+}
+
+watch(() => props.fileObject, (fileObject) => {
+	const mimeType = fileObject?.metadata?.mimeType;
+	if (isValidEditorType(mimeType)) {
+		const editorFile = editorStore.openFile(props.element!.path, fileObject!.url, mimeType);
+
+		codeEditorFile.value = editorFile;
+		return;
+	}
+	codeEditorFile.value = null;
+}, { immediate: true })
+
+
+const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full w-full"
 const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(props.fileObject.metadata.size / 1024) : 0);
 </script>
 
@@ -36,20 +67,17 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 				<img :src="fileObject.url" :width="fileObject.metadata.width" :height="fileObject.metadata.height" />
 			</div>
 
-			<div v-else-if="fileObject.metadata.mimeType == 'text/markdown'"
-				class="flex-1 overflow-auto">
+			<div v-else-if="fileObject.metadata.mimeType == 'text/markdown'" class="flex-1 overflow-auto">
 				<MarkdownView :content="fileObject.url" />
 			</div>
 
-			<div v-else-if="fileObject.url != null && fileObject.metadata.mimeType == 'text/json'"
-				class="flex-1 overflow-auto">
-				<CodeView :content="fileObject.url"/>
+			<div v-else-if="codeEditorFile != null" class="flex-1 overflow-auto">
+				<CodeView :file="codeEditorFile" />
 			</div>
 
-			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')"
-				class="flex-1 overflow-auto">
+			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">
 				<code class="text-s">{{ fileObject.url }}</code>
-				
+
 			</div>
 
 		</div>

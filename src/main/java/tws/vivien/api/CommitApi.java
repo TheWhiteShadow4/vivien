@@ -38,7 +38,7 @@ public class CommitApi implements Api
 			var status = repository.getCachedStatus();
 			if (status == null) status = repository.getBranchStatus(config);
 
-			if (status.changed.size() > 0) // Haben wir Änderungen in der Stage
+			if (status.added.size() > 0 || status.changed.size() > 0 || status.removed.size() > 0) // Haben wir Änderungen in der Stage
 			{
 				repository.commit(request);
 			}

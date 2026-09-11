@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { GitBranchStatus, GitStageOperation, GitStageRequest, ServerError, StageInfo } from './types/vivien-generated';
+import type { GitBranchStatus, GitStageOperation, GitStageRequest, ServerError } from './types/vivien-generated';
 
 
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
@@ -66,50 +66,63 @@ export async function checkGitStatus()
 	}
 }
 
-export async function uploadFiles(event: Event, fileOrFolder: string): Promise<boolean>
+export async function sendUploadRequest(formData: FormData): Promise<boolean>
 {
 	const store = useStore();
 
-	if (!store.settings.email)
+	try
 	{
-		emitter.emit("errror", { message: "Email nicht gesetzt."} as ServerError)
-		return false;
-	}
-
-	const target = event.target as HTMLInputElement;
-	if (target.files && target.files.length > 0)
-	{
-		const formData = new FormData()
-
-		formData.append('email', store.settings.email);
-		formData.append('fileOrFolder', fileOrFolder);
-
-		Array.from(target.files).forEach((file) => {
-			formData.append('files', file)
+		const response = await fetch('/api/upload', {
+			headers: {'Authorization': `Basic ${store.settings.credentials}`},
+			method: 'POST',
+			body: formData,
 		})
 
-		try
+		if (response.ok)
 		{
-			const response = await fetch('/api/upload', {
-				headers: {'Authorization': `Basic ${store.settings.credentials}`},
-				method: 'POST',
-				body: formData,
-			})
-
-			if (response.ok)
-			{
-				store.git = await response.json() as GitBranchStatus
-				emitter.emit("refresh-folder");
-				return true;
-			}
-			else
-			{
-				const error = await response.json() as ServerError
-				emitter.emit("error", error);
-			}
-		} catch (error) {
-			console.error('Netzwerkfehler beim Upload:', error)
+			store.git = await response.json() as GitBranchStatus
+			emitter.emit("refresh-folder");
+			return true;
+		}
+		else
+		{
+			const error = await response.json() as ServerError
+			emitter.emit("error", error);
 		}
 	}
+	catch (error)
+	{
+		console.error('Netzwerkfehler beim Upload:', error)
+	}
 	return false;
+}
+
+export async function uploadFiles(event: Event, fileOrFolder: string): Promise<boolean>
+{
+	const target = event.target as HTMLInputElement;
+	if (!target.files || target.files.length === 0) return false;
+
+	const formData = new FormData();
+	formData.append('fileOrFolder', fileOrFolder);
+
+	Array.from(target.files).forEach((file) => {
+		formData.append('files', file);
+	});
+
+	return await sendUploadRequest(formData);
+}
+
+export async function uploadEditorContent(path: string, content: string): Promise<boolean>
+{
+	const formData = new FormData();
+	
+	const fileName = path.split('/').pop();
+	if (!fileName) return false;
+	
+	const file = new File([content], fileName, { type: 'text/plain' });
+
+	formData.append('fileOrFolder', path);
+	formData.append('files', file);
+
+	return await sendUploadRequest(formData);
 }

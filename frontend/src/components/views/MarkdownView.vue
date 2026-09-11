@@ -4,11 +4,9 @@ import { computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
-interface Props {
+const props = defineProps<{
   content: string
-}
-
-const props = defineProps<Props>()
+}>()
 
 // Wandelt Markdown sicher in HTML um
 const parsedHtml = computed(() => {

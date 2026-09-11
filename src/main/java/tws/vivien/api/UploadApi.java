@@ -1,7 +1,7 @@
 package tws.vivien.api;
 
 import io.javalin.http.Context;
-import io.javalin.util.FileUtil;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
@@ -32,14 +32,14 @@ public class UploadApi implements Api
 	@Override
 	public void handle(Context ctx)
 	{
-		String email = ctx.formParam("email");
+		//String email = ctx.formParam("email");
 		String fileOrFolder = ctx.formParam("fileOrFolder");
-		if (email == null)
+		/*if (email == null)
 		{
 			ctx.status(400);
 			ctx.json(new ServerError("Parameter email nicht gesetzt.", null));
 			return;
-		}
+		}*/
 		if (fileOrFolder == null)
 		{
 			ctx.status(400);
@@ -63,7 +63,7 @@ public class UploadApi implements Api
 						ctx.json(new ServerError("Unerlaubter Dateityp '" + file.filename() + "'", null));
 						return;
 					}
-					FileUtil.streamToFile(file.content(), fullPath.toString());
+					FileUtils.copyInputStreamToFile(file.content(), fullPath.toFile());
 					repository.trackFile(fullPath);
 				}
 			}
@@ -76,7 +76,7 @@ public class UploadApi implements Api
 					ctx.json(new ServerError("Unerlaubter Dateityp '" + file.filename() + "'", null));
 					return;
 				}
-				FileUtil.streamToFile(file.content(), targetPath.toString());
+				FileUtils.copyInputStreamToFile(file.content(), targetPath.toFile());
 				repository.trackFile(targetPath);
 			}
 			gitStatusApi.handle(ctx);

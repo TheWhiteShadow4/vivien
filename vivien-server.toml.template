@@ -2,7 +2,8 @@
 mode = "hosted" # Wir entwickeln mit hosted, weil dabei der Browser nicht geöffnet wird
 
 # Das Git-Repository, auf dem Vivien arbeiten soll
-repo_url = "https://github.com"
+git.remote = "origin"
+git.branch = "master"
 git.user = <Git_USER>
 git.token = <GIT_TOKEN>
 git.resolve = "ours"

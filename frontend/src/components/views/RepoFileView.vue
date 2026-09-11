@@ -361,7 +361,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 		<!-- Liste der Elemente -->
 		<div class="flex-1 overflow-auto">
 			<!-- Lade-Zustand -->
-			<div v-if="isLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
+			<div v-if="!currentFolder && isLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
 				Repository wird geladen...
 			</div>
 
