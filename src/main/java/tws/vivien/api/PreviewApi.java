@@ -56,12 +56,12 @@ public class PreviewApi implements Api
 		}
 		catch(FileNotFoundException e)
 		{
-			ctx.status(410);
+			ctx.status(418);
 			ctx.json(ServerError.fromError(e));
 		}
 		catch (Exception e)
 		{
-			LOG.error("getPreview", e);
+			LOG.error("Request fehlgeschlagen", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}

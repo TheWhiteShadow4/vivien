@@ -14,6 +14,7 @@ import emitter from '@/mitt';
 import IconClose from '@/icons/IconClose.vue';
 import IconSync from '@/icons/IconSync.vue';
 import { sendDelete } from '@/services/git';
+import IconExport from '@/icons/IconExport.vue';
 
 const store = useStore();
 
@@ -66,6 +67,12 @@ async function changeStaged(op: GitStageOperation)
 	{
 		isLoading.value = false
 	}
+}
+
+function copyFile()
+{
+	store.clipboard = props.element;
+	//emitter.emit("clipboard", props.element);
 }
 
 async function deleteFile()
@@ -197,6 +204,15 @@ async function handleFileChange(event: Event)
 			class="flex flex-col items-center">
 			<IconDownload />
 			<span class="text-sm">Download</span>
+		</BaseIconButton>
+
+		<BaseIconButton
+			@click="copyFile()"
+			:disabled="isLoading || isRemoved"
+			variant="normal" size="xl"
+			class="flex flex-col items-center">
+			<IconExport />
+			<span class="text-sm">Verschieben</span>
 		</BaseIconButton>
 
 		<BaseIconButton

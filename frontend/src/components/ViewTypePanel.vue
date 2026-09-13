@@ -24,7 +24,7 @@ const badgeLabelStyle = computed(() => {return{
 
 <template>
 	<div class="flex items-center cursor-pointer" @click="toggleView">
-		<div class="w-30 flex items-center gap-2 px-4 py-2 rounded-vit-panel-radius text-sm" :class="badgeStyle">
+		<div class="w-32 flex items-center gap-2 px-4 py-2 rounded-vit-panel-radius text-md" :class="badgeStyle">
 		<span class="text-vit-text-muted">View: <strong :class="badgeLabelStyle">{{ view.charAt(0).toUpperCase() + view.slice(1) }}</strong></span>
 		</div>
 	</div>

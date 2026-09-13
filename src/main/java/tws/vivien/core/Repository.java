@@ -14,9 +14,11 @@ import tws.vivien.dto.*;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
@@ -242,6 +244,24 @@ public class Repository implements Closeable
 		gitApi.stashApply().call();
 	}
 
+	public void move(String source, String destination) throws Exception
+	{
+		Path path = resolve(source);
+		if (!Files.exists(path)) throw new FileNotFoundException();
+
+		Path dest = resolve(destination);
+		if (Files.isDirectory(dest))
+		{
+			dest = dest.resolve(path.getFileName());
+			String filename = path.getFileName().toString();
+			destination = destination.isEmpty() ? filename : (destination + '/' + filename);
+		}
+
+		Files.move(path, dest, StandardCopyOption.REPLACE_EXISTING);
+		gitApi.rm().addFilepattern(source).call();
+		gitApi.add().addFilepattern(destination).call();
+	}
+
 	/*public GitFileStatus getStatus(Path path) throws Exception
 	{
 		Status status = gitApi.status().addPath(path.toString()).call();
@@ -266,6 +286,13 @@ public class Repository implements Closeable
 		gitApi.close();
 	}
 
+	/**
+	 * Gbt den absoluten Pfad für eine Repository relativen Datei zurück.
+	 * Wenn es sich nicht um eine Datei handelt, wird null zurückgegeben.
+	 * @param file Relativer Pfad
+	 * @return Absoluter Pfad
+	 * @see #resolve(String)
+	 */
 	public Path resolveFile(String file)
 	{
 		Path path = resolve(file);
@@ -275,12 +302,25 @@ public class Repository implements Closeable
 			return null;
 	}
 
+	/**
+	 * Gbt den absoluten Pfad für einen Repository relativen Pfad zurück.
+	 * @param folder Relativer Pfad
+	 * @return Absoluter Pfad
+	 * @see #getRelativePath(Path)
+	 * @see #resolveFile(String)
+	 */
 	public Path resolve(String folder)
 	{
 		if (folder.startsWith("/")) folder = folder.substring(1);
 		return rootPath.resolve(Path.of(folder));
 	}
 
+	/**
+	 * Gibt den relativen Pfad zum Repository für einen absoluten Pfad zurück.
+	 * @param path Absoluter Pfad
+	 * @return Relativer Pfad
+	 * @see #resolve(String)
+	 */
 	public String getRelativePath(Path path)
 	{
 		return rootPath.relativize(path).toString().replace("\\", "/");

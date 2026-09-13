@@ -108,6 +108,8 @@ public class Server
 			c.routes.post("/api/stash", ctx -> component.stashApi().handle(ctx));
 			c.routes.post("/api/unstash", ctx -> component.unstashApi().handle(ctx));
 			c.routes.post("/api/upload", ctx -> component.uploadApi().handle(ctx));
+			c.routes.post("/api/create", ctx -> component.createApi().handle(ctx));
+			c.routes.post("/api/move", ctx -> component.moveApi().handle(ctx));
 		});
 		app.start(config.port);
 

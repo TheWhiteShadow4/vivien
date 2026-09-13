@@ -15,6 +15,7 @@ import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt'
 import Splitter from './components/base/Splitter.vue'
 import { useGit } from './handler/useGit'
+import NewFolderDialog from './components/dialoge/NewFolderDialog.vue'
 
 const store = useStore();
 
@@ -171,6 +172,7 @@ onUnmounted(() => {
 	  </div>-->
 		</div>
 
+		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
 		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog(true)" @cancel="closeCommitDialog(false)" />
 		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
 	</div>

@@ -1,11 +1,16 @@
 <!-- src\components\ThePreviewPanel.vue -->
 <script setup lang="ts">
 import type { FileObject, RepositoryElement } from '@/types/vivien-generated';
-import { computed, ref, watch } from 'vue';
-import MarkdownView from './views/MarkdownView.vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
-import CodeView from '@/components/views/CodeView.vue';
 import { useEditorStore, type EditorFile, type EditorTypes } from '@/store';
+
+const MarkdownView = defineAsyncComponent(() =>
+  import('@/components/views/MarkdownView.vue')
+)
+const CodeView = defineAsyncComponent(() =>
+  import('@/components/views/CodeView.vue')
+)
 
 const editorStore = useEditorStore();
 

@@ -4,9 +4,10 @@
   /* SCHRIFTEN */
   --font-sans: "Inter", "Roboto", system-ui, sans-serif;
   --font-mono: "Courier New", mono;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.75rem;
+  --text-sm: 0.8rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
 
   /* --- HINTERGRÜNDE & RAHMEN --- */
   --color-vit-bg: #12101c;          /* Basis-Hintergrund der gesamten App */
@@ -51,7 +52,7 @@ html, body {
   background-color: var(--color-vit-bg);
   color: var(--color-vit-text-main);
   font-family: var(--font-sans);
-  font-size: var(--font-size-base);
+  font-size: var(--text-md);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;

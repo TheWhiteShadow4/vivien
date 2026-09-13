@@ -49,36 +49,35 @@ tracking-wide border-b border-vit-border pb-2 mb-4`
 </script>
 
 <template>
-  <div :class="backdropStyles" @click.self.prevent>
-    <BasePanel variant="dialog">
-      
-      <h2 :class="titleStyles">Commit</h2>
+	<div :class="backdropStyles" @click.self.prevent>
+	<BasePanel variant="dialog">
+		
+		<h2 :class="titleStyles">Speichern</h2>
 
-      <div class="flex flex-col gap-6 w-108">
-        <TextArea
-          v-model="message"
-          type="text"
-          label="Nachicht (erforderlich)"
-          placeholder="Message"
-          :variant="message && !isMessageValid ? 'failed' : 'default'"
-          @enter="submitCommit"
-        >
-        </TextArea>
-      </div>
+		<div class="flex flex-col gap-6 w-108">
+		<TextArea
+			v-model="message"
+			type="text"
+			label="Dokumentiere hier, was du gemacht hast."
+			placeholder="Message"
+			:variant="message && !isMessageValid ? 'failed' : 'default'"
+		>
+		</TextArea>
+		</div>
 
-      <div class="mt-6 flex justify-between">
-        <BaseButton
-          variant="primary"
-          :disabled="!isFormValid || isLoading"
-          @click="submitCommit"
-        >Absenden</BaseButton>
-		 <BaseButton
-          variant="danger"
-          :disabled="isLoading"
-          @click="cancelCommit"
-        >Abbrechen</BaseButton>
-      </div>
+		<div class="mt-6 flex justify-between">
+		<BaseButton
+			variant="primary"
+			:disabled="!isFormValid || isLoading"
+			@click="submitCommit"
+		>Absenden</BaseButton>
+			<BaseButton
+			variant="danger"
+			:disabled="isLoading"
+			@click="cancelCommit"
+		>Abbrechen</BaseButton>
+		</div>
 
-    </BasePanel>
-  </div>
+	</BasePanel>
+	</div>
 </template>

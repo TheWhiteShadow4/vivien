@@ -55,7 +55,7 @@ public class CommitApi implements Api
 		}
 		catch (Exception e)
 		{
-			LOG.error("commit", e);
+			LOG.error("Request fehlgeschlagen", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}

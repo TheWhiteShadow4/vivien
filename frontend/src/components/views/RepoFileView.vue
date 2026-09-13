@@ -2,7 +2,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import RepoElement from './RepoElement.vue'
-// Importiere die generierten Typen aus deiner d.ts-Datei
 import type { GitBranchStatus, RepositoryElement } from '@/types/vivien-generated'
 import { emitDisconectError, fetchWithView, uploadFiles } from '@/client';
 import TextInput from '../base/TextInput.vue';
@@ -15,8 +14,13 @@ import Tooltip from '../base/Tooltip.vue';
 import { useStore } from '@/store/index';
 import ListButton from '../base/ListButton.vue';
 import IconBin from '@/icons/IconBin.vue';
+import NewFolderDialog from '../dialoge/NewFolderDialog.vue';
+import IconAddFolder from '@/icons/IconAddFolder.vue';
+import IconImport from '@/icons/IconImport.vue';
+import { useGit } from '@/handler/useGit.ts';
 
 const store = useStore();
+const gitApi = useGit();
 
 const deleteCount = computed(() => {
 	return store.git ? (store.git.missing.length + store.git.removed.length) : 0;
@@ -26,19 +30,20 @@ const emit = defineEmits<{
 	(e: 'select', element: RepositoryElement | null): void
 }>()
 
-// Reaktiver Zustand für die API-Daten und Lade-Status
-//const repository = ref<RepositoryRoot | null>(null)
+
 const isMounted = ref(false);
-const isLoading = ref(true);
-const errorMessage = ref<string | null>(null)
+const isTreeLoading = ref(true);
+const errorMessage = ref<string | null>(null);
 
 const folderCache: Map<string, RepositoryElement> = new Map([]);
 
-const previousFolder = ref<RepositoryElement | null>(null)
-const currentFolder = ref<RepositoryElement | null>(null)
-const selectedElement = ref<RepositoryElement | null>(null)
+const previousFolder = ref<RepositoryElement | null>(null);
+const currentFolder = ref<RepositoryElement | null>(null);
+const selectedElement = ref<RepositoryElement | null>(null);
 
-const searchQuery = ref('')
+const showCreateDialog = ref(false);
+
+const searchQuery = ref('');
 
 function selectParent()
 {
@@ -71,17 +76,14 @@ function selectParent()
 
 function selectElement(element: RepositoryElement, doppelt: boolean)
 {
-	if (currentFolder.value != null && element.type == 'FOLDER' && doppelt)
+	if (currentFolder.value != null && element.type == 'FOLDER')
 	{
 		const child = folderCache.get(element.path);
 		if (child != null)
 		{
 			currentFolder.value = child;
 		}
-		else
-		{
-			fetchRepository(element.path);
-		}
+		fetchRepository(element.path);
 		selectedElement.value = null;
 	}
 	else
@@ -134,7 +136,7 @@ async function fetchSearch(query: string)
 		}
 		else
 		{
-			isLoading.value = true
+			isTreeLoading.value = true
 			errorMessage.value = null
 
 			const response = await fetchWithView(`/api/repo?q=${query}`)
@@ -159,7 +161,7 @@ async function fetchSearch(query: string)
 	}
 	finally
 	{
-		isLoading.value = false
+		isTreeLoading.value = false
 	}
 }
 
@@ -168,17 +170,16 @@ function clearSearch()
 	searchQuery.value = "";
 	if (previousFolder.value != null)
 	{
-		currentFolder.value = previousFolder.value;
+		navigateToFolder(previousFolder.value);
 	}
 }
 
-// Funktion zum asynchronen Laden der Daten vom Server
 async function fetchRepository(path: string)
 {
 	if (store.settings.username == null) return;
 	try
 	{
-		isLoading.value = true
+		isTreeLoading.value = true
 		errorMessage.value = null
 
 		const response = await fetchWithView(`/api/repo?path=${path}`)
@@ -203,15 +204,13 @@ async function fetchRepository(path: string)
 	}
 	finally
 	{
-		isLoading.value = false
+		isTreeLoading.value = false
 	}
 }
 
 function navigateToFolder(folder: RepositoryElement, isBrowserBackAction = false)
 {
 	currentFolder.value = folder
-
-	//var suffix = folder.path == "/" ? "" : folder.path;
 
 	// Wenn die Aktion VOM Browser (Zurück-Taste) kam, dürfen wir keinen NEUEN Eintrag in die History pushen!
 	if (!isBrowserBackAction)
@@ -291,6 +290,22 @@ async function refreshFile(path: string)
 	}
 }
 
+function moveClipboardFile()
+{
+	if (!store.clipboard || !currentFolder.value) return;
+
+	const file = store.clipboard.path;
+	const d = file.lastIndexOf('/');
+	const folder = (d != -1) ? file.substring(0, d) : "/";
+
+	if (folder == currentFolder.value.path) return;
+	folderCache.delete(folder);
+
+	gitApi.move(file, currentFolder.value.path);
+
+	store.clipboard = null;
+}
+
 onMounted(() => {
 	const path = window.location.pathname.substring(1);
 	fetchRepository(path);
@@ -309,7 +324,7 @@ onUnmounted(() => {
 
 // Strukturierte Design-Klassen aus dem vit-Theme
 const tableWrapper = "w-full h-full flex flex-col border border-vit-border rounded-vit-radius bg-vit-surface shadow-vit-shadow"
-const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex justify-between items-center text-sm font-semibold text-vit-text-muted"
+const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex justify-between items-center text-md font-semibold text-vit-text-muted"
 </script>
 
 <template>
@@ -339,13 +354,29 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			multiple
 			@change="handleFileChange" 
 			/>
+		<Tooltip text="Ordner erstellen">
+		<BaseIconButton variant="secondary" :disabled="!currentFolder" @click="showCreateDialog = true">
+			<IconAddFolder />
+		</BaseIconButton>
+		</Tooltip>
+		<div class="w-80 flex items-center gap-3">
+			<template v-if="!!store.clipboard">
+				<BaseIconButton variant="normal" :disabled="!currentFolder" @click="moveClipboardFile()">
+					<IconImport />
+				</BaseIconButton>
+				<span class="text-vit-text-muted">{{ store.clipboard.name }}</span>
+			</template>
+		</div>
+	</Teleport>
+	<Teleport to="body">
+		<NewFolderDialog v-if="showCreateDialog" :parent="currentFolder!.path" @close="showCreateDialog = false" />
 	</Teleport>
 	<Teleport v-if="isMounted" to="#papierkorb">
 		<ListButton
 			color="ghost"
 			label="Papierkorb"
 			:minified="!store.settings.sidebar"
-			:disabled="isLoading && deleteCount > 0"
+			:disabled="isTreeLoading && deleteCount > 0"
 			:count="deleteCount"
 			@click="fetchSearch(':missing,removed')">
 			<IconBin />
@@ -361,7 +392,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 		<!-- Liste der Elemente -->
 		<div class="flex-1 overflow-auto">
 			<!-- Lade-Zustand -->
-			<div v-if="!currentFolder && isLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
+			<div v-if="!currentFolder && isTreeLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
 				Repository wird geladen...
 			</div>
 

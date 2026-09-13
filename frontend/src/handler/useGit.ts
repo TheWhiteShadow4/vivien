@@ -1,5 +1,5 @@
 import emitter from "@/mitt";
-import { sendCheckout, sendCommit, sendDelete, sendPull, sendReset } from "@/services/git";
+import { sendCheckout, sendCommit, sendDelete, sendMove, sendPull, sendReset } from "@/services/git";
 import { useStore, type StoreType } from "@/store";
 import type { GitBranchStatus, ServerError } from "@/types/vivien-generated";
 import { ref, type Ref } from "vue";
@@ -14,6 +14,7 @@ export function useGit()
 	const reset = () => doReset(store, isLoading);
 	const pull = () => doPull(store, isLoading);
 	const $delete = (file: string) => doDelete(store, isLoading, file);
+	const move = (src: string, dst: string) => doMoveElement(store, isLoading, src, dst);
 
 	return {
 		checkout,
@@ -21,6 +22,7 @@ export function useGit()
 		reset,
 		pull,
 		$delete,
+		move,
 		isLoading,
 	};
 }
@@ -152,7 +154,7 @@ async function doDelete(store: StoreType, isLoading: Ref<boolean>, file: string)
 
 		if (response.ok)
 		{
-			store.git = await response.json() as GitBranchStatus
+			store.git = await response.json() as GitBranchStatus;
 		}
 		else
 		{
@@ -168,4 +170,35 @@ async function doDelete(store: StoreType, isLoading: Ref<boolean>, file: string)
 	{
 		isLoading.value = false;
 	}
+}
+
+async function doMoveElement(store: StoreType, isLoading: Ref<boolean>, src: string, dst: string): Promise<boolean>
+{
+	try
+	{
+		isLoading.value = true;
+
+		const response = await sendMove(src, dst);
+		
+		if (response.ok)
+		{
+			store.git = await response.json() as GitBranchStatus;
+			emitter.emit("refresh-folder");
+			return true;
+		}
+		else
+		{
+			const error = await response.json() as ServerError;
+			emitter.emit("error", error);
+		}
+	}
+	catch(err: unknown)
+	{
+		emitter.emit("error", err as Error);
+	}
+	finally
+	{
+		isLoading.value = false;
+	}
+	return false;
 }

@@ -6,7 +6,7 @@ import type { ServerState } from '@/types/vivien-generated.js';
 
 const props = defineProps<{ state?: ServerState }>()
 
-const headerContainer = "h-14 w-full bg-vit-surface border-b border-vit-border px-6 flex items-center justify-between z-20 shrink-0"
+const headerContainer = "h-16 w-full bg-vit-surface border-b border-vit-border px-6 flex items-center justify-between z-20 shrink-0"
 </script>
 
 <template>
@@ -18,7 +18,7 @@ const headerContainer = "h-14 w-full bg-vit-surface border-b border-vit-border p
           Vivien
 		</h1>
     </div>
-	<div id="fileview-toolbar" class="w-180 flex items-start mx-4 gap-4"></div>
+	<div id="fileview-toolbar" class="w-220 flex items-start mx-4 gap-6"></div>
 
     <ViewTypePanel v-if="props.state" :view="props.state.view" />
   </header>

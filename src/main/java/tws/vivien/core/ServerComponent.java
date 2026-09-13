@@ -35,4 +35,6 @@ public interface ServerComponent
 	StashApi stashApi();
 	UnstashApi unstashApi();
 	UploadApi uploadApi();
+	CreateApi createApi();
+	MoveApi moveApi();
 }

@@ -1,5 +1,5 @@
 import { fetchWithView } from "@/client";
-import type { CheckoutRequest, CommitRequest, GitStageRequest } from "@/types/vivien-generated";
+import type { CheckoutRequest, CommitRequest, GitStageRequest, MoveRequest } from "@/types/vivien-generated";
 
 
 export async function sendCheckout(branch: string): Promise<Response>
@@ -53,4 +53,13 @@ export async function sendDelete(file: string): Promise<Response>
 		} as GitStageRequest)
 	};
 	return fetchWithView("/api/delete", options);
+}
+
+export async function sendMove(src: string, dst: string): Promise<Response>
+{
+	const options: RequestInit = {
+		method: "POST",
+		body: JSON.stringify({ src, dst } as MoveRequest)
+	};
+	return fetchWithView("/api/move", options);
 }

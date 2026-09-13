@@ -31,8 +31,8 @@ const variantStyles = {
 
 // Exakt quadratische Größen-Definitionen
 const sizeStyles = {
-  sm: "w-7 h-7 p-1 text-sm",
-  md: "w-9 h-9 p-1.5 text-base",
+  sm: "w-8 h-8 p-1 text-sm",
+  md: "w-10 h-10 p-1.5 text-md",
   lg: "w-12 h-12 p-2 text-lg",
   xl: "w-20 h-20 p-2 text-xl"
 }

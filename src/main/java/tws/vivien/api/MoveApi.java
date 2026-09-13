@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
 import tws.vivien.core.Repository;
-import tws.vivien.dto.CheckoutRequest;
+import tws.vivien.dto.MoveRequest;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
@@ -13,29 +13,27 @@ import javax.inject.Singleton;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
-public class CheckoutApi implements Api
+public class MoveApi implements Api
 {
-	private static final Logger LOG = LoggerFactory.getLogger(CheckoutApi.class);
+	private static final Logger LOG = LoggerFactory.getLogger(MoveApi.class);
 
 	@Inject public Config config;
 	@Inject public Repository repository;
 	@Inject public ReentrantReadWriteLock gitLock;
 	@Inject public GitStatusApi gitStatusApi;
 
-	@Inject public CheckoutApi() {}
+	@Inject public MoveApi() {}
 
 	@Override
 	public void handle(Context ctx)
 	{
 		try
 		{
-			var request = ctx.bodyAsClass(CheckoutRequest.class);
+			gitLock.readLock().lock();
+			var request = ctx.bodyAsClass(MoveRequest.class);
 
-			if (request.branch == null) throw new NullPointerException("branch ist null");
-
-			gitLock.writeLock().lock();
-			repository.checkout(request.branch);
-
+			LOG.info("Move: {} => {}", request.src, request.dst);
+			repository.move(request.src, request.dst);
 			gitStatusApi.handle(ctx);
 		}
 		catch (Exception e)
@@ -46,7 +44,7 @@ public class CheckoutApi implements Api
 		}
 		finally
 		{
-			gitLock.writeLock().unlock();
+			gitLock.readLock().unlock();
 		}
 	}
 }

@@ -1,7 +1,7 @@
 // src\store\index.ts
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import type { GitBranchStatus, StageInfo } from '@/types/vivien-generated'
+import type { RepositoryElement, GitBranchStatus, StageInfo } from '@/types/vivien-generated';
 
 export interface UserSettings
 {
@@ -27,6 +27,7 @@ export const useStore = defineStore('settings', () => {
 
 	const git = ref<GitBranchStatus>();
 	const stage = ref<StageInfo>();
+	const clipboard = ref<RepositoryElement | null>(null);
 
 	// 1. Initialisierung: Versuche aus dem LocalStorage zu laden, sonst nimm Defaults
 	const settings = ref<UserSettings>({
@@ -57,6 +58,7 @@ export const useStore = defineStore('settings', () => {
 	return {
 		git,
 		stage,
+		clipboard,
 		settings,
 		updateSetting
 	}

@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { GitBranchStatus, GitStageOperation, GitStageRequest, ServerError } from './types/vivien-generated';
+import type { GitBranchStatus, GitStageOperation, GitStageRequest, RepositoryElement, ServerError } from './types/vivien-generated';
 
 
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
@@ -126,3 +126,4 @@ export async function uploadEditorContent(path: string, content: string): Promis
 
 	return await sendUploadRequest(formData);
 }
+
