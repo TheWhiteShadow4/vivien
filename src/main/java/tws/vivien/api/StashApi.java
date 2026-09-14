@@ -4,12 +4,12 @@ import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Diese Api ist nur dazu da den Stash zu pushen.
@@ -23,7 +23,7 @@ public class StashApi implements Api
 
 	@Inject	public Config config;
 	@Inject public Repository repository;
-	@Inject public ReentrantReadWriteLock gitLock;
+	@Inject public LockService lockService;
 	@Inject public GitStatusApi gitStatusApi;
 
 	@Inject public StashApi() {}
@@ -33,7 +33,7 @@ public class StashApi implements Api
 	{
 		try
 		{
-			gitLock.writeLock().lock();
+			lockService.gitLock.writeLock().lock();
 			repository.stash();
 			gitStatusApi.handle(ctx);
 		}
@@ -45,7 +45,7 @@ public class StashApi implements Api
 		}
 		finally
 		{
-			gitLock.writeLock().unlock();
+			lockService.gitLock.writeLock().unlock();
 		}
 	}
 }

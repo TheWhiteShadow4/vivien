@@ -16,12 +16,12 @@ port = 8080
 security = "lax"
 users = [ "Anna", "Fufu" ]
 password = "*****"
-
-[preview]
-compression = 0.5
-
 # Erlaubte Upload Formate (Optional)
 formats = "png,jpg,jpeg,tif,tiff,tga,txt,md,json,yaml,wav,mp3,acc,ogg"
+
+[preview]
+output = "jpg"
+compression = 0.5
 
 [views.admin]
 excludes = [ ".meta" ]

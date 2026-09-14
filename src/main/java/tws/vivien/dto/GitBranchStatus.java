@@ -17,4 +17,9 @@ public class GitBranchStatus
 	public Set<String> removed;
 	public Set<String> missing;
 	public Set<String> conflicts;
+
+	public boolean hasStagedFiles()
+	{
+		return (added.size() > 0 || changed.size() > 0 || removed.size() > 0);
+	}
 }

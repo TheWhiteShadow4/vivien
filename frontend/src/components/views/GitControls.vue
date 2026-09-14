@@ -65,6 +65,7 @@ function commitPush()
 			<IconGitPull />
 		</ListButton> -->
 
+		<Tooltip align="left" text="Macht alle nicht gespeicherten Änderungen rückgängig">
 		<ListButton
 			v-if="store.git"
 			:variant="(gitChangeCount + gitStageCount) > 0 ? 'secondary' : 'normal'"
@@ -75,8 +76,9 @@ function commitPush()
 			@click="reset()">
 			<IconSync />
 		</ListButton>
+		</Tooltip>
 
-		<Tooltip text="Aktualisieren">
+		<Tooltip align="left" text="Bringt den Vivien Server auf den neusten Stand">
 		<ListButton
 			color="accent"
 			:label="isAdmin ? 'Fetch/Pull' : 'Aktualisieren'"

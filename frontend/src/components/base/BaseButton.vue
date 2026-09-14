@@ -17,12 +17,6 @@ defineEmits<{
   (e: 'click', event: MouseEvent): void
 }>()
 
-const baseStyles = `inline-flex items-center justify-center
-rounded-vit-btn-radius transition-colors duration-200
-cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2
-focus-visible:ring-vit-primary focus-visible:ring-offset-2 disabled:opacity-50
-disabled:cursor-not-allowed disabled:shadow-none`
-
 const variantStyles = {
   primary: `bg-vit-primary text-vit-text-main font-bold shadow-vit-inset hover:bg-gradient-to-b
   active:translate-y-[2px] primary-gradient`,
@@ -49,10 +43,25 @@ const sizeStyles = {
   <button
     :type="'button'"
     :disabled="disabled"
-    :class="[baseStyles, variantStyles[variant], sizeStyles[size]]"
+	class="baseButton"
+    :class="[variantStyles[variant], sizeStyles[size]]"
     @click="$emit('click', $event)"
   >
     <!-- Slot für Text und optionale Icons -->
     <slot />
   </button>
 </template>
+
+<style>
+@import "tailwindcss";
+@import "src/style.css";
+
+@utility baseButton
+{
+	@apply 
+		inline-flex items-center justify-center rounded-vit-btn-radius
+		cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2
+		focus-visible:ring-vit-primary focus-visible:ring-offset-2 disabled:opacity-50
+		disabled:cursor-not-allowed disabled:shadow-none transition-colors duration-200;
+}
+</style>

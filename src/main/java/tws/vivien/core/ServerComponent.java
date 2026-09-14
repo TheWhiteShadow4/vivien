@@ -4,7 +4,6 @@ import dagger.Component;
 import tws.vivien.api.*;
 
 import javax.inject.Singleton;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Das hier ist die Registry für alle Dependency Injection Klassen, die über Dagger verwaltet werden.
@@ -16,8 +15,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public interface ServerComponent
 {
 	Config config();
-	// Lock um Git Operationen(write) gegenüber kleine Datei Operationen(read) abzusichern.
-	ReentrantReadWriteLock gitLock();
+	LockService lockService();
 	Repository repository();
 	RepositoryApi repositoryApi();
 	PreviewApi previewApi();
@@ -37,4 +35,5 @@ public interface ServerComponent
 	UploadApi uploadApi();
 	CreateApi createApi();
 	MoveApi moveApi();
+	FileLockApi fileLockApi();
 }

@@ -4,6 +4,7 @@ import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.ElementType;
 import tws.vivien.dto.RepositoryElement;
@@ -14,7 +15,6 @@ import javax.inject.Singleton;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
 public class CreateApi implements Api
@@ -24,7 +24,7 @@ public class CreateApi implements Api
 	@Inject
 	public Config config;
 	@Inject public Repository repository;
-	@Inject public ReentrantReadWriteLock gitLock;
+	@Inject public LockService lockService;
 
 	@Inject public CreateApi() {}
 
@@ -33,7 +33,7 @@ public class CreateApi implements Api
 	{
 		try
 		{
-			gitLock.readLock().lock();
+			lockService.gitLock.readLock().lock();
 			var request = ctx.bodyAsClass(RepositoryElement.class);
 			Path path = repository.resolve(request.path);
 			if (!Files.isDirectory(path)) throw new FileNotFoundException();
@@ -58,7 +58,7 @@ public class CreateApi implements Api
 		}
 		finally
 		{
-			gitLock.readLock().unlock();
+			lockService.gitLock.readLock().unlock();
 		}
 	}
 }

@@ -3,23 +3,21 @@ package tws.vivien.api;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.core.Config;
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.MoveRequest;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
 public class MoveApi implements Api
 {
 	private static final Logger LOG = LoggerFactory.getLogger(MoveApi.class);
 
-	@Inject public Config config;
 	@Inject public Repository repository;
-	@Inject public ReentrantReadWriteLock gitLock;
+	@Inject public LockService lockService;
 	@Inject public GitStatusApi gitStatusApi;
 
 	@Inject public MoveApi() {}
@@ -29,7 +27,7 @@ public class MoveApi implements Api
 	{
 		try
 		{
-			gitLock.readLock().lock();
+			lockService.gitLock.readLock().lock();
 			var request = ctx.bodyAsClass(MoveRequest.class);
 
 			LOG.info("Move: {} => {}", request.src, request.dst);
@@ -44,7 +42,7 @@ public class MoveApi implements Api
 		}
 		finally
 		{
-			gitLock.readLock().unlock();
+			lockService.gitLock.readLock().unlock();
 		}
 	}
 }

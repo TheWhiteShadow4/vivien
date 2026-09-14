@@ -15,12 +15,16 @@ import IconClose from '@/icons/IconClose.vue';
 import IconSync from '@/icons/IconSync.vue';
 import { sendDelete } from '@/services/git';
 import IconExport from '@/icons/IconExport.vue';
+import IconEdit from '@/icons/IconEdit.vue';
 
 const store = useStore();
 
 const props = defineProps<{
-  element: RepositoryElement
+  element: RepositoryElement,
+  editButton: 'hidden' | 'edit' | 'unedit'
 }>();
+
+const emit = defineEmits(["edit"]);
 
 const isLoading = ref<boolean>(false)
 
@@ -213,6 +217,26 @@ async function handleFileChange(event: Event)
 			class="flex flex-col items-center">
 			<IconExport />
 			<span class="text-sm">Verschieben</span>
+		</BaseIconButton>
+
+		<BaseIconButton
+			v-if="editButton === 'edit'"
+			@click="emit('edit', true)"
+			:disabled="isLoading"
+			variant="normal" size="xl"
+			class="flex flex-col items-center">
+			<IconEdit />
+			<span class="text-sm">Bearbeiten</span>
+		</BaseIconButton>
+
+		<BaseIconButton
+			v-if="editButton === 'unedit'"
+			@click="emit('edit', false)"
+			:disabled="isLoading"
+			variant="secondary" size="xl"
+			class="flex flex-col items-center">
+			<IconEdit />
+			<span class="text-sm">Freigeben</span>
 		</BaseIconButton>
 
 		<BaseIconButton

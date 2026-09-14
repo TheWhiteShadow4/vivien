@@ -97,7 +97,7 @@ public class ImageHandler implements IHandler
 		int w = Math.round(width / f);
 		int h = Math.round(height / f);
 
-		String format = config.previewFormat;
+		String format = config.previewOutputFormat;
 		BufferedImage dstBufferedImage;
 		if (image.getColorModel().hasAlpha() && !"jpg".equals(format))
 		{

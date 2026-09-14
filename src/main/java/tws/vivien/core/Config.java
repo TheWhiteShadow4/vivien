@@ -32,10 +32,10 @@ public class Config
 	public Object cert = null;
 	public String user = null;
 	public String password = null;
+	public String previewOutputFormat;
 	public List<String> validFileformats;
 	public List<String> validUsers;
 
-	public String previewFormat;
 	public float previewCompression;
 
 	public String gitRemote = null;
@@ -86,18 +86,19 @@ public class Config
 	private void readConfig(FileConfig config)
 	{
 		mode = CReader.readString(this, config, "mode")
-					  .map(ServerMode::fromString).withDefault(ServerMode.LOCAL).get();
+				.map(ServerMode::fromString).withDefault(ServerMode.LOCAL).get();
 
 		repository = CReader.readString(this, config, "repo_path").required("")
-							.map(Path::of).get();
+				.map(Path::of).get();
 
 		gitRemote = CReader.readString(this, config, "git.remote").get();
 		gitBranch = CReader.readString(this, config, "git.branch").get();
-		mergeStrategy = CReader.readString(this, config, "git.resolve").map(this::mapMergeStrategy).withDefault(MergeStrategy.OURS).get();
+		mergeStrategy = CReader.readString(this, config, "git.resolve")
+				.map(this::mapMergeStrategy).withDefault(MergeStrategy.OURS).get();
 
 		var defaultSecurity = mode == ServerMode.HOSTED ? SecurityMode.STRICT : SecurityMode.LAX;
 		security = CReader.readString(this, config, "server.security")
-						  .map(SecurityMode::fromString).withDefault(defaultSecurity).get();
+				.map(SecurityMode::fromString).withDefault(defaultSecurity).get();
 
 		serverHost = CReader.readString(this, config, "server.host").withDefault(serverHost).get();
 		port = CReader.<Integer>read(this, config, "server.port").withDefault(port).get();
@@ -105,14 +106,13 @@ public class Config
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
-		previewFormat = CReader.readString(this, config, "preview.format").get();
-		previewCompression = CReader.<Double>read(this, config, "preview.compression")
-				.map(Double::floatValue).withDefault(0.5f).get();
-
 		validFileformats = CReader.readString(this, config, "server.formats")
 				.map(s -> Arrays.stream(s.split(",")).map(String::trim).toList()).get();
 
+		previewCompression = CReader.<Double>read(this, config, "preview.compression")
+				.map(Double::floatValue).withDefault(0.5f).get();
 
+		previewOutputFormat = CReader.readString(this, config, "preview.output").get();
 
 		var gitToken = CReader.readString(this, config, "git.token").get();
 		if (gitToken != null)

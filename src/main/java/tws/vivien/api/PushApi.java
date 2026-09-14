@@ -4,13 +4,12 @@ import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
-import tws.vivien.core.ErrorBacklog;
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
 public class PushApi implements Api
@@ -19,8 +18,7 @@ public class PushApi implements Api
 
 	@Inject public Config config;
 	@Inject public Repository repository;
-	@Inject public ReentrantReadWriteLock gitLock;
-	@Inject	public ErrorBacklog errorBacklog;
+	@Inject public LockService lockService;
 	@Inject public GitStatusApi gitStatusApi;
 
 	@Inject public PushApi() {}

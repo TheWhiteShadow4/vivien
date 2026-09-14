@@ -5,14 +5,17 @@ import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { yaml, yamlFrontmatter } from "@codemirror/lang-yaml"
 import { linter, lintGutter } from '@codemirror/lint';
 import { dracula } from 'thememirror';
-import { keymap } from '@codemirror/view';
+import { EditorView, keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { computed, ref, watch } from 'vue';
+import { EditorState, Compartment } from '@codemirror/state';
+import { computed, ref, shallowRef, watch } from 'vue';
 import { useEditorStore, type EditorFile } from '@/store';
 import { uploadEditorContent } from '@/client';
 import emitter from '@/mitt';
 import type { ServerError } from '@/types/vivien-generated';
 
+const languageCompartment = new Compartment();
+const readOnlyCompartment = new Compartment();
 const editorStore = useEditorStore();
 
 interface Props { file: EditorFile }
@@ -22,6 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
 		path: "",
 		content: "",
 		type: "text/json",
+		readOnly: true,
 		isDirty: false
 	} as any
 });
@@ -31,6 +35,7 @@ const model = ref<string>(active.content);
 
 const isSaving = ref<boolean>(false);
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+const view = shallowRef<EditorView | null>(null);
 
 async function saveEditor(file: EditorFile, content: string)
 {
@@ -65,6 +70,13 @@ watch(() => props.file.path, (newPath) => {
 	active = props.file;
 });
 
+watch(() => props.file.readOnly, (readOnly) => {
+	if (view.value)
+	{
+		view.value.dispatch({ effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)) });
+	}
+});
+
 watch(model, (newContent) => {
 	if (saveTimeout) clearTimeout(saveTimeout);
 
@@ -88,7 +100,8 @@ return {
 		keymap.of([
 			...defaultKeymap,
 			...historyKeymap
-		])
+		]),
+		readOnlyCompartment.of(EditorState.readOnly.of(props.file.readOnly)),
 	],
 	"text/yaml": [
 		dracula,
@@ -98,7 +111,8 @@ return {
 		keymap.of([
 			...defaultKeymap,
 			...historyKeymap
-		])
+		]),
+		readOnlyCompartment.of(EditorState.readOnly.of(props.file.readOnly)),
 	]
 }[props.file.type]});
 </script>

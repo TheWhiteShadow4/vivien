@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import tws.vivien.core.Cache;
 import tws.vivien.core.Config;
 import tws.vivien.core.Repository;
+import tws.vivien.core.ServerMode;
 import tws.vivien.dto.FileObject;
 import tws.vivien.dto.ServerError;
 import tws.vivien.handlers.IHandler;
@@ -13,6 +14,9 @@ import tws.vivien.handlers.IHandler;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 @Singleton
@@ -51,6 +55,12 @@ public class PreviewApi implements Api
 				return;
 			}
 
+			if (config.mode == ServerMode.SETUP && "vivien-server.toml".equals(file))
+			{
+				sendSetupConfig(ctx);
+				return;
+			}
+
 			FileObject obj = handler.generatePreview(file);
 			ctx.json(obj);
 		}
@@ -71,5 +81,16 @@ public class PreviewApi implements Api
 	{
 		String fileExt = file.substring(file.lastIndexOf(".")+1).toLowerCase();
 		return handlerMap.get(fileExt);
+	}
+
+	private void sendSetupConfig(Context ctx) throws IOException
+	{
+		Path path = Path.of("vivien-server.toml");
+		String content = Files.readString(path);
+
+		var meta = new FileObject.FileObjectMeta();
+		meta.mimeType = "text/toml";
+		meta.size = content.length();
+		ctx.json(new FileObject(content, path.getFileName().toString(), meta));
 	}
 }

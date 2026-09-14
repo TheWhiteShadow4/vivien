@@ -4,6 +4,7 @@ import type { FileObject, RepositoryElement } from '@/types/vivien-generated';
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
 import { useEditorStore, type EditorFile, type EditorTypes } from '@/store';
+import { useFiles } from '@/handler/useFiles.ts';
 
 const MarkdownView = defineAsyncComponent(() =>
   import('@/components/views/MarkdownView.vue')
@@ -12,6 +13,7 @@ const CodeView = defineAsyncComponent(() =>
   import('@/components/views/CodeView.vue')
 )
 
+const files = useFiles();
 const editorStore = useEditorStore();
 
 const props = defineProps<{
@@ -50,6 +52,21 @@ watch(() => props.fileObject, (fileObject) => {
 	codeEditorFile.value = null;
 }, { immediate: true })
 
+async function getFileLock(lock: boolean)
+{
+	if (!codeEditorFile.value) return;
+
+	let result = await files.lockFile(codeEditorFile.value.path, lock);
+	if (result.success)
+	{
+		codeEditorFile.value.readOnly = false;
+	}
+}
+
+const editButton = computed(() => {
+	if (codeEditorFile.value == null) return "hidden";
+	return codeEditorFile.value.readOnly ? "edit" : "unedit";
+})
 
 const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full w-full"
 const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(props.fileObject.metadata.size / 1024) : 0);
@@ -66,7 +83,7 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
 		</div>
-		<Toolbar v-if="element" :element="element" />
+		<Toolbar v-if="element" :element="element" :editButton="editButton" @edit="getFileLock" />
 		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
 			<div v-if="fileObject.metadata.mimeType.startsWith('image')" class="flex flex-col items-center">
 				<img :src="fileObject.url" :width="fileObject.metadata.width" :height="fileObject.metadata.height" />

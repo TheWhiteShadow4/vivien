@@ -6,13 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
 import tws.vivien.core.ErrorBacklog;
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.CommitRequest;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
 public class CommitApi implements Api
@@ -21,7 +21,7 @@ public class CommitApi implements Api
 
 	@Inject public Config config;
 	@Inject public Repository repository;
-	@Inject public ReentrantReadWriteLock gitLock;
+	@Inject public LockService lockService;
 	@Inject	public ErrorBacklog errorBacklog;
 	@Inject public GitStatusApi gitStatusApi;
 
@@ -34,11 +34,11 @@ public class CommitApi implements Api
 		{
 			CommitRequest request = ctx.bodyAsClass(CommitRequest.class);
 
-			gitLock.writeLock().lock();
+			lockService.gitLock.writeLock().lock();
 			var status = repository.getCachedStatus();
 			if (status == null) status = repository.getBranchStatus(config);
 
-			if (status.added.size() > 0 || status.changed.size() > 0 || status.removed.size() > 0) // Haben wir Änderungen in der Stage
+			if (status.hasStagedFiles()) // Haben wir Änderungen in der Stage
 			{
 				repository.commit(request);
 			}
@@ -61,7 +61,7 @@ public class CommitApi implements Api
 		}
 		finally
 		{
-			gitLock.writeLock().unlock();
+			lockService.gitLock.writeLock().unlock();
 		}
 	}
 }

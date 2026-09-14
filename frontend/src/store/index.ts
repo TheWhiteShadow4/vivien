@@ -19,6 +19,7 @@ export interface EditorFile
 	path: string,
 	content: string
 	type: EditorTypes
+	readOnly: boolean
 	isDirty: boolean
 }
 
@@ -87,6 +88,7 @@ export const useEditorStore = defineStore('codemirror', {
 					path,
 					content,
 					type,
+					readOnly: true,
 					isDirty: false
 				};
 			}

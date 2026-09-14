@@ -16,8 +16,7 @@ Wählt man ein Element aus, wird vom Server die Metadaten geladen und eine Vorsc
 Es gibt ein Store für Usersettings (local Storage), Git Status (untracked, added, changed, ect).
 Ein Upload mit Dateiauswahl und Commit Dialog.
 Funktion um Dateien zu löschen oder gelöschte Dateien wiederherzustellen.
-
-Geplant: Texteditor mit CodeMirror 6.
+Interaktiver Texteditor mit CodeMirror 6.
 
 Zielgruppe & Ergonomie:
 - Hauptnutzung auf DESKTOP und TABLET. Ignoriere Mobile-First für Smartphones!

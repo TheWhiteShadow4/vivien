@@ -5,12 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
 import tws.vivien.core.ErrorBacklog;
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
 public class PullApi implements Api
@@ -19,7 +19,7 @@ public class PullApi implements Api
 
 	@Inject public Config config;
 	@Inject public Repository repository;
-	@Inject public ReentrantReadWriteLock gitLock;
+	@Inject public LockService lockService;
 	@Inject	public ErrorBacklog errorBacklog;
 	@Inject public GitStatusApi gitStatusApi;
 
@@ -30,7 +30,7 @@ public class PullApi implements Api
 	{
 		try
 		{
-			gitLock.writeLock().lock();
+			lockService.gitLock.writeLock().lock();
 			if (config.gitRemote != null)
 			{
 				repository.fetch(config);
@@ -50,7 +50,7 @@ public class PullApi implements Api
 		}
 		finally
 		{
-			gitLock.writeLock().unlock();
+			lockService.gitLock.writeLock().unlock();
 		}
 	}
 }

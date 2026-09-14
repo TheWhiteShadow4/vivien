@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.Config;
 import tws.vivien.core.ErrorBacklog;
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.GitStageRequest;
 import tws.vivien.dto.ServerError;
@@ -13,7 +14,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
 public class DeleteApi implements Api
@@ -23,7 +23,7 @@ public class DeleteApi implements Api
 	@Inject
 	public Config config;
 	@Inject public Repository repository;
-	@Inject public ReentrantReadWriteLock gitLock;
+	@Inject public LockService lockService;
 	@Inject public ErrorBacklog errorBacklog;
 
 	@Inject public DeleteApi() {}
@@ -33,7 +33,7 @@ public class DeleteApi implements Api
 	{
 		try
 		{
-			gitLock.readLock().lock();
+			lockService.gitLock.readLock().lock();
 			var request = ctx.bodyAsClass(GitStageRequest.class);
 			Path file = repository.resolve(request.file);
 			LOG.info("Delete: {}", file);
@@ -47,7 +47,7 @@ public class DeleteApi implements Api
 		}
 		finally
 		{
-			gitLock.readLock().unlock();
+			lockService.gitLock.readLock().unlock();
 		}
 	}
 }

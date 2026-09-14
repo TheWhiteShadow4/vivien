@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { GitBranchStatus, GitStageOperation, GitStageRequest, RepositoryElement, ServerError } from './types/vivien-generated';
+import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, RepositoryElement, ServerError } from './types/vivien-generated';
 
 
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
@@ -127,3 +127,15 @@ export async function uploadEditorContent(path: string, content: string): Promis
 	return await sendUploadRequest(formData);
 }
 
+export async function updatePreview(el: RepositoryElement): Promise<FileObject | null>
+{
+	const response = await fetchWithView(`/api/preview?file=${el.path}`);
+	if (response.ok)
+	{
+		return await response.json() as FileObject;
+	}
+	else
+	{
+		return null;
+	}
+}

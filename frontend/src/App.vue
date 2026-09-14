@@ -8,14 +8,14 @@ import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
 import RepoFileView from './components/views/RepoFileView.vue'
 import ThePreviewPanel from './components/ThePreviewPanel.vue'
-import { checkGitStatus, emitDisconectError, fetchWithView } from './client'
+import { checkGitStatus, emitDisconectError, fetchWithView, updatePreview } from './client'
 import { useStore } from './store/index'
 import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt'
 import Splitter from './components/base/Splitter.vue'
 import { useGit } from './handler/useGit'
-import NewFolderDialog from './components/dialoge/NewFolderDialog.vue'
+import { getFileExtension, README_FILE, SUPPORTED_PREVIEW_TYPES } from './config.ts'
 
 const store = useStore();
 
@@ -29,7 +29,6 @@ const isSidebarOpen = ref(true)
 const showCommitDialog = ref(false)
 const showLoginDialog = ref(false)
 const isLoading = ref<boolean>(true)
-const networkError = ref<string | null>(null)
 const previewImage = ref<FileObject | null>(null);
 const selectedElement = ref<RepositoryElement |null>(null);
 
@@ -39,7 +38,6 @@ async function checkBackendStatus()
 	try
 	{
 		isLoading.value = true
-		networkError.value = null
 
 		const response = await fetchWithView("/api/state")
 
@@ -63,26 +61,23 @@ async function checkBackendStatus()
 	}
 }
 
-async function updatePreview(el: RepositoryElement | null)
+async function onRefreshPreview(el: RepositoryElement | null, select: boolean = false)
 {
 	if (el == null)
 	{
-		selectedElement.value = null;
+		if (select)
+			selectedElement.value = null;
 		return;
 	}
 	if (el.type != "FILE") return;
 
-	selectedElement.value = el;
+	if (select)
+		selectedElement.value = el;
 
-	const response = await fetchWithView(`/api/preview?file=${el.path}`);
-	if (response.ok)
+	let ext = getFileExtension(el.name);
+	if (ext && SUPPORTED_PREVIEW_TYPES.includes(ext))
 	{
-		const fileObject: FileObject = await response.json();
-		previewImage.value = fileObject;
-	}
-	else
-	{
-		previewImage.value = null;
+		previewImage.value = await updatePreview(el);
 	}
 }
 
@@ -98,13 +93,9 @@ function onGitCommand(arg: string)
 	}
 }
 
-function closeCommitDialog(needRefresh: boolean)
+function closeCommitDialog()
 {
 	showCommitDialog.value = false;
-	if (needRefresh)
-	{
-		checkGitStatus();
-	}
 }
 
 function closeLoginDialog(needRefresh: boolean)
@@ -127,15 +118,16 @@ onMounted(() => {
 	else
 	{
 		checkBackendStatus();
+		onRefreshPreview(README_FILE as RepositoryElement, false);
 	}
 
 	emitter.on("error", (e) => state.value.serverErrors.push(e as ServerError));
-	emitter.on("refresh-preview", (e) => updatePreview(e as RepositoryElement));
+	emitter.on("refresh-preview", (e) => onRefreshPreview(e as RepositoryElement));
 })
 
 onUnmounted(() => {
 	emitter.off("error", (e) => state.value.serverErrors.push(e as ServerError));
-	emitter.off("refresh-preview", (e) => updatePreview(e as RepositoryElement));
+	emitter.off("refresh-preview", (e) => onRefreshPreview(e as RepositoryElement));
 })
 
 </script>
@@ -145,7 +137,6 @@ onUnmounted(() => {
 
 		<TheHeader :state="state" />
 
-		<!-- Inhalt unter dem Header -->
 		<div class="flex flex-1 min-h-0">
 
 			<TheSidebar :state="state" :is-open="isSidebarOpen" @git="onGitCommand($event)" @user="showLoginDialog = true" />
@@ -154,7 +145,7 @@ onUnmounted(() => {
 			<main class="w-full h-full bg-vit-bg p-1">
 				<Splitter>
 					<template v-slot:links>
-						<RepoFileView @select="(e) => updatePreview(e)" />
+						<RepoFileView @select="(e) => onRefreshPreview(e, true)" />
 					</template>
 					<template v-slot:rechts>
 						<ThePreviewPanel :element="selectedElement" :fileObject="previewImage" />
@@ -163,17 +154,12 @@ onUnmounted(() => {
 			</main>
 
 			<ErrorBannerList :errors="state.serverErrors"
-				@dismiss-error="(index) => state.serverErrors.splice(index, 1)" />
-
-			<!--<div class="fixed bottom-6 right-6 z-50 flex flex-row gap-4 max-w-2xl pointer-events-none">
-	  <BasePanel variant="dialog" >Surface</BasePanel>
-      <BasePanel variant="info" >Das ist ein Toast<br /><span class="text-vit-text-muted">Zweite Zeile.</span></BasePanel>
-	  <BasePanel variant="warning" >Warning</BasePanel>
-	  </div>-->
+				@dismiss-error="(index) => state.serverErrors.splice(index, 1)"
+			/>
 		</div>
 
 		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
-		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog(true)" @cancel="closeCommitDialog(false)" />
+		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog()" @cancel="closeCommitDialog()" />
 		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
 	</div>
 </template>

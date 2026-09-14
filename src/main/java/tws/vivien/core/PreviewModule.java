@@ -8,6 +8,10 @@ import tws.vivien.handlers.IHandler;
 import tws.vivien.handlers.ImageHandler;
 import tws.vivien.handlers.TextHandler;
 
+/**
+ * Liste der Preview Handler pro Dateiendung.
+ * Muss mit der Liste in <code>frontend/src/config.ts</code> übereinstimmen.
+ */
 @Module
 public class PreviewModule
 {
