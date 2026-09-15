@@ -1,7 +1,7 @@
 // src\store\index.ts
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import type { RepositoryElement, GitBranchStatus, StageInfo } from '@/types/vivien-generated';
+import type { RepositoryElement, GitBranchStatus, StageInfo, ServerState } from '@/types/vivien-generated';
 
 export interface UserSettings
 {
@@ -12,7 +12,8 @@ export interface UserSettings
 	sidebar: boolean;
 }
 
-export type EditorTypes = "text/json" | "text/yaml";
+export const ALLOWED_EDITOR_TYPES = ["text/json", "text/yaml", "text/toml"] as const;
+export type EditorTypes = typeof ALLOWED_EDITOR_TYPES[number];
 
 export interface EditorFile
 {
@@ -26,6 +27,7 @@ export interface EditorFile
 // Der Name 'settings' ist der eindeutige Identifier des Stores
 export const useStore = defineStore('settings', () => {
 
+	const server = ref<ServerState | null>(null);
 	const git = ref<GitBranchStatus>();
 	const stage = ref<StageInfo>();
 	const clipboard = ref<RepositoryElement | null>(null);
@@ -58,6 +60,7 @@ export const useStore = defineStore('settings', () => {
 
 	// Alles zurückgeben, was in Komponenten/Dateien verfügbar sein soll
 	return {
+		server,
 		git,
 		stage,
 		clipboard,

@@ -17,6 +17,11 @@ public class PreviewModule
 {
 	@Provides
 	@IntoMap
+	@StringKey("toml")
+	public IHandler provideTomlHandler(TextHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
 	@StringKey("png")
 	public IHandler providePngHandler(ImageHandler handler) { return handler; }
 

@@ -3,10 +3,7 @@ package tws.vivien.api;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.core.Cache;
-import tws.vivien.core.Config;
-import tws.vivien.core.Repository;
-import tws.vivien.core.ServerMode;
+import tws.vivien.core.*;
 import tws.vivien.dto.FileObject;
 import tws.vivien.dto.ServerError;
 import tws.vivien.handlers.IHandler;
@@ -55,7 +52,7 @@ public class PreviewApi implements Api
 				return;
 			}
 
-			if (config.mode == ServerMode.SETUP && "vivien-server.toml".equals(file))
+			if (config.mode == ServerMode.SETUP && "setup.toml".equals(file))
 			{
 				sendSetupConfig(ctx);
 				return;
@@ -91,6 +88,7 @@ public class PreviewApi implements Api
 		var meta = new FileObject.FileObjectMeta();
 		meta.mimeType = "text/toml";
 		meta.size = content.length();
+		meta.lockHolder = ctx.header(Server.APP_USER);
 		ctx.json(new FileObject(content, path.getFileName().toString(), meta));
 	}
 }

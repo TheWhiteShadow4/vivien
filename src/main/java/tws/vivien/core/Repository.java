@@ -32,14 +32,15 @@ public class Repository implements Closeable
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
 
-	private final Path rootPath;
-	private final Git gitApi;
-	private final RepositoryCache cache;
+	private Path rootPath;
+	private Git gitApi;
+	private RepositoryCache cache;
 	private GitBranchStatus branchStatus;
 
 	@Inject
 	public Repository(Config config)
 	{
+		if (config.mode == ServerMode.SETUP) return;
 		try
 		{
 			this.rootPath = config.repository;

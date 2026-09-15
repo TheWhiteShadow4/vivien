@@ -2,6 +2,7 @@
 import { useStore } from '@/store'
 import emitter from './mitt';
 import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, RepositoryElement, ServerError } from './types/vivien-generated';
+import { getFileExtension } from '@/config';
 
 
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
@@ -117,7 +118,7 @@ export async function uploadEditorContent(path: string, content: string): Promis
 {
 	const formData = new FormData();
 	
-	const fileName = path.split('/').pop();
+	const fileName = getFileExtension(path);
 	if (!fileName) return false;
 	
 	const file = new File([content], fileName, { type: 'text/plain' });

@@ -6,23 +6,23 @@ import type { ServerError } from '../types/vivien-generated'
 import BaseButton from './base/BaseButton.vue';
 import BaseIconButton from './base/BaseIconButton.vue';
 import BasePanel from './base/BasePanel.vue';
+import { useStore } from '@/store';
+
+const store = useStore();
 
 // Erweitere das Interface für den lokalen UI-Zustand (Ausklappen)
 interface UIError extends ServerError {
   _showDetails?: boolean;
 }
 
-// Erwarte das Fehler-Array aus der Hauptkomponente als Prop
-const props = defineProps<{
-  errors: UIError[]
-}>()
+function getErrors(): UIError[]
+{
+	return (store.server?.serverErrors ?? []) as UIError[];
+}
 
-const emit = defineEmits<{
-  (e: 'dismissError', index: number): void
-}>()
-
-const removeError = (index: number) => {
-  emit('dismissError', index)
+function removeError(index: number)
+{
+	store.server?.serverErrors.splice(index, 1);
 }
 </script>
 
@@ -33,7 +33,7 @@ const removeError = (index: number) => {
     <!-- Animierter Übergang beim Löschen von Fehlern -->
     <TransitionGroup name="error-fade">
       <BasePanel 
-        v-for="(err, index) in props.errors" 
+        v-for="(err, index) in getErrors()" 
         :key="index"
         variant="warning"
       >

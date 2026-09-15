@@ -201,6 +201,7 @@ async function handleFileChange(event: Event)
 			<span class="text-sm">Ersetzen</span>
 		</BaseIconButton>
 
+		<template v-if="store.server?.mode != 'SETUP'">
 		<BaseIconButton
 			@click="download()"
 			:disabled="isLoading || isRemoved"
@@ -218,6 +219,7 @@ async function handleFileChange(event: Event)
 			<IconExport />
 			<span class="text-sm">Verschieben</span>
 		</BaseIconButton>
+		</template>
 
 		<BaseIconButton
 			v-if="editButton === 'edit'"
@@ -230,7 +232,16 @@ async function handleFileChange(event: Event)
 		</BaseIconButton>
 
 		<BaseIconButton
-			v-if="editButton === 'unedit'"
+			v-if="store.server?.mode == 'SETUP'"
+			@click="emit('edit', true)"
+			:disabled="isLoading"
+			variant="primary" size="xl"
+			class="flex flex-col items-center">
+			<IconSync />
+			<span class="text-sm">Neustarten</span>
+		</BaseIconButton>
+		<BaseIconButton
+			v-else-if="editButton === 'unedit'"
 			@click="emit('edit', false)"
 			:disabled="isLoading"
 			variant="secondary" size="xl"

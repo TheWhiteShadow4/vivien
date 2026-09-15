@@ -3,7 +3,7 @@
 import type { FileObject, RepositoryElement } from '@/types/vivien-generated';
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
-import { useStore, type EditorFile, type EditorTypes } from '@/store';
+import { ALLOWED_EDITOR_TYPES, useStore, type EditorFile, type EditorTypes } from '@/store';
 import { useFiles } from '@/handler/useFiles.ts';
 
 const MarkdownView = defineAsyncComponent(() =>
@@ -35,10 +35,9 @@ watch(() => props.element, (element) => {
 	}
 }, { immediate: true })
 
-function isValidEditorType(mimeType: string | undefined): mimeType is EditorTypes {
-	return mimeType === "text/json" || mimeType === "text/yaml";
-	// Alternativ, wenn die Liste länger wird:
-	// return ["text/json", "text/yaml"].includes(mimeType as any);
+function isValidEditorType(mimeType: string | undefined): mimeType is EditorTypes
+{
+	return ALLOWED_EDITOR_TYPES.includes(mimeType as EditorTypes);
 }
 
 watch(() => props.fileObject, (fileObject) => {
@@ -46,7 +45,7 @@ watch(() => props.fileObject, (fileObject) => {
 	if (isValidEditorType(mimeType))
 	{
 		const editorFile = {
-			path: props.element!.path,
+			path: props.element?.path,
 			content: fileObject!.url,
 			type: mimeType,
 			isDirty: false
@@ -123,7 +122,6 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 
 			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">
 				<code class="text-s">{{ fileObject.url }}</code>
-
 			</div>
 
 		</div>

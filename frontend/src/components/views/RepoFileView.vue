@@ -74,6 +74,7 @@ function selectParent()
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function selectElement(element: RepositoryElement, doppelt: boolean)
 {
 	if (currentFolder.value != null && element.type == 'FOLDER')
@@ -191,16 +192,16 @@ async function fetchRepository(path: string)
 				const errorData = await response.json();
 				emitter.emit("error", errorData);
 			}
-			else
-			{
-				emitDisconectError(response.statusText);
-			}
 			return;
 		}
 
 		const tree: RepositoryElement = await response.json();
 		folderCache.set(tree.path, tree);
 		navigateToFolder(tree);
+	}
+	catch(err)
+	{
+		emitDisconectError((err as Error).message);
 	}
 	finally
 	{

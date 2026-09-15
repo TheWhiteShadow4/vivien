@@ -25,19 +25,24 @@ public class TextHandler implements IHandler
 		if (path == null) throw new FileNotFoundException();
 
 		String content = Files.readString(path);
+		String filename = file.toLowerCase();
 
 		String mimeType;
-		if (file.toLowerCase().endsWith("md"))
+		if (filename.endsWith(".md"))
 		{
 			mimeType = "text/markdown";
 		}
-		else if (file.toLowerCase().endsWith("yaml"))
+		else if (filename.endsWith(".yaml"))
 		{
 			mimeType = "text/yaml";
 		}
-		else if (file.toLowerCase().endsWith("json"))
+		else if (filename.endsWith(".json"))
 		{
 			mimeType = "text/json";
+		}
+		else if (filename.endsWith(".toml"))
+		{
+			mimeType = "text/toml";
 		}
 		else
 		{

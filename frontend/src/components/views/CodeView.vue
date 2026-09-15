@@ -13,6 +13,8 @@ import { useStore, type EditorFile } from '@/store';
 import { uploadEditorContent } from '@/client';
 import emitter from '@/mitt';
 import type { ServerError } from '@/types/vivien-generated';
+import { StreamLanguage } from '@codemirror/language';
+import { toml } from "@codemirror/legacy-modes/mode/toml";
 
 const store = useStore();
 
@@ -28,8 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
 	} as EditorFile)
 });
 
-let active = props.file;
-const model = ref<string>(active.content);
+const model = ref<string>(props.file.content);
 
 const isSaving = ref<boolean>(false);
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -57,14 +58,13 @@ async function saveEditor(file: EditorFile, content: string)
 }
 
 watch(() => props.file.path, (newPath) => {
-	if (active?.isDirty && !isSaving.value)
+	if (props.file?.isDirty && !isSaving.value)
 	{
 		if (saveTimeout) clearTimeout(saveTimeout);
-		saveEditor(active, model.value);
+		saveEditor(props.file, model.value);
 	}
 	console.log("Neue Datei", newPath, "Inhalt:", props.file.content.substring(0, 20).replace("\n", " "))
 	model.value = props.file.content;
-	active = props.file;
 });
 
 watch(model, (newContent) => {
@@ -98,6 +98,8 @@ const editorExtensions = computed(() => {
 			extensions.push(linter(jsonParseLinter()));
 		case "text/yaml":
 			extensions.push(yamlFrontmatter({ content: yaml() }));
+		case "text/toml":
+			extensions.push(StreamLanguage.define(toml));
 	}
 	if (props.file.readOnly)
 	{

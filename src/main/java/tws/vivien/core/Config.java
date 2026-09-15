@@ -14,6 +14,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.function.Function;
 
@@ -22,7 +23,7 @@ public class Config
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Config.class);
 
-	private static final String CONFIG_FILE_NAME = "vivien-server.toml";
+	public static final String CONFIG_FILE_NAME = "vivien-server.toml";
 
 	public Path webRoot;
 	public ServerMode mode;
@@ -68,7 +69,7 @@ public class Config
 		catch (Exception e)
 		{
 			System.out.println("⚠ Fehlerhafte Konfiguration (" + e.getMessage() + "). Wechsle in SETUP-Modus.");
-			initSafeConfig();
+			initSetupConfig();
 		}
 	}
 
@@ -86,7 +87,7 @@ public class Config
 	private void readConfig(FileConfig config)
 	{
 		mode = CReader.readString(this, config, "mode")
-				.map(ServerMode::fromString).withDefault(ServerMode.LOCAL).get();
+				.map(ServerMode::fromString).withDefault(ServerMode.SETUP).get();
 
 		repository = CReader.readString(this, config, "repo_path").required("")
 				.map(Path::of).get();
@@ -204,9 +205,10 @@ public class Config
 
 	private void validateRepository(Path repository)
 	{
-		if (repository == null)
+		String str = repository.toString();
+		if (str.isEmpty() || str.equals("."))
 		{
-			throw new RuntimeException("Repository Pfad ist null.");
+			throw new InvalidParameterException("Repository Pfad ist ungültig.");
 		}
 		if (!Files.isDirectory(repository))
 		{

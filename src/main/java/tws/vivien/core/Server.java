@@ -12,6 +12,7 @@ import java.awt.*;
 import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class Server
 {
@@ -25,6 +26,7 @@ public class Server
 	private final Cache serverCache;
 	private final ServerComponent component;
 	private final boolean productionMode;
+	private Javalin app;
 
 	public Server(boolean productionMode) throws Exception
 	{
@@ -51,7 +53,7 @@ public class Server
 		LOG.debug("Working Directory: {}", System.getProperty("user.dir"));
 		LOG.debug("Cache Directory: {}", serverCache.getCacheFolder());
 
-		Javalin app = Javalin.create(c ->
+		this.app = Javalin.create(c ->
 		{
 			c.startup.showJavalinBanner = false;
 			c.http.compressionStrategy = CompressionStrategy.GZIP;
@@ -93,24 +95,39 @@ public class Server
 			c.routes.before("/api/*", this::authFilter);
 
 			c.routes.get("/api/state", ctx -> component.serverStateApi().handle(ctx));
-			c.routes.get("/api/repo", ctx -> component.repositoryApi().handle(ctx));
 			c.routes.get("/api/preview", ctx -> component.previewApi().handle(ctx));
-
-			c.routes.get("/api/git", ctx -> component.gitStaturApi().handle(ctx));
-			c.routes.get("/api/download", ctx -> component.downloadApi().handle(ctx));
-
-			c.routes.post("/api/delete", ctx -> component.deleteApi().handle(ctx));
-			c.routes.post("/api/staged", ctx -> component.stageApi().handle(ctx));
-			c.routes.post("/api/checkout", ctx -> component.checkoutApi().handle(ctx));
-			c.routes.post("/api/reset", ctx -> component.resetApi().handle(ctx));
-			c.routes.post("/api/commit", ctx -> component.commitApi().handle(ctx));
-			c.routes.post("/api/pull", ctx -> component.pullApi().handle(ctx));
-			c.routes.post("/api/stash", ctx -> component.stashApi().handle(ctx));
-			c.routes.post("/api/unstash", ctx -> component.unstashApi().handle(ctx));
 			c.routes.post("/api/upload", ctx -> component.uploadApi().handle(ctx));
-			c.routes.post("/api/create", ctx -> component.createApi().handle(ctx));
-			c.routes.post("/api/move", ctx -> component.moveApi().handle(ctx));
-			c.routes.post("/api/filelock", ctx -> component.fileLockApi().handle(ctx));
+			if (config.mode != ServerMode.SETUP)
+			{
+				c.routes.get("/api/repo", ctx -> component.repositoryApi().handle(ctx));
+				c.routes.get("/api/git", ctx -> component.gitStaturApi().handle(ctx));
+				c.routes.get("/api/download", ctx -> component.downloadApi().handle(ctx));
+
+				c.routes.post("/api/delete", ctx -> component.deleteApi().handle(ctx));
+				c.routes.post("/api/staged", ctx -> component.stageApi().handle(ctx));
+				c.routes.post("/api/checkout", ctx -> component.checkoutApi().handle(ctx));
+				c.routes.post("/api/reset", ctx -> component.resetApi().handle(ctx));
+				c.routes.post("/api/commit", ctx -> component.commitApi().handle(ctx));
+				c.routes.post("/api/pull", ctx -> component.pullApi().handle(ctx));
+				c.routes.post("/api/stash", ctx -> component.stashApi().handle(ctx));
+				c.routes.post("/api/unstash", ctx -> component.unstashApi().handle(ctx));
+				c.routes.post("/api/create", ctx -> component.createApi().handle(ctx));
+				c.routes.post("/api/move", ctx -> component.moveApi().handle(ctx));
+				c.routes.post("/api/filelock", ctx -> component.fileLockApi().handle(ctx));
+			}
+			c.routes.post("/api/restart", ctx -> CompletableFuture.runAsync(() -> {
+				try
+				{
+					Thread.sleep(100);
+					LOG.info("Server wird neu gestartet...");
+					app.stop();
+					new Server(productionMode).start();
+				}
+				catch (Exception e)
+				{
+					LOG.error("Fehler beim Server Neustart", e);
+				}
+			}));
 		});
 		app.start(config.port);
 
@@ -130,10 +147,14 @@ public class Server
 				var credentials = ctx.basicAuthCredentials();
 				if (credentials != null && Objects.equals(config.password, credentials.getPassword()))
 				{
-					if (config.validUsers == null) return;
+					if (config.validUsers == null)
+					{
+						setUsername(ctx);
+						return;
+					}
 					if (config.validUsers.contains(credentials.getUsername()))
 					{
-						setUsername(ctx, credentials.getUsername());
+						ctx.header(APP_USER, credentials.getUsername());
 						return;
 					}
 				}
@@ -145,14 +166,15 @@ public class Server
 		}
 		else
 		{
-			setUsername(ctx, DEFAULT_USER);
+			setUsername(ctx);
 		}
 	}
 
-	private void setUsername(Context ctx, String defaultValue)
+	private void setUsername(Context ctx)
 	{
 		var val = ctx.header(APP_USER);
-		if (val == null || val.isEmpty()) ctx.header(APP_USER, defaultValue);
+		if (val == null || val.isEmpty()) val = DEFAULT_USER;
+		ctx.header(APP_USER, val);
 	}
 
 	public void openBrowser()
