@@ -4,10 +4,7 @@ import io.javalin.http.Context;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.core.Config;
-import tws.vivien.core.ErrorBacklog;
-import tws.vivien.core.LockService;
-import tws.vivien.core.Repository;
+import tws.vivien.core.*;
 import tws.vivien.dto.CommitRequest;
 import tws.vivien.dto.ServerError;
 
@@ -40,6 +37,7 @@ public class CommitApi implements Api
 
 			if (status.hasStagedFiles()) // Haben wir Änderungen in der Stage
 			{
+				lockService.freeUserLocks(ctx.header(Server.APP_USER));
 				repository.commit(request);
 			}
 			if (config.gitRemote != null)

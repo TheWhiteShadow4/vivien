@@ -29,6 +29,7 @@ export const useStore = defineStore('settings', () => {
 	const git = ref<GitBranchStatus>();
 	const stage = ref<StageInfo>();
 	const clipboard = ref<RepositoryElement | null>(null);
+	const editor = ref<EditorFile | null>(null);
 
 	// 1. Initialisierung: Versuche aus dem LocalStorage zu laden, sonst nimm Defaults
 	const settings = ref<UserSettings>({
@@ -61,47 +62,9 @@ export const useStore = defineStore('settings', () => {
 		stage,
 		clipboard,
 		settings,
+		editor,
 		updateSetting
 	}
 })
 
 export type StoreType = ReturnType<typeof useStore>;
-
-
-export const useEditorStore = defineStore('codemirror', {
-	state: () => ({
-		openFiles: {} as Record<string, EditorFile>,
-		activePath: null as string | null,
-	}),
-	getters: {
-		activeFile: (state) => state.activePath ? state.openFiles[state.activePath] : null
-	},
-	actions: {
-		openFile(path: string, content: string, type: EditorTypes): EditorFile
-		{
-			// Prüfen, ob die Datei bereits geöffnet ist
-			const existing = !!this.openFiles[path];
-
-			if (!existing)
-			{
-				this.openFiles[path] = {
-					path,
-					content,
-					type,
-					readOnly: true,
-					isDirty: false
-				};
-			}
-			// Die Datei als aktiv markieren
-			this.activePath = path;
-			return this.openFiles[path]!;
-		},
-		updateContent(path: string, newContent: string) {
-			const file = this.openFiles[path];
-			if (file)
-			{
-				file.content = newContent;
-			}
-		}
-	}
-})

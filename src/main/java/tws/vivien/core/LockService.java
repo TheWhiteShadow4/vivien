@@ -20,4 +20,15 @@ public class LockService
 		gitLock = new ReentrantReadWriteLock();
 		fileLocks = new ConcurrentHashMap<>();
 	}
+
+	public void lockFile(String path, String user)
+	{
+		freeUserLocks(user);
+		fileLocks.put(path, user);
+	}
+
+	public void freeUserLocks(String user)
+	{
+		fileLocks.values().removeIf(value -> value.equals(user));
+	}
 }

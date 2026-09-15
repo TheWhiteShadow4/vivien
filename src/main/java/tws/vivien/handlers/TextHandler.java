@@ -1,5 +1,6 @@
 package tws.vivien.handlers;
 
+import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.FileObject;
 
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 public class TextHandler implements IHandler
 {
 	@Inject public Repository repository;
+	@Inject public LockService lockService;
 
 	@Inject public TextHandler() {}
 
@@ -42,9 +44,11 @@ public class TextHandler implements IHandler
 			mimeType = "text/plain";
 		}
 
+		var lockHolder = lockService.fileLocks.get(file);
 		var meta = new FileObject.FileObjectMeta();
 		meta.mimeType = mimeType;
 		meta.size = content.length();
+		meta.lockHolder = lockHolder;
 
 		return new FileObject(content, path.getFileName().toString(), meta);
 	}

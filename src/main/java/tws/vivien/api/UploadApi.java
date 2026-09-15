@@ -88,6 +88,7 @@ public class UploadApi implements Api
 
 	private boolean isValidUploadFile(String filename)
 	{
+		if (config.validFileformats == null) return true;
 		for(var format : config.validFileformats)
 		{
 			if (filename.endsWith(format)) return true;

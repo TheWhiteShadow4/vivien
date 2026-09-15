@@ -89,6 +89,9 @@ async function doReset(store: StoreType, isLoading: Ref<boolean>)
 	{
 		isLoading.value = true;
 
+		if (store.editor)
+			store.editor.readOnly = true;
+
 		const response = await sendReset();
 
 		if (response.ok)
@@ -118,6 +121,9 @@ async function doCommit(store: StoreType, isLoading: Ref<boolean>, message: stri
 		if (!store.settings.username) throw new Error("username ist null");
 		if (!store.settings.email) throw new Error("email ist null");
 		isLoading.value = true;
+
+		if (store.editor)
+			store.editor.readOnly = true;
 
 		const response = await sendCommit(
 			store.settings.username,

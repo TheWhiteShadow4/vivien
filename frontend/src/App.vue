@@ -74,7 +74,7 @@ async function onRefreshPreview(el: RepositoryElement | null, select: boolean = 
 	if (select)
 		selectedElement.value = el;
 
-	let ext = getFileExtension(el.name);
+	const ext = getFileExtension(el.name);
 	if (ext && SUPPORTED_PREVIEW_TYPES.includes(ext))
 	{
 		previewImage.value = await updatePreview(el);

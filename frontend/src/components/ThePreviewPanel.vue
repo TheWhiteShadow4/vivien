@@ -3,7 +3,7 @@
 import type { FileObject, RepositoryElement } from '@/types/vivien-generated';
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
-import { useEditorStore, type EditorFile, type EditorTypes } from '@/store';
+import { useStore, type EditorFile, type EditorTypes } from '@/store';
 import { useFiles } from '@/handler/useFiles.ts';
 
 const MarkdownView = defineAsyncComponent(() =>
@@ -13,8 +13,8 @@ const CodeView = defineAsyncComponent(() =>
   import('@/components/views/CodeView.vue')
 )
 
+const store = useStore();
 const files = useFiles();
-const editorStore = useEditorStore();
 
 const props = defineProps<{
 	element: RepositoryElement | null
@@ -23,10 +23,10 @@ const props = defineProps<{
 
 const codeEditorFile = ref<EditorFile | null>(null);
 
-watch(() => props.element, (element, oldElement) => {
+watch(() => props.element, (element) => {
 	if (element != null)
 	{
-		const editorFile = editorStore.$state.openFiles[element.path];
+		const editorFile = store.editor;
 		if (editorFile != null)
 		{
 			codeEditorFile.value = editorFile;
@@ -43,8 +43,17 @@ function isValidEditorType(mimeType: string | undefined): mimeType is EditorType
 
 watch(() => props.fileObject, (fileObject) => {
 	const mimeType = fileObject?.metadata?.mimeType;
-	if (isValidEditorType(mimeType)) {
-		const editorFile = editorStore.openFile(props.element!.path, fileObject!.url, mimeType);
+	if (isValidEditorType(mimeType))
+	{
+		const editorFile = {
+			path: props.element!.path,
+			content: fileObject!.url,
+			type: mimeType,
+			isDirty: false
+		} as EditorFile;
+		store.editor = editorFile;
+		const lockHolder = fileObject!.metadata.lockHolder;
+		editorFile.readOnly = lockHolder == null || lockHolder !== store.settings.username;
 
 		codeEditorFile.value = editorFile;
 		return;
@@ -56,12 +65,26 @@ async function getFileLock(lock: boolean)
 {
 	if (!codeEditorFile.value) return;
 
-	let result = await files.lockFile(codeEditorFile.value.path, lock);
-	if (result.success)
+	if (lock)
 	{
-		codeEditorFile.value.readOnly = false;
+		const result = await files.lockFile(codeEditorFile.value.path);
+		if (result.success)
+		{
+			codeEditorFile.value.readOnly = false;
+		}
+	}
+	else
+	{
+		const result = await files.unlockFile(codeEditorFile.value.path);
+		if (result.success)
+		{
+			codeEditorFile.value.readOnly = true;
+		}
 	}
 }
+
+const lockHolder = computed(() => props.fileObject?.metadata.lockHolder);
+const isLocked = computed(() => lockHolder.value && lockHolder.value !== store.settings.username);
 
 const editButton = computed(() => {
 	if (codeEditorFile.value == null) return "hidden";
@@ -84,6 +107,7 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 			</template>
 		</div>
 		<Toolbar v-if="element" :element="element" :editButton="editButton" @edit="getFileLock" />
+		<div v-if="isLocked" class="h-7 px-2 bg-vit-accent-bg">Die Datei ist gerade gesperrt durch <strong>{{ lockHolder }}</strong></div>
 		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
 			<div v-if="fileObject.metadata.mimeType.startsWith('image')" class="flex flex-col items-center">
 				<img :src="fileObject.url" :width="fileObject.metadata.width" :height="fileObject.metadata.height" />

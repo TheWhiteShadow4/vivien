@@ -133,7 +133,7 @@ public class Server
 					if (config.validUsers == null) return;
 					if (config.validUsers.contains(credentials.getUsername()))
 					{
-						if (ctx.header(APP_USER) == null) ctx.header(APP_USER, credentials.getUsername());
+						setUsername(ctx, credentials.getUsername());
 						return;
 					}
 				}
@@ -145,8 +145,14 @@ public class Server
 		}
 		else
 		{
-			if (ctx.header(APP_USER) == null) ctx.header(APP_USER, DEFAULT_USER);
+			setUsername(ctx, DEFAULT_USER);
 		}
+	}
+
+	private void setUsername(Context ctx, String defaultValue)
+	{
+		var val = ctx.header(APP_USER);
+		if (val == null || val.isEmpty()) ctx.header(APP_USER, defaultValue);
 	}
 
 	public void openBrowser()

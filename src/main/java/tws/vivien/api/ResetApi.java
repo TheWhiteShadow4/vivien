@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
+import tws.vivien.core.Server;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
@@ -27,6 +28,7 @@ public class ResetApi implements Api
 		try
 		{
 			lockService.gitLock.writeLock().lock();
+			lockService.freeUserLocks(ctx.header(Server.APP_USER));
 			repository.reset();
 			gitStatusApi.handle(ctx);
 		}

@@ -5,29 +5,27 @@ import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { yaml, yamlFrontmatter } from "@codemirror/lang-yaml"
 import { linter, lintGutter } from '@codemirror/lint';
 import { dracula } from 'thememirror';
-import { EditorView, keymap } from '@codemirror/view';
+import { keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { EditorState, Compartment } from '@codemirror/state';
-import { computed, ref, shallowRef, watch } from 'vue';
-import { useEditorStore, type EditorFile } from '@/store';
+import { EditorState, Prec } from '@codemirror/state';
+import { computed, ref, watch } from 'vue';
+import { useStore, type EditorFile } from '@/store';
 import { uploadEditorContent } from '@/client';
 import emitter from '@/mitt';
 import type { ServerError } from '@/types/vivien-generated';
 
-const languageCompartment = new Compartment();
-const readOnlyCompartment = new Compartment();
-const editorStore = useEditorStore();
+const store = useStore();
 
 interface Props { file: EditorFile }
 
 const props = withDefaults(defineProps<Props>(), {
-	file: {
+	file: () => ({
 		path: "",
 		content: "",
 		type: "text/json",
 		readOnly: true,
 		isDirty: false
-	} as any
+	} as EditorFile)
 });
 
 let active = props.file;
@@ -35,17 +33,16 @@ const model = ref<string>(active.content);
 
 const isSaving = ref<boolean>(false);
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
-const view = shallowRef<EditorView | null>(null);
 
 async function saveEditor(file: EditorFile, content: string)
 {
 	isSaving.value = true;
 	try
 	{
-		const path = file.path;
-		editorStore.updateContent(path, content);
+		file.content = content;
+		store.editor = file;
 
-		const ret = await uploadEditorContent(path, content);
+		const ret = await uploadEditorContent(file.path, content);
 		file.isDirty = !ret;
 	}
 	catch (error)
@@ -60,7 +57,7 @@ async function saveEditor(file: EditorFile, content: string)
 }
 
 watch(() => props.file.path, (newPath) => {
-	if (active?.isDirty && !isSaving)
+	if (active?.isDirty && !isSaving.value)
 	{
 		if (saveTimeout) clearTimeout(saveTimeout);
 		saveEditor(active, model.value);
@@ -70,18 +67,12 @@ watch(() => props.file.path, (newPath) => {
 	active = props.file;
 });
 
-watch(() => props.file.readOnly, (readOnly) => {
-	if (view.value)
-	{
-		view.value.dispatch({ effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)) });
-	}
-});
-
 watch(model, (newContent) => {
 	if (saveTimeout) clearTimeout(saveTimeout);
 
 	if (newContent !== props.file.content)
 	{
+		// eslint-disable-next-line vue/no-mutating-props
 		props.file.isDirty = true;
 		saveTimeout = setTimeout(() => {
 			saveEditor(props.file, newContent);
@@ -89,32 +80,31 @@ watch(model, (newContent) => {
 	}
 });
 
-let editorExtensions = computed(() => {
-return {
-	"text/json": [
+const editorExtensions = computed(() => {
+	console.log("CodeView compute:", props.file);
+	const extensions = [
 		dracula,
-		json(),
-		linter(jsonParseLinter()),
-		lintGutter(),
-		history(),
+		lintGutter(), // Fehlerleiste Links
+		history(),	// Undo/Redo
 		keymap.of([
 			...defaultKeymap,
 			...historyKeymap
-		]),
-		readOnlyCompartment.of(EditorState.readOnly.of(props.file.readOnly)),
-	],
-	"text/yaml": [
-		dracula,
-		yamlFrontmatter({ content: yaml() }),
-		lintGutter(),
-		history(),
-		keymap.of([
-			...defaultKeymap,
-			...historyKeymap
-		]),
-		readOnlyCompartment.of(EditorState.readOnly.of(props.file.readOnly)),
-	]
-}[props.file.type]});
+		])
+	];
+	switch (props.file.type)
+	{
+		case "text/json":
+			extensions.push(json());
+			extensions.push(linter(jsonParseLinter()));
+		case "text/yaml":
+			extensions.push(yamlFrontmatter({ content: yaml() }));
+	}
+	if (props.file.readOnly)
+	{
+		extensions.push(Prec.highest(EditorState.readOnly.of(true)));
+	}
+	return extensions;
+});
 </script>
 
 <template>

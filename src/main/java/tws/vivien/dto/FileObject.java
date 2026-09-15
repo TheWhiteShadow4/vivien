@@ -1,5 +1,7 @@
 package tws.vivien.dto;
 
+import jakarta.annotation.Nullable;
+
 import java.io.Serializable;
 
 public class FileObject
@@ -23,5 +25,7 @@ public class FileObject
 		public int height;
 		public int srcWidth;
 		public int srcHeight;
+		@Nullable
+		public String lockHolder;
 	}
 }

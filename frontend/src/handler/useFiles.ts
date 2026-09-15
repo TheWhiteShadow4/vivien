@@ -9,11 +9,13 @@ export function useFiles()
 	const isLoading = ref(false);
 
 	const createFolder = (parent: string, name: string) => doCreateFolder(isLoading, parent, name);
-	const lockFile = (file: string, lock: boolean) => doLockFile(isLoading, file, lock);
+	const lockFile = (file: string) => doLockFile(isLoading, file, true);
+	const unlockFile = (file: string) => doLockFile(isLoading, file, false);
 
 	return {
 		createFolder,
 		lockFile,
+		unlockFile,
 		isLoading,
 	};
 }

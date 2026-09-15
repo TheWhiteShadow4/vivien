@@ -32,7 +32,7 @@ public class FileLockApi implements Api
 		{
 			if (lockedByUser == null || Objects.equals(request.user, lockedByUser) || Objects.equals(request.kickUser, lockedByUser))
 			{
-				lockService.fileLocks.put(request.file, request.user);
+				lockService.lockFile(request.file, request.user);
 				ctx.json(new FileLockResponse(true, lockedByUser));
 			}
 			else
@@ -44,8 +44,8 @@ public class FileLockApi implements Api
 		{
 			if (lockedByUser == null || Objects.equals(lockedByUser, request.user))
 			{
-				lockService.fileLocks.remove(request.file);
-				ctx.json(new FileLockResponse(true, lockedByUser));
+				lockService.freeUserLocks(request.user);
+				ctx.json(new FileLockResponse(true, null));
 			}
 			else
 			{

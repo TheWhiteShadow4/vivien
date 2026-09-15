@@ -11,6 +11,7 @@ export async function fetchWithView(url: string, options: RequestInit = {}): Pro
 	const headers = new Headers(options.headers);
 
 	headers.set('X-App-View', store.settings.view);
+	headers.set('X-App-User', store.settings.username ?? "");
 	headers.set('Authorization', `Basic ${store.settings.credentials}`);
 
 	if (!headers.has('Content-Type') && (options.method === 'POST'))
