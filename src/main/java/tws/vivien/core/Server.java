@@ -3,7 +3,7 @@ package tws.vivien.core;
 import io.javalin.Javalin;
 import io.javalin.compression.CompressionStrategy;
 import io.javalin.http.Context;
-import io.javalin.http.HttpStatus;
+import io.javalin.http.UnauthorizedResponse;
 import io.javalin.http.staticfiles.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +12,6 @@ import java.awt.*;
 import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 public class Server
 {
@@ -115,19 +114,6 @@ public class Server
 				c.routes.post("/api/move", ctx -> component.moveApi().handle(ctx));
 				c.routes.post("/api/filelock", ctx -> component.fileLockApi().handle(ctx));
 			}
-			c.routes.post("/api/restart", ctx -> CompletableFuture.runAsync(() -> {
-				try
-				{
-					Thread.sleep(100);
-					LOG.info("Server wird neu gestartet...");
-					app.stop();
-					new Server(productionMode).start();
-				}
-				catch (Exception e)
-				{
-					LOG.error("Fehler beim Server Neustart", e);
-				}
-			}));
 		});
 		app.start(config.port);
 
@@ -159,10 +145,13 @@ public class Server
 					}
 				}
 			}
-			catch(Exception _) {}
+			catch(Exception e)
+			{
+				LOG.error("Authorization Fehler", e);
+			}
 
 			ctx.header("WWW-Authenticate", "Basic realm=\"Protected Area\"");
-			ctx.status(HttpStatus.UNAUTHORIZED).result("Zugriff verweigert");
+			throw new UnauthorizedResponse("Zugriff verweigert");
 		}
 		else
 		{

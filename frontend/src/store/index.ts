@@ -10,6 +10,7 @@ export interface UserSettings
 	credentials?: string;
 	view: string;
 	sidebar: boolean;
+	favorites: RepositoryElement[];
 }
 
 export const ALLOWED_EDITOR_TYPES = ["text/json", "text/yaml", "text/toml"] as const;
@@ -29,7 +30,6 @@ export const useStore = defineStore('settings', () => {
 
 	const server = ref<ServerState | null>(null);
 	const git = ref<GitBranchStatus>();
-	const stage = ref<StageInfo>();
 	const clipboard = ref<RepositoryElement | null>(null);
 	const editor = ref<EditorFile | null>(null);
 
@@ -37,16 +37,22 @@ export const useStore = defineStore('settings', () => {
 	const settings = ref<UserSettings>({
 		view: 'artist',
 		sidebar: true,
+		favorites: [],
 		...JSON.parse(localStorage.getItem('vivian_user') || '{}')
 	})
-
-	/*function updateGit(value: GitBranchStatus) {
-		git.value = value
-	}*/
 
 	// 2. Aktion (Methode) zum Ändern einzelner Werte
 	function updateSetting<K extends keyof UserSettings>(key: K, value: UserSettings[K]) {
 		settings.value[key] = value
+	}
+
+	function addFavorite(el: RepositoryElement) {
+		settings.value.favorites.push(el);
+	}
+
+	function delFavorite(el: RepositoryElement) {
+		const index = settings.value.favorites.indexOf(el);
+		if (index > -1) settings.value.favorites.splice(index, 1);
 	}
 
 	// 3. Watcher: Jedes Mal, wenn sich ein Wert im Objekt ändert, in LocalStorage schreiben
@@ -62,10 +68,11 @@ export const useStore = defineStore('settings', () => {
 	return {
 		server,
 		git,
-		stage,
 		clipboard,
 		settings,
 		editor,
+		addFavorite,
+		delFavorite,
 		updateSetting
 	}
 })

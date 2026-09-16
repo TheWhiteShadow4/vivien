@@ -1,6 +1,8 @@
 package tws.vivien.core;
 
 import org.eclipse.jgit.ignore.IgnoreNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tws.vivien.dto.ElementType;
 import tws.vivien.dto.RepositoryElement;
 import tws.vivien.dto.RepositoryRoot;
@@ -27,6 +29,8 @@ import static java.nio.file.StandardWatchEventKinds.*;
  */
 public class RepositoryCache
 {
+	private static final Logger LOG = LoggerFactory.getLogger(RepositoryCache.class);
+
 	private final Path rootPath;
 	private final IgnoreNode gitIgnore = new IgnoreNode();
 	private volatile boolean isMuted = false;
@@ -39,11 +43,8 @@ public class RepositoryCache
 	private final ConcurrentHashMap<WatchKey, Path> watchKeys = new ConcurrentHashMap<>(256);
 	private final WatchService watchService;
 
-	public synchronized RepositoryRoot getRootElement() {
-		return this.rootElement;
-	}
-
-	public Map<String, RepositoryElement> getPathLookup() {
+	public Map<String, RepositoryElement> getPathLookup()
+	{
 		return Collections.unmodifiableMap(this.pathLookup);
 	}
 
@@ -54,17 +55,15 @@ public class RepositoryCache
 
 		loadGitIgnore();
 
-		// 1. Initialer vollständiger Scan beim Serverstart
 		buildInitialCache();
 
-		jgitRepo.getListenerList().addRefsChangedListener(event -> {
+		jgitRepo.getListenerList().addRefsChangedListener(event ->
+		{
 			triggerFullCacheRefresh();
 		});
 
-		// 2. WatchService für alle existierenden Ordner registrieren
 		registerRecursive(this.rootPath);
 
-		// 3. Hintergrund-Thread starten
 		Thread watchThread = new Thread(this::listenToEvents, "GitRepo-WatchService");
 		watchThread.setDaemon(true);
 		watchThread.start();
@@ -73,13 +72,16 @@ public class RepositoryCache
 	private void loadGitIgnore()
 	{
 		File ignoreFile = new File(rootPath.toFile(), ".gitignore");
-		if (ignoreFile.exists()) {
+		if (ignoreFile.exists())
+		{
 			try (FileInputStream fis = new FileInputStream(ignoreFile))
 			{
 				gitIgnore.parse(fis);
-				System.out.println("✅ .gitignore erfolgreich geladen und für Filterung aktiv.");
-			} catch (IOException e) {
-				System.err.println("Fehler beim Lesen der .gitignore: " + e.getMessage());
+				LOG.info(".gitignore wird  für Filterung aktiv.");
+			}
+			catch (IOException e)
+			{
+				LOG.error("Fehler beim Lesen der .gitignore", e);
 			}
 		}
 	}
@@ -98,25 +100,26 @@ public class RepositoryCache
 	 */
 	public void triggerFullCacheRefresh()
 	{
-		System.out.println("🔄 Rebuild Cache...");
+		LOG.info("Rebuild Cache...");
 
-		// 1. Watcher stummschalten, damit eintreffende OS-Events ignoriert werden
 		this.isMuted = true;
-
 		try
 		{
 			synchronized (this)
 			{
 				buildInitialCache();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			// 4. WICHTIG: Alle Events, die sich WÄHREND des Einlesens angestaut haben, ungelesen verwerfen
+		}
+		catch (Exception e)
+		{
+			LOG.error("Fehler beim Cache Aufbau", e);
+		}
+		finally
+		{
 			flushPendingEvents();
 
 			this.isMuted = false;
-			System.out.println("✅ Cache-Refresh abgeschlossen. Watcher wieder aktiv.");
+			LOG.info("Cache-Refresh abgeschlossen. Watcher wieder aktiv.");
 		}
 	}
 
@@ -124,20 +127,22 @@ public class RepositoryCache
 	{
 		// Wir holen uns alle aktuell signalisierten Keys ab und verwerfen deren Events
 		WatchKey key;
-		while ((key = watchService.poll()) != null) {
+		while ((key = watchService.poll()) != null)
+		{
 			key.pollEvents(); // Events löschen
 			key.reset();      // Key wieder bereitmachen
 		}
 	}
 
 	// Liefert die Wurzel für die Javalin-Route
-	public synchronized RepositoryElement getRoot() {
+	public synchronized RepositoryElement getRoot()
+	{
 		return this.rootElement;
 	}
 
 	public RepositoryElement getDirectory(String path)
 	{
-		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
+		if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
 		if (path.isEmpty() || path.equals("/")) return getRoot();
 		return pathLookup.get(path);
 	}
@@ -171,7 +176,8 @@ public class RepositoryCache
 		File dir = new File(rootPath.toFile(), parent.path);
 		File[] files = dir.listFiles();
 
-		if (files == null) {
+		if (files == null)
+		{
 			parent.children = Collections.emptyList();
 			return;
 		}
@@ -186,14 +192,16 @@ public class RepositoryCache
 			String childPath;
 			if (parent.path.isEmpty())
 				childPath = name;
-			else if (parent.path.endsWith("/")){
+			else if (parent.path.endsWith("/"))
+			{
 				System.err.println("Pfad endet mit /!!! " + parent.path);
-				childPath = parent.path + name;}
+				childPath = parent.path + name;
+			}
 			else
 				childPath = parent.path + "/" + name;
 
-			// 🛑 FILTER: Ignorierte Unity-Ordner/Dateien überspringen
-			if (isIgnored(childPath, file.isDirectory())) {
+			if (isIgnored(childPath, file.isDirectory()))
+			{
 				continue;
 			}
 
@@ -212,7 +220,7 @@ public class RepositoryCache
 	}
 
 	/**
-	 * Der unendliche Loop, der auf Betriebssystem-Events lauscht
+	 * Der Loop, der auf Betriebssystem-Events lauscht
 	 */
 	private void listenToEvents()
 	{
@@ -231,7 +239,8 @@ public class RepositoryCache
 
 				Path dirPath = watchKeys.get(key);
 
-				if (dirPath == null) {
+				if (dirPath == null)
+				{
 					key.reset();
 					continue;
 				}
@@ -241,9 +250,10 @@ public class RepositoryCache
 
 				// Falls der Ordner im Cache noch gar nicht per Lazy-Loading geöffnet wurde,
 				// müssen wir die Events nicht verarbeiten (da children eh null ist)
-				if (parentElement != null && parentElement.children != null) {
-
-					for (WatchEvent<?> event : key.pollEvents()) {
+				if (parentElement != null && parentElement.children != null)
+				{
+					for (WatchEvent<?> event : key.pollEvents())
+					{
 						WatchEvent.Kind<?> kind = event.kind();
 						Path eventPath = (Path) event.context();
 						Path fullPath = dirPath.resolve(eventPath);
@@ -254,35 +264,40 @@ public class RepositoryCache
 						String repoRelPath = relativeParentPath.isEmpty() ? childName : relativeParentPath + "/" + childName;
 
 						// Gezielte Updates ausführen
-						synchronized (this) {
-							if (kind == ENTRY_CREATE) {
-								// 🛑 FILTER: Verhindert, dass zur Laufzeit erstellte Temp-Dateien im Cache landen
+						synchronized (this)
+						{
+							if (kind == ENTRY_CREATE)
+							{
 								if (isIgnored(repoRelPath, Files.isDirectory(fullPath))) continue;
 
 								handleCreateEvent(parentElement, fullPath, childName, repoRelPath);
-							} else if (kind == ENTRY_DELETE) {
+							}
+							else if (kind == ENTRY_DELETE)
+							{
 								handleDeleteEvent(parentElement, repoRelPath);
-							} else if (kind == ENTRY_MODIFY) {
-								handleModifyEvent(repoRelPath);
 							}
 						}
 					}
 				}
 
-				// Wichtig: Key zurücksetzen, um weiter auf diesem Ordner zu lauschen
 				boolean valid = key.reset();
-				if (!valid) {
-					watchKeys.remove(key); // Ordner wurde gelöscht
+				if (!valid)
+				{
+					watchKeys.remove(key);
 				}
 			}
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e)
+		{
 			Thread.currentThread().interrupt();
-		} catch (Exception e) {
-			e.printStackTrace();
+		}
+		catch (Exception e)
+		{
+			LOG.error("Fehler im Watcher Job", e);
 		}
 	}
 
-	private void handleCreateEvent(RepositoryElement parent, Path fullPath, String name, String relativePath)
+	private void handleCreateEvent(RepositoryElement parent, Path fullPath, String name, String relativePath) throws IOException
 	{
 		// Falls das Element bereits existiert, nichts tun
 		if (pathLookup.containsKey(relativePath)) return;
@@ -300,36 +315,29 @@ public class RepositoryCache
 		pathLookup.put(relativePath, newElement);
 
 		// Wenn ein neuer Ordner erstellt wurde, müssen wir ihn ebenfalls überwachen!
-		if (isDir) {
-			try {
-				registerSingleDirectory(fullPath);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		if (isDir)
+		{
+			registerSingleDirectory(fullPath);
 		}
 	}
 
 	private void handleDeleteEvent(RepositoryElement parent, String relativePath)
 	{
 		RepositoryElement removedElement = pathLookup.remove(relativePath);
-		if (removedElement != null && parent.children != null) {
+		if (removedElement != null && parent.children != null)
+		{
 			parent.children.remove(removedElement);
 			// Kaskadierend aus Lookup löschen, falls es ein Ordner mit Unterordnern war
 			removeChildrenFromLookup(removedElement);
 		}
 	}
 
-	private void handleModifyEvent(String relativePath) {
-		RepositoryElement element = pathLookup.get(relativePath);
-		if (element != null) {
-			// Datei wurde geändert
-			//element.gitStatus = determineGitStatus(relativePath);
-		}
-	}
-
-	private void removeChildrenFromLookup(RepositoryElement element) {
-		if (element.children != null) {
-			for (RepositoryElement child : element.children) {
+	private void removeChildrenFromLookup(RepositoryElement element)
+	{
+		if (element.children != null)
+		{
+			for (RepositoryElement child : element.children)
+			{
 				pathLookup.remove(child.path);
 				removeChildrenFromLookup(child);
 			}
@@ -339,7 +347,8 @@ public class RepositoryCache
 	/**
 	 * Registriert einen einzelnen Ordner beim OS-WatchService
 	 */
-	private void registerSingleDirectory(Path dir) throws IOException {
+	private void registerSingleDirectory(Path dir) throws IOException
+	{
 		WatchKey key = dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
 		watchKeys.put(key, dir);
 	}
@@ -347,28 +356,32 @@ public class RepositoryCache
 	/**
 	 * Registriert rekursiv alle Unterordner beim Start
 	 */
-	private void registerRecursive(Path start) throws IOException {
-		Files.walk(start)
-				.filter(Files::isDirectory)
-				.filter(p -> !p.toString().contains(".git"))
-				.forEach(p -> {
-					String relativePath = rootPath.relativize(p).toString().replace("\\", "/");
+	private void registerRecursive(Path start) throws IOException
+	{
+		Files.walk(start).filter(Files::isDirectory)
+			.filter(p -> !p.toString().contains(".git"))
+			.forEach(p ->
+			{
+				String relativePath = rootPath.relativize(p).toString().replace("\\", "/");
 
-					// 🛑 FILTER: Nur Ordner überwachen, die NICHT in der .gitignore stehen
-					if (!isIgnored(relativePath, true)) {
-						try {
-							registerSingleDirectory(p);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+				if (!isIgnored(relativePath, true))
+				{
+					try
+					{
+						registerSingleDirectory(p);
 					}
-				});
+					catch (IOException e)
+					{
+						LOG.error("Konnte Watcher für {} nicht registrieren", relativePath, e);
+					}
+				}
+			});
 	}
 
 	private String normalizeRepositoryPath(String path)
 	{
 		path = path.replace("\\", "/");
-		if (path.endsWith("/")) path = path.substring(0, path.length()-1);
+		if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
 		if (path.startsWith("/")) path = path.substring(1);
 		return path;
 	}
@@ -376,7 +389,8 @@ public class RepositoryCache
 	@Override
 	public String toString()
 	{
-		if (this.rootElement == null) {
+		if (this.rootElement == null)
+		{
 			return "Cache ist leer (nicht initialisiert).";
 		}
 		StringBuilder sb = new StringBuilder();
@@ -396,8 +410,10 @@ public class RepositoryCache
 	private void buildTreeString(RepositoryElement element, String indent, boolean isLast, StringBuilder sb, int level)
 	{
 		// HARTES ABSCHNEIDEN: Alles ab Ebene 3 wird nicht mehr gerendert
-		if (level > 3) {
-			if (isLast) {
+		if (level > 3)
+		{
+			if (isLast)
+			{
 				sb.append(indent).append("└── ... (Tiefere Assets ausgeblendet) \n");
 			}
 			return;
@@ -405,9 +421,12 @@ public class RepositoryCache
 
 		sb.append(indent);
 
-		if (element.type == ElementType.ROOT) {
+		if (element.type == ElementType.ROOT)
+		{
 			sb.append("💻 ");
-		} else {
+		}
+		else
+		{
 			sb.append(isLast ? "└── " : "├── ");
 		}
 
@@ -417,15 +436,21 @@ public class RepositoryCache
 
 		boolean isContainer = (element.type == ElementType.ROOT || element.type == ElementType.FOLDER);
 
-		if (isContainer) {
+		if (isContainer)
+		{
 			sb.append("📁 ").append(displayName).append("/");
 
-			if (element.children == null || element.children.isEmpty()) {
+			if (element.children == null || element.children.isEmpty())
+			{
 				sb.append(" [Leer]");
-			} else {
+			}
+			else
+			{
 				sb.append(" [").append(element.children.size()).append(" Elemente]");
 			}
-		} else {
+		}
+		else
+		{
 			sb.append("📄 ").append(displayName);
 		}
 
@@ -436,9 +461,11 @@ public class RepositoryCache
 		sb.append("\n");
 
 		// Rekursion für geladene Ordner
-		if (isContainer && element.children != null) {
+		if (isContainer && element.children != null)
+		{
 			String nextIndent = indent + (isLast ? "    " : "│   ");
-			for (int i = 0; i < element.children.size(); i++) {
+			for (int i = 0; i < element.children.size(); i++)
+			{
 				boolean lastChild = (i == element.children.size() - 1);
 				buildTreeString(element.children.get(i), nextIndent, lastChild, sb, level + 1);
 			}

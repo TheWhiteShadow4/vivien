@@ -17,7 +17,8 @@ import IconBin from '@/icons/IconBin.vue';
 import NewFolderDialog from '../dialoge/NewFolderDialog.vue';
 import IconAddFolder from '@/icons/IconAddFolder.vue';
 import IconImport from '@/icons/IconImport.vue';
-import { useGit } from '@/handler/useGit.ts';
+import { useGit } from '@/handler/useGit';
+import IconStarFilled from '@/icons/IconStarFilled.vue';
 
 const store = useStore();
 const gitApi = useGit();
@@ -112,6 +113,13 @@ function gitQuery(query: string): RepositoryElement
 						const name = entry.substring(entry.lastIndexOf("/"));
 						const element: RepositoryElement = { name: name, path: entry, type: "FILE" };
 						serachRoot.children!.push(element);
+					}
+				}
+				if (field === "fav")
+				{
+					for(const entry of store.settings.favorites)
+					{
+						serachRoot.children!.push(entry);
 					}
 				}
 			}
@@ -372,7 +380,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 	<Teleport to="body">
 		<NewFolderDialog v-if="showCreateDialog" :parent="currentFolder!.path" @close="showCreateDialog = false" />
 	</Teleport>
-	<Teleport v-if="isMounted" to="#papierkorb">
+	<Teleport v-if="isMounted" to="#repo-nav">
 		<ListButton
 			color="ghost"
 			label="Papierkorb"
@@ -381,6 +389,15 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			:count="deleteCount"
 			@click="fetchSearch(':missing,removed')">
 			<IconBin />
+		</ListButton>
+		<ListButton
+			color="ghost"
+			label="Lesezeichen"
+			:minified="!store.settings.sidebar"
+			:disabled="store.settings.favorites.length == 0"
+			:count="store.settings.favorites.length"
+			@click="fetchSearch(':fav')">
+			<IconStarFilled />
 		</ListButton>
 	</Teleport>
 	<div :class="tableWrapper">

@@ -134,7 +134,6 @@ onUnmounted(() => {
 	emitter.off("error", (e) => store.server?.serverErrors.push(e as ServerError));
 	emitter.off("refresh-preview", (e) => onRefreshPreview(e as RepositoryElement));
 })
-
 </script>
 
 <template>

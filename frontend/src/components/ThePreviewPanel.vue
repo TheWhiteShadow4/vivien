@@ -1,10 +1,12 @@
 <!-- src\components\ThePreviewPanel.vue -->
 <script setup lang="ts">
-import type { FileObject, RepositoryElement } from '@/types/vivien-generated';
+import type { FileObject, RepositoryElement, ServerError } from '@/types/vivien-generated';
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
 import { ALLOWED_EDITOR_TYPES, useStore, type EditorFile, type EditorTypes } from '@/store';
-import { useFiles } from '@/handler/useFiles.ts';
+import { useFiles } from '@/handler/useFiles';
+import { uploadEditorContent } from '@/client';
+import emitter from '@/mitt';
 
 const MarkdownView = defineAsyncComponent(() =>
   import('@/components/views/MarkdownView.vue')
@@ -22,18 +24,9 @@ const props = defineProps<{
 }>()
 
 const codeEditorFile = ref<EditorFile | null>(null);
+const codeEditorModel = ref<string>("");
+const isSaving = ref<boolean>(false);
 
-watch(() => props.element, (element) => {
-	if (element != null)
-	{
-		const editorFile = store.editor;
-		if (editorFile != null)
-		{
-			codeEditorFile.value = editorFile;
-			return;
-		}
-	}
-}, { immediate: true })
 
 function isValidEditorType(mimeType: string | undefined): mimeType is EditorTypes
 {
@@ -55,35 +48,52 @@ watch(() => props.fileObject, (fileObject) => {
 		editorFile.readOnly = lockHolder == null || lockHolder !== store.settings.username;
 
 		codeEditorFile.value = editorFile;
+		codeEditorModel.value = editorFile.content;
 		return;
 	}
 	codeEditorFile.value = null;
 }, { immediate: true })
 
-async function getFileLock(lock: boolean)
+async function saveFile(final: boolean)
+{
+	if (!store.editor || store.editor.readOnly || isSaving.value) return;
+	try
+	{
+		store.editor.content = codeEditorModel.value;
+
+		isSaving.value = true;
+		const ret = await uploadEditorContent(store.editor.path, codeEditorModel.value, final);
+		if (ret)
+		{
+			store.editor.isDirty = false;
+			if (final) store.editor.readOnly = true;
+		}
+	}
+	catch (error)
+	{
+		console.error("Fehler beim Hintergrund-Speichern:", error);
+		emitter.emit("error", { message: "Fehler beim Speichern" } as ServerError);
+	}
+	finally
+	{
+		isSaving.value = false;
+	}
+}
+
+async function getFileLock()
 {
 	if (!codeEditorFile.value) return;
 
-	if (lock)
+	const result = await files.lockFile(codeEditorFile.value.path);
+	if (result.success)
 	{
-		const result = await files.lockFile(codeEditorFile.value.path);
-		if (result.success)
-		{
-			codeEditorFile.value.readOnly = false;
-		}
-	}
-	else
-	{
-		const result = await files.unlockFile(codeEditorFile.value.path);
-		if (result.success)
-		{
-			codeEditorFile.value.readOnly = true;
-		}
+		codeEditorFile.value.readOnly = false;
 	}
 }
 
 const lockHolder = computed(() => props.fileObject?.metadata.lockHolder);
 const isLocked = computed(() => lockHolder.value && lockHolder.value !== store.settings.username);
+const isSetup = computed(() => store.server?.mode === 'SETUP');
 
 const editButton = computed(() => {
 	if (codeEditorFile.value == null) return "hidden";
@@ -105,8 +115,9 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
 		</div>
-		<Toolbar v-if="element" :element="element" :editButton="editButton" @edit="getFileLock" />
+		<Toolbar v-if="element" :element="element" :editButton="editButton" @lock="getFileLock()" @unlock="saveFile(true)" />
 		<div v-if="isLocked" class="h-7 px-2 bg-vit-accent-bg">Die Datei ist gerade gesperrt durch <strong>{{ lockHolder }}</strong></div>
+		<div v-if="isSetup" class="h-7 px-2 bg-vit-accent-bg">Server Setup Modus</div>
 		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
 			<div v-if="fileObject.metadata.mimeType.startsWith('image')" class="flex flex-col items-center">
 				<img :src="fileObject.url" :width="fileObject.metadata.width" :height="fileObject.metadata.height" />
@@ -117,7 +128,7 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 			</div>
 
 			<div v-else-if="codeEditorFile != null" class="flex-1 overflow-auto">
-				<CodeView :file="codeEditorFile" />
+				<CodeView :file="codeEditorFile" v-model="codeEditorModel" @save="saveFile" />
 			</div>
 
 			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">

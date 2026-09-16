@@ -4,15 +4,14 @@ import jakarta.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class RepositoryElement
 {
 	public String name;
 	public String path;
 	public ElementType type;
-	@Nullable
-	public Map<String, Object> importProps;
+	//@Nullable
+	//public Map<String, Object> importProps;
 
 	@Nullable
 	public List<RepositoryElement> children;
@@ -33,7 +32,7 @@ public class RepositoryElement
 		copy.name = this.name;
 		copy.path = this.path;
 		copy.type = this.type;
-		copy.importProps = this.importProps;
+		//copy.importProps = this.importProps;
 		// Kein lazy loading, bei leeren Listen
 		if (children != null && children.isEmpty())
 			copy.children = Collections.emptyList();

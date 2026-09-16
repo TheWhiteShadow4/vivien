@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import IconStar from '@/icons/IconStar.vue'
 import { useStore } from '@/store/index'
 import BaseIconButton from '@/base/BaseIconButton.vue';
+import IconStarFilled from '@/icons/IconStarFilled.vue';
 
 const store = useStore();
 
@@ -45,9 +46,16 @@ const stateBadge = computed(() => {
 })
 
 
-function favorit()
+function favorit(add: boolean)
 {
-
+	if (add)
+	{
+		store.addFavorite(props.element);
+	}
+	else
+	{
+		store.delFavorite(props.element);
+	}
 }
 
 </script>
@@ -69,14 +77,13 @@ function favorit()
 
 	<div class="flex items-center text-vit-text-main">
 		<template v-if="selected">
-			<BaseIconButton class="mx-2" @click.stop="favorit()"><IconStar/></BaseIconButton>
+			<BaseIconButton v-if="store.settings.favorites.includes(element)" class="mx-2" @click.stop="favorit(false)"><IconStarFilled/></BaseIconButton>
+			<BaseIconButton v-else class="mx-2" @click.stop="favorit(true)"><IconStar/></BaseIconButton>
 		</template>
 		
 		<!-- Rechte Seite: Typ-Badge -->
 		<span class="w-3 h-3 ml-4 rounded-full flex" :class="stateBadge"></span>
 	</div>
-
-    
 
   </div>
 </template>

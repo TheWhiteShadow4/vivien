@@ -4,9 +4,9 @@ import tws.vivien.core.Server;
 
 public class ServerMain
 {
-	private Server server;
+	public static boolean startFlag;
 
-	static void main() throws Exception
+	static void main()
 	{
 		System.setProperty("org.slf4j.simpleLogger.log.io.javalin", "warn");
 		System.setProperty("org.slf4j.simpleLogger.log.org.eclipse.jetty", "warn");
@@ -14,7 +14,19 @@ public class ServerMain
 		String protocol = ServerMain.class.getResource("ServerMain.class").getProtocol();
 		boolean productionMode = "jar".equals(protocol);
 
-		Server server = new Server(productionMode);
-		server.start();
+		startFlag = true;
+		while(startFlag)
+		{
+			startFlag = false;
+			try
+			{
+				Server server = new Server(productionMode);
+				server.start();
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 }

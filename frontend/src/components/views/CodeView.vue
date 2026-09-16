@@ -18,6 +18,10 @@ import { toml } from "@codemirror/legacy-modes/mode/toml";
 
 const store = useStore();
 
+const emit = defineEmits<{
+	(e: 'save', final: boolean): void
+}>();
+
 interface Props { file: EditorFile }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,41 +34,27 @@ const props = withDefaults(defineProps<Props>(), {
 	} as EditorFile)
 });
 
-const model = ref<string>(props.file.content);
+const model = defineModel<string>({ required: true });
 
-const isSaving = ref<boolean>(false);
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
-async function saveEditor(file: EditorFile, content: string)
+async function saveEditor(file: EditorFile, final: boolean)
 {
-	isSaving.value = true;
-	try
-	{
-		file.content = content;
-		store.editor = file;
+	if (file.readOnly) return;
 
-		const ret = await uploadEditorContent(file.path, content);
-		file.isDirty = !ret;
-	}
-	catch (error)
-	{
-		console.error("Fehler beim Hintergrund-Speichern:", error);
-		emitter.emit("error", { message: "Fehler beim Hintergrund-Speichern" } as ServerError);
-	}
-	finally
-	{
-		isSaving.value = false;
-	}
+	file.content = model.value;
+	store.editor = file;
+	emit("save", final);
 }
 
 watch(() => props.file.path, (newPath) => {
-	if (props.file?.isDirty && !isSaving.value)
+	if (props.file?.isDirty)
 	{
 		if (saveTimeout) clearTimeout(saveTimeout);
-		saveEditor(props.file, model.value);
+		saveEditor(props.file, true);
 	}
 	console.log("Neue Datei", newPath, "Inhalt:", props.file.content.substring(0, 20).replace("\n", " "))
-	model.value = props.file.content;
+	//model.value = props.file.content;
 });
 
 watch(model, (newContent) => {
@@ -75,8 +65,8 @@ watch(model, (newContent) => {
 		// eslint-disable-next-line vue/no-mutating-props
 		props.file.isDirty = true;
 		saveTimeout = setTimeout(() => {
-			saveEditor(props.file, newContent);
-		}, 3000);
+			saveEditor(props.file, false);
+		}, 5000);
 	}
 });
 

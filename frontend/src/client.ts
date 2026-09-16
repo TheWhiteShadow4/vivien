@@ -75,7 +75,10 @@ export async function sendUploadRequest(formData: FormData): Promise<boolean>
 	try
 	{
 		const response = await fetch('/api/upload', {
-			headers: {'Authorization': `Basic ${store.settings.credentials}`},
+			headers: {
+				'Authorization': `Basic ${store.settings.credentials}`,
+				'X-App-User': store.settings.username ?? ""
+			},
 			method: 'POST',
 			body: formData,
 		})
@@ -114,7 +117,7 @@ export async function uploadFiles(event: Event, fileOrFolder: string): Promise<b
 	return await sendUploadRequest(formData);
 }
 
-export async function uploadEditorContent(path: string, content: string): Promise<boolean>
+export async function uploadEditorContent(path: string, content: string, final: boolean = false): Promise<boolean>
 {
 	const formData = new FormData();
 	
@@ -125,6 +128,8 @@ export async function uploadEditorContent(path: string, content: string): Promis
 
 	formData.append('fileOrFolder', path);
 	formData.append('files', file);
+	if (final)
+		formData.append('unlock', 'true');
 
 	return await sendUploadRequest(formData);
 }

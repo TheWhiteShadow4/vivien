@@ -24,7 +24,7 @@ const props = defineProps<{
   editButton: 'hidden' | 'edit' | 'unedit'
 }>();
 
-const emit = defineEmits(["edit"]);
+const emit = defineEmits(["lock", "unlock"]);
 
 const isLoading = ref<boolean>(false)
 
@@ -194,7 +194,7 @@ async function handleFileChange(event: Event)
 		
 		<BaseIconButton
 			@click="openFileBrowser()"
-			:disabled="isLoading || isRemoved"
+			:disabled="isLoading || isRemoved || editButton === 'unedit'"
 			variant="normal" size="xl" 
 			class="flex flex-col items-center">
 			<IconUpload />
@@ -223,7 +223,7 @@ async function handleFileChange(event: Event)
 
 		<BaseIconButton
 			v-if="editButton === 'edit'"
-			@click="emit('edit', true)"
+			@click="emit('lock')"
 			:disabled="isLoading"
 			variant="normal" size="xl"
 			class="flex flex-col items-center">
@@ -232,17 +232,8 @@ async function handleFileChange(event: Event)
 		</BaseIconButton>
 
 		<BaseIconButton
-			v-if="store.server?.mode == 'SETUP'"
-			@click="emit('edit', true)"
-			:disabled="isLoading"
-			variant="primary" size="xl"
-			class="flex flex-col items-center">
-			<IconSync />
-			<span class="text-sm">Neustarten</span>
-		</BaseIconButton>
-		<BaseIconButton
-			v-else-if="editButton === 'unedit'"
-			@click="emit('edit', false)"
+			v-if="editButton === 'unedit'"
+			@click="emit('unlock')"
 			:disabled="isLoading"
 			variant="secondary" size="xl"
 			class="flex flex-col items-center">

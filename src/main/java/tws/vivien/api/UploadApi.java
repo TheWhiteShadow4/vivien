@@ -55,17 +55,14 @@ public class UploadApi implements Api
 			{
 				for (var file : ctx.uploadedFiles("files"))
 				{
-					String holder = lockService.fileLocks.get(fileOrFolder);
-					if (holder != null) throw new IOException("Die Datei ist von " + holder + " gesperrt.");
-
+					checkUserLock(ctx, fileOrFolder);
 					Path fullPath = targetPath.resolve(file.filename());
 					writeFile(ctx, fullPath, file);
 				}
 			}
 			else if (Files.isRegularFile(targetPath)) // Single Upload
 			{
-				String holder = lockService.fileLocks.get(fileOrFolder);
-				if (holder != null) throw new IOException("Die Datei ist von " + holder + " gesperrt.");
+				checkUserLock(ctx, fileOrFolder);
 
 				if (Objects.equals(ctx.formParam("unlock"),"true"))
 				{
@@ -86,6 +83,13 @@ public class UploadApi implements Api
 		{
 			lockService.gitLock.readLock().unlock();
 		}
+	}
+
+	private void checkUserLock(Context ctx, String file) throws IOException
+	{
+		String holder = lockService.fileLocks.get(file);
+		if (holder != null && !Objects.equals(holder, ctx.header(Server.APP_USER)))
+			throw new IOException("Die Datei ist von " + holder + " gesperrt.");
 	}
 
 	private void writeFile(Context ctx, Path path, UploadedFile file) throws Exception

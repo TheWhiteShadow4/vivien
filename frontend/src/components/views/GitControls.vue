@@ -120,6 +120,6 @@ function commitPush()
 			<IconPushStash />
 		</ListButton>
 
-		<div id="papierkorb"></div>
+		<div id="repo-nav"></div>
 	</nav>
 </template>
