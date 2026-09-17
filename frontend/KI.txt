@@ -1,6 +1,6 @@
 Ich arbeite an einer Single-Page Application mit Vue 3 mit Typescript (v6), Pinia Store und Tailwind CSS (v4).
 Mein Backend Server läuft mit Javalin (v7.2) mit JGit (v7.7).
-Die Anwendung stellt ein Git Repository im Browser da und soll technisch unversierten Artists,
+Die Anwendung enthält ein Cloud Filesystem sowie einen Text Editor und soll technisch unversierten Artists,
 die an Hobby Spielen mitwirken, dabei helfen ihre Assets ins Projekt zu bekommen und dort zu bearbeiten.
 
 Was ich bereits habe:

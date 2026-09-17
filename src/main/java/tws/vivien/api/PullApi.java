@@ -33,8 +33,8 @@ public class PullApi implements Api
 			lockService.gitLock.writeLock().lock();
 			if (config.gitRemote != null)
 			{
-				repository.fetch(config);
-				repository.pull(config);
+				repository.fetch();
+				repository.pull();
 				gitStatusApi.handle(ctx);
 			}
 			else

@@ -33,7 +33,7 @@ public class CommitApi implements Api
 
 			lockService.gitLock.writeLock().lock();
 			var status = repository.getCachedStatus();
-			if (status == null) status = repository.getBranchStatus(config);
+			if (status == null) status = repository.getBranchStatus();
 
 			if (status.hasStagedFiles()) // Haben wir Änderungen in der Stage
 			{
@@ -42,7 +42,7 @@ public class CommitApi implements Api
 			}
 			if (config.gitRemote != null)
 			{
-				var result = repository.push(config);
+				var result = repository.push();
 				if (result == RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)
 				{
 					ctx.status(409);

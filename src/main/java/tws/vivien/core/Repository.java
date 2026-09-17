@@ -30,6 +30,7 @@ public class Repository
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
 
+	private Config config;
 	private Path rootPath;
 	private Git gitApi;
 	private RepositoryCache cache;
@@ -40,6 +41,7 @@ public class Repository
 		if (config.mode == ServerMode.SETUP) return null;
 		try
 		{
+			this.config = config;
 			this.rootPath = config.repository;
 			this.gitApi = Git.open(rootPath.toFile());
 			cache = new RepositoryCache(rootPath, gitApi.getRepository());
@@ -56,6 +58,7 @@ public class Repository
 	{
 		try
 		{
+			this.config = config;
 			this.rootPath = config.repository;
 			this.gitApi = Git.init().setGitDir(rootPath.toFile()).call();
 			cache = new RepositoryCache(rootPath, gitApi.getRepository());
@@ -115,7 +118,7 @@ public class Repository
 				.toList();
 	}
 
-	public GitBranchStatus getBranchStatus(Config config) throws Exception
+	public GitBranchStatus getBranchStatus() throws Exception
 	{
 		Status status = gitApi.status().call();
 		var repo = gitApi.getRepository();
@@ -124,7 +127,7 @@ public class Repository
 		result.branch = repo.getBranch();
 
 		if (config.gitRemote != null)
-			result.remote = getRemoteStatus(config, result.branch);
+			result.remote = getRemoteStatus(result.branch);
 
 		result.uncommited = status.hasUncommittedChanges();
 		result.untracked = status.getUntracked();
@@ -138,7 +141,7 @@ public class Repository
 		return result;
 	}
 
-	public RemoteGitStatus getRemoteStatus(Config config, String branch) throws Exception
+	public RemoteGitStatus getRemoteStatus(String branch) throws Exception
 	{
 		//List<RemoteConfig> remotes = RemoteConfig.getAllRemoteConfigs(gitApi.getRepository().getConfig());
 		//if (remotes.isEmpty()) return null;
@@ -215,7 +218,7 @@ public class Repository
 		gitApi.commit().setAuthor(request.name, request.email).setMessage(request.message).call();
 	}
 
-	public RemoteRefUpdate.Status push(Config config) throws Exception
+	public RemoteRefUpdate.Status push() throws Exception
 	{
 		LOG.info("git push");
 		var results = gitApi.push().setCredentialsProvider(config.credentials).call();
@@ -231,7 +234,7 @@ public class Repository
 		return null;
 	}
 
-	public void pull(Config config) throws Exception
+	public void pull() throws Exception
 	{
 		LOG.info("git pull");
 		var result = gitApi.pull().setCredentialsProvider(config.credentials).setStrategy(config.mergeStrategy) .call();
@@ -241,7 +244,7 @@ public class Repository
 		}
 	}
 
-	public void fetch(Config config) throws Exception
+	public void fetch() throws Exception
 	{
 		LOG.info("git fetch");
 		gitApi.fetch().setCredentialsProvider(config.credentials).call();

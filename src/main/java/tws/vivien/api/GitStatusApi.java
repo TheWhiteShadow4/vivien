@@ -3,7 +3,6 @@ package tws.vivien.api;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.core.Config;
 import tws.vivien.core.ErrorBacklog;
 import tws.vivien.core.Repository;
 import tws.vivien.core.Server;
@@ -18,7 +17,6 @@ public class GitStatusApi implements Api
 {
 	private static final Logger LOG = LoggerFactory.getLogger(GitStatusApi.class);
 
-	@Inject public Config config;
 	@Inject public Repository repository;
 	@Inject public ErrorBacklog errorBacklog;
 
@@ -30,7 +28,7 @@ public class GitStatusApi implements Api
 		GitBranchStatus state;
 		try
 		{
-			state = repository.getBranchStatus(config);
+			state = repository.getBranchStatus();
 		}
 		catch(Exception e)
 		{
@@ -42,7 +40,7 @@ public class GitStatusApi implements Api
 
 		try
 		{
-			state.remote = repository.getRemoteStatus(config, state.branch);
+			state.remote = repository.getRemoteStatus(state.branch);
 		}
 		catch(Exception e)
 		{

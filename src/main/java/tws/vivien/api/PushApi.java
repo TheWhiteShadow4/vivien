@@ -3,7 +3,6 @@ package tws.vivien.api;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.core.Config;
 import tws.vivien.core.LockService;
 import tws.vivien.core.Repository;
 import tws.vivien.dto.ServerError;
@@ -16,7 +15,6 @@ public class PushApi implements Api
 {
 	private static final Logger LOG = LoggerFactory.getLogger(PushApi.class);
 
-	@Inject public Config config;
 	@Inject public Repository repository;
 	@Inject public LockService lockService;
 	@Inject public GitStatusApi gitStatusApi;
@@ -28,7 +26,7 @@ public class PushApi implements Api
 	{
 		try
 		{
-			repository.push(config);
+			repository.push();
 			gitStatusApi.handle(ctx);
 		}
 		catch (Exception e)
