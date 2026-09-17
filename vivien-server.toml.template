@@ -17,7 +17,7 @@ security = "lax"
 users = [ "Anna", "Fufu" ]
 password = "*****"
 # Erlaubte Upload Formate (Optional)
-formats = "png,jpg,jpeg,tif,tiff,tga,txt,md,json,yaml,wav,mp3,acc,ogg"
+formats = "png,jpg,jpeg,tif,tiff,tga,txt,md,json,yaml,wav,mp3,acc,ogg,fbx"
 
 [preview]
 output = "jpg"

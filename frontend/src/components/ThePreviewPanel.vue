@@ -3,7 +3,7 @@
 import type { FileObject, RepositoryElement, ServerError } from '@/types/vivien-generated';
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
-import { ALLOWED_EDITOR_TYPES, useStore, type EditorFile, type EditorTypes } from '@/store';
+import { ALLOWED_EDITOR_TYPES, ALLOWED_MODEL_TYPES, useStore, type EditorFile, type EditorTypes, type ModelType } from '@/store';
 import { useFiles } from '@/handler/useFiles';
 import { uploadEditorContent } from '@/client';
 import emitter from '@/mitt';
@@ -13,6 +13,9 @@ const MarkdownView = defineAsyncComponent(() =>
 )
 const CodeView = defineAsyncComponent(() =>
   import('@/components/views/CodeView.vue')
+)
+const MeshView = defineAsyncComponent(() =>
+  import('@/components/views/MeshView.vue')
 )
 
 const store = useStore();
@@ -31,6 +34,11 @@ const isSaving = ref<boolean>(false);
 function isValidEditorType(mimeType: string | undefined): mimeType is EditorTypes
 {
 	return ALLOWED_EDITOR_TYPES.includes(mimeType as EditorTypes);
+}
+
+function isValid3DType(mimeType: string | undefined): mimeType is ModelType
+{
+	return ALLOWED_MODEL_TYPES.includes(mimeType as ModelType);
 }
 
 watch(() => props.fileObject, (fileObject) => {
@@ -129,6 +137,10 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 
 			<div v-else-if="codeEditorFile != null" class="flex-1 overflow-auto">
 				<CodeView :file="codeEditorFile" v-model="codeEditorModel" @save="saveFile" />
+			</div>
+
+			<div v-else-if="isValid3DType(fileObject.metadata.mimeType)" class="flex-1 overflow-auto">
+				<MeshView :content="fileObject.url" />
 			</div>
 
 			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">

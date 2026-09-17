@@ -16,6 +16,9 @@ export interface UserSettings
 export const ALLOWED_EDITOR_TYPES = ["text/json", "text/yaml", "text/toml"] as const;
 export type EditorTypes = typeof ALLOWED_EDITOR_TYPES[number];
 
+export const ALLOWED_MODEL_TYPES = ["application/fbx", "application/glb"] as const;
+export type ModelType = typeof ALLOWED_MODEL_TYPES[number];
+
 export interface EditorFile
 {
 	path: string,

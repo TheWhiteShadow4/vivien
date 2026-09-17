@@ -39,6 +39,7 @@ public class Config
 	public float previewCompression;
 
 	public String gitRemote = null;
+	public String gitUrl = null;
 	public String gitBranch = null;
 	public MergeStrategy mergeStrategy;
 	public UsernamePasswordCredentialsProvider credentials;
@@ -92,6 +93,7 @@ public class Config
 				.map(Path::of).get();
 
 		gitRemote = CReader.readString(this, config, "git.remote").get();
+		gitUrl = CReader.readString(this, config, "git.url").get();
 		gitBranch = CReader.readString(this, config, "git.branch").get();
 		mergeStrategy = CReader.readString(this, config, "git.resolve")
 				.map(this::mapMergeStrategy).withDefault(MergeStrategy.OURS).get();

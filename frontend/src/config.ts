@@ -1,7 +1,7 @@
 
 // Dateiendungen, für die es eine Preview gibt.
 // Muss mit der Liste in tws.vivien.core.PreviewModule im Backend übereinstimmen.
-export const SUPPORTED_PREVIEW_TYPES = [ "toml", "png", "jpg", "jpeg", "tif", "tiff", "tga", "txt", "md", "json", "yaml", "xml", "html" ];
+export const SUPPORTED_PREVIEW_TYPES = [ "toml", "png", "jpg", "jpeg", "tif", "tiff", "tga", "txt", "md", "json", "yaml", "xml", "html", "fbx", "glb" ];
 
 export function getFileExtension(path: string): string | null
 {

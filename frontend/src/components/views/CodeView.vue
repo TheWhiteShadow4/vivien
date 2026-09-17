@@ -8,11 +8,8 @@ import { dracula } from 'thememirror';
 import { keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { EditorState, Prec } from '@codemirror/state';
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useStore, type EditorFile } from '@/store';
-import { uploadEditorContent } from '@/client';
-import emitter from '@/mitt';
-import type { ServerError } from '@/types/vivien-generated';
 import { StreamLanguage } from '@codemirror/language';
 import { toml } from "@codemirror/legacy-modes/mode/toml";
 

@@ -4,9 +4,7 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.StringKey;
-import tws.vivien.handlers.IHandler;
-import tws.vivien.handlers.ImageHandler;
-import tws.vivien.handlers.TextHandler;
+import tws.vivien.handlers.*;
 
 /**
  * Liste der Preview Handler pro Dateiendung.
@@ -69,4 +67,14 @@ public class PreviewModule
 	@IntoMap
 	@StringKey("html")
 	public IHandler provideHtmlHandler(TextHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
+	@StringKey("fbx")
+	public IHandler provideFBXHandler(ModelHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
+	@StringKey("glb")
+	public IHandler provideGLTFHandler(ModelHandler handler) { return handler; }
 }

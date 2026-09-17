@@ -3,6 +3,7 @@ package tws.vivien.core;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.PushResult;
@@ -43,11 +44,30 @@ public class Repository
 		{
 			this.config = config;
 			this.rootPath = config.repository;
-			this.gitApi = Git.open(rootPath.toFile());
+			try
+			{
+				this.gitApi = Git.open(rootPath.toFile());
+			}
+			catch(RepositoryNotFoundException _)
+			{
+				if (config.gitUrl != null)
+				{
+					this.gitApi = Git.cloneRepository()
+							.setCredentialsProvider(config.credentials)
+							.setURI(config.gitUrl)
+							.setDirectory(rootPath.toFile())
+							.setBare(false)
+							.call();
+				}
+				else
+				{
+					this.gitApi = Git.init().setGitDir(rootPath.toFile()).call();
+				}
+			}
 			cache = new RepositoryCache(rootPath, gitApi.getRepository());
 			return this;
 		}
-		catch(IOException e)
+		catch(Exception e)
 		{
 			throw new RuntimeException(e);
 		}

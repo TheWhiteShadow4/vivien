@@ -30,11 +30,13 @@
     "tailwindcss": "^4.3.3",
     "thememirror": "^2.0.1",
     "vue": "^3.5.40",
+    "vue-3d-loader": "^3.0.1",
     "vue-codemirror6": "^1.6.2"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.13.3",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/tsconfig": "^0.9.1",
