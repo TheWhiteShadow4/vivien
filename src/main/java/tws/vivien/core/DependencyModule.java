@@ -6,7 +6,6 @@ import dagger.Provides;
 
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Module
 public class DependencyModule
@@ -20,6 +19,20 @@ public class DependencyModule
 
 	@Provides
 	@Singleton
+	public Config serverConfig()
+	{
+		return new Config().load();
+	}
+
+	@Provides
+	@Singleton
+	public Repository serverRepository(Config config)
+	{
+		return new Repository().open(config);
+	}
+
+	@Provides
+	@Singleton
 	public Cache serverCache()
 	{
 		try
@@ -27,12 +40,5 @@ public class DependencyModule
 			return new Cache(cachePath);
 		}
 		catch(IOException e) { throw  new RuntimeException(e); }
-	}
-
-	@Provides
-	@Singleton
-	public ReentrantReadWriteLock gitLock()
-	{
-		return new ReentrantReadWriteLock();
 	}
 }

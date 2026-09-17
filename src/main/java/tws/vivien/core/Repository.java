@@ -11,9 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.dto.*;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +26,7 @@ import java.util.List;
  * Das Repository hat einen Verzeichnis-Cache, der bei Start vollständig aufgebaut und aktuell gehalten wird.
  */
 @Singleton
-public class Repository implements Closeable
+public class Repository
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
 
@@ -37,17 +35,33 @@ public class Repository implements Closeable
 	private RepositoryCache cache;
 	private GitBranchStatus branchStatus;
 
-	@Inject
-	public Repository(Config config)
+	public Repository open(Config config)
 	{
-		if (config.mode == ServerMode.SETUP) return;
+		if (config.mode == ServerMode.SETUP) return null;
 		try
 		{
 			this.rootPath = config.repository;
 			this.gitApi = Git.open(rootPath.toFile());
 			cache = new RepositoryCache(rootPath, gitApi.getRepository());
+			return this;
 		}
 		catch(IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	// Momentan nur für Tests
+	public Repository create(Config config)
+	{
+		try
+		{
+			this.rootPath = config.repository;
+			this.gitApi = Git.init().setGitDir(rootPath.toFile()).call();
+			cache = new RepositoryCache(rootPath, gitApi.getRepository());
+			return this;
+		}
+		catch(Exception e)
 		{
 			throw new RuntimeException(e);
 		}
@@ -281,7 +295,6 @@ public class Repository implements Closeable
 		throw new Error("Unbekannter Git State");
 	}*/
 
-	@Override
 	public void close()
 	{
 		gitApi.close();

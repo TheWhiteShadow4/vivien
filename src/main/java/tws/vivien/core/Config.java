@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.plugins.EnginePlugin;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
 import java.nio.file.Files;
@@ -49,8 +48,7 @@ public class Config
 
 	public List<ConfigException> errors = new ArrayList<>();
 
-	@Inject
-	public Config()
+	public Config load()
 	{
 		webRoot = Paths.get(".").toAbsolutePath();
 		File configFile = new File(CONFIG_FILE_NAME);
@@ -71,6 +69,7 @@ public class Config
 			System.out.println("⚠ Fehlerhafte Konfiguration (" + e.getMessage() + "). Wechsle in SETUP-Modus.");
 			initSetupConfig();
 		}
+		return this;
 	}
 
 	public ConfigView getView(String name)
