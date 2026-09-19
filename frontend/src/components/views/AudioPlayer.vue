@@ -3,8 +3,6 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import WaveSurfer from 'wavesurfer.js'
 import BaseIconButton from '@/base/BaseIconButton.vue';
-import IconStar from '@/icons/IconStar.vue';
-import IconStarFilled from '@/icons/IconStarFilled.vue';
 import IconPause from '@/icons/IconPause.vue';
 import IconPlay from '@/icons/IconPlay.vue';
 
@@ -28,9 +26,6 @@ const initPlayer = async () => {
 
 	try
 	{
-		const WaveSurferModule = await import('wavesurfer.js')
-		const WaveSurfer = WaveSurferModule.default
-
 		ws.value = WaveSurfer.create({
 			container: containerRef.value,
 			waveColor: '#7b73a5',

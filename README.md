@@ -52,7 +52,7 @@ mvn process-classes
 
 ---
 
-## 📦 Release / Fertiges Tool bauen
+## 📦 Jar Bauen
 
 **Alles in eine Jar kompilieren:**
    Im Hauptverzeichnis:
@@ -68,3 +68,13 @@ mklink /D node "C:\Users\<Benutzer>\AppData\Local\nvm\v24.19.0"
 mvn clean package
 ```
 Deine fertige App liegt nun unter `target/Vivien-1.0-SNAPSHOT.jar` und kann per Doppelklick oder `java -jar Vivien-1.0-SNAPSHOT.jar` gestartet werden.
+
+## Docker
+
+**Docker Kontainer bauen**
+```bash
+docker compose up --build
+
+docker compose down
+```
+

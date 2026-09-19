@@ -50,7 +50,7 @@ public class Repository
 			{
 				this.gitApi = Git.open(rootPath.toFile());
 			}
-			catch(RepositoryNotFoundException _)
+			catch(RepositoryNotFoundException e)
 			{
 				if (config.gitUrl != null)
 				{

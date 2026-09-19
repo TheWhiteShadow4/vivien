@@ -81,7 +81,8 @@ public class Server
 				staticFiles.headers = Map.of("Cache-Control", "public, max-age=86400, immutable");
 			});
 
-			if (Files.isDirectory(component.repository().getRoot()))
+			var repo = component.repository();
+			if (repo != null && Files.isDirectory(repo.getRoot()))
 			{
 				c.staticFiles.add(staticFiles ->
 				{

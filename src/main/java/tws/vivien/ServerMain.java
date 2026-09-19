@@ -6,7 +6,7 @@ public class ServerMain
 {
 	public static boolean startFlag;
 
-	static void main()
+	public static void main(String[] args)
 	{
 		System.setProperty("org.slf4j.simpleLogger.log.io.javalin", "warn");
 		System.setProperty("org.slf4j.simpleLogger.log.org.eclipse.jetty", "warn");

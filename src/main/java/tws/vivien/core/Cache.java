@@ -94,7 +94,7 @@ public class Cache
 				   {
 					   Files.deleteIfExists(path);
 				   }
-				   catch (IOException _) {}
+				   catch (IOException e) { /**/ }
 			   }
 			});
 		}

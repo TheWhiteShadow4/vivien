@@ -40,7 +40,6 @@ public class StageApi implements Api
 
 			lockService.gitLock.readLock().lock();
 			Path file = repository.resolve(request.file);
-			IO.println("staged " + request.op + " File: " + request.file + " => "+ file);
 
 			switch (request.op)
 			{
