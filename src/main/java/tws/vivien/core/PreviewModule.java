@@ -75,6 +75,36 @@ public class PreviewModule
 
 	@Provides
 	@IntoMap
+	@StringKey("gltf")
+	public IHandler provideGltfHandler(ModelHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
 	@StringKey("glb")
-	public IHandler provideGLTFHandler(ModelHandler handler) { return handler; }
+	public IHandler provideGlbHandler(ModelHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
+	@StringKey("obj")
+	public IHandler provideObjHandler(ModelHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
+	@StringKey("wav")
+	public IHandler provideWavHandler(AudioHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
+	@StringKey("mp3")
+	public IHandler provideMp3Handler(AudioHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
+	@StringKey("ogg")
+	public IHandler provideOggHandler(AudioHandler handler) { return handler; }
+
+	@Provides
+	@IntoMap
+	@StringKey("aac")
+	public IHandler provideAacHandler(AudioHandler handler) { return handler; }
 }

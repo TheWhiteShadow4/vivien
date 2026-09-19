@@ -2,7 +2,7 @@
 import { useStore } from '@/store'
 import emitter from './mitt';
 import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, RepositoryElement, ServerError } from './types/vivien-generated';
-import { getFileExtension } from '@/config';
+import { getFileExtension, getFilename } from '@/config';
 
 
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
@@ -91,8 +91,9 @@ export async function sendUploadRequest(formData: FormData): Promise<boolean>
 		}
 		else
 		{
-			const error = await response.json() as ServerError
-			emitter.emit("error", error);
+			const error = await response.json() as ServerError[];
+			if (store.server)
+				store.server.serverErrors = store.server.serverErrors.concat(error);
 		}
 	}
 	catch (error)
@@ -121,10 +122,10 @@ export async function uploadEditorContent(path: string, content: string, final: 
 {
 	const formData = new FormData();
 	
-	const fileName = getFileExtension(path);
-	if (!fileName) return false;
+	const ext = getFileExtension(path);
+	if (!ext) return false;
 	
-	const file = new File([content], fileName, { type: 'text/plain' });
+	const file = new File([content], getFilename(path), { type: 'text/plain' });
 
 	formData.append('fileOrFolder', path);
 	formData.append('files', file);

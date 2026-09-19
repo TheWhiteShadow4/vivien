@@ -115,7 +115,7 @@ function gitQuery(query: string): RepositoryElement
 						serachRoot.children!.push(element);
 					}
 				}
-				if (field === "fav")
+				else if (field === "fav")
 				{
 					for(const entry of store.settings.favorites)
 					{
@@ -139,7 +139,7 @@ async function fetchSearch(query: string)
 	try
 	{
 		let serachRoot: RepositoryElement;
-		if (query.startsWith(':'))
+		if (query.startsWith(':') && query !== ":config")
 		{
 			serachRoot = gitQuery(query)
 		}

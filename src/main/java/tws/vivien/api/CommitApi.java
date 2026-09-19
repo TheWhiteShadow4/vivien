@@ -29,12 +29,10 @@ public class CommitApi implements Api
 	{
 		try
 		{
+			lockService.gitLock.writeLock().lock();
 			CommitRequest request = ctx.bodyAsClass(CommitRequest.class);
 
-			lockService.gitLock.writeLock().lock();
-			var status = repository.getCachedStatus();
-			if (status == null) status = repository.getBranchStatus();
-
+			var status = repository.getBranchStatus();
 			if (status.hasStagedFiles()) // Haben wir Änderungen in der Stage
 			{
 				lockService.freeUserLocks(ctx.header(Server.APP_USER));

@@ -33,7 +33,15 @@ public class RepositoryApi
 
 			if (q != null)
 			{
-				ctx.json(repository.searchFiles(view, q));
+				if (":config".equals(q))
+				{
+					var list = config.getConfigFileList();
+					ctx.json(list);
+				}
+				else
+				{
+					ctx.json(repository.searchFiles(view, q));
+				}
 				return;
 			}
 

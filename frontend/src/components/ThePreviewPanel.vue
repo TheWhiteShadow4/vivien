@@ -3,7 +3,7 @@
 import type { FileObject, RepositoryElement, ServerError } from '@/types/vivien-generated';
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
-import { ALLOWED_EDITOR_TYPES, ALLOWED_MODEL_TYPES, useStore, type EditorFile, type EditorTypes, type ModelType } from '@/store';
+import { ALLOWED_AUDIO_TYPES, ALLOWED_EDITOR_TYPES, ALLOWED_MODEL_TYPES, useStore, type AudioType, type EditorFile, type EditorTypes, type ModelType } from '@/store';
 import { useFiles } from '@/handler/useFiles';
 import { uploadEditorContent } from '@/client';
 import emitter from '@/mitt';
@@ -16,6 +16,9 @@ const CodeView = defineAsyncComponent(() =>
 )
 const MeshView = defineAsyncComponent(() =>
   import('@/components/views/MeshView.vue')
+)
+const AudioPlayer = defineAsyncComponent(() =>
+  import('@/components/views/AudioPlayer.vue')
 )
 
 const store = useStore();
@@ -39,6 +42,11 @@ function isValidEditorType(mimeType: string | undefined): mimeType is EditorType
 function isValid3DType(mimeType: string | undefined): mimeType is ModelType
 {
 	return ALLOWED_MODEL_TYPES.includes(mimeType as ModelType);
+}
+
+function isValidAudio(mimeType: string | undefined): mimeType is AudioType
+{
+	return ALLOWED_AUDIO_TYPES.includes(mimeType as AudioType);
 }
 
 watch(() => props.fileObject, (fileObject) => {
@@ -140,7 +148,11 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 			</div>
 
 			<div v-else-if="isValid3DType(fileObject.metadata.mimeType)" class="flex-1 overflow-auto">
-				<MeshView :content="fileObject.url" />
+				<MeshView :fileObject="fileObject" />
+			</div>
+
+			<div v-else-if="isValidAudio(fileObject.metadata.mimeType)" class="flex-1 overflow-auto">
+				<AudioPlayer :url="fileObject.url" />
 			</div>
 
 			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">

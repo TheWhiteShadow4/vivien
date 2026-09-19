@@ -17,7 +17,7 @@ security = "lax"
 users = [ "Anna", "Fufu" ]
 password = "*****"
 # Erlaubte Upload Formate (Optional)
-formats = "png,jpg,jpeg,tif,tiff,tga,txt,md,json,yaml,wav,mp3,acc,ogg,fbx"
+formats = "png,jpg,jpeg,tif,tiff,tga,txt,md,json,yaml,wav,mp3,acc,ogg,fbx,glb,gltf,obj,mtl"
 
 [preview]
 output = "jpg"
@@ -28,5 +28,5 @@ excludes = [ ".meta" ]
 
 [views.artist]
 root = "Assets"
-includes = [ "*.png", "*.jpg", "*.tga", "*.tif", "*.svg" ]
+includes = [ "*.png", "*.jpg", "*.tga", "*.tif", "*.svg", "*.md", "*.txt", "*.json", "*.yaml", "*.fbx", "*.obj", "*.gltf", "*.glb", "*.wav", "*.mp3", "*.ogg", "*.aac" ]
 excludes = [ ".idea/", ".git/", ".meta" ]

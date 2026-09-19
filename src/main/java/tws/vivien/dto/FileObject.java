@@ -27,5 +27,7 @@ public class FileObject
 		public int srcHeight;
 		@Nullable
 		public String lockHolder;
+		@Nullable
+		public String additional;
 	}
 }

@@ -5,11 +5,14 @@ import io.javalin.compression.CompressionStrategy;
 import io.javalin.http.Context;
 import io.javalin.http.UnauthorizedResponse;
 import io.javalin.http.staticfiles.Location;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.net.URI;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -20,6 +23,8 @@ public class Server
 	public static final String APP_VIEW = "X-App-View";
 	public static final String APP_USER = "X-App-User";
 	public static final String DEFAULT_USER = "global";
+
+	private static final java.util.List<String> REPO_ACCESS_FILES = List.of("fbx", "gltf", "glb", "obj", "bin", "mtl", "wav", "mp3", "ogg", "aac", "png", "jpg");
 
 	private final Config config;
 	private final Cache serverCache;
@@ -75,6 +80,21 @@ public class Server
 
 				staticFiles.headers = Map.of("Cache-Control", "public, max-age=86400, immutable");
 			});
+
+			if (Files.isDirectory(component.repository().getRoot()))
+			{
+				c.staticFiles.add(staticFiles ->
+				{
+					staticFiles.hostedPath = "/file";
+					staticFiles.directory = component.repository().getRoot().toString();
+					staticFiles.location = Location.EXTERNAL;
+					staticFiles.skipFileFunction = (req) ->
+					{
+						var ext = FilenameUtils.getExtension(req.getRequestURI());
+						return !REPO_ACCESS_FILES.contains(ext);
+					};
+				});
+			}
 
 			c.bundledPlugins.enableCors(cors ->
 					cors.addRule(rule ->
@@ -177,6 +197,13 @@ public class Server
 				System.err.println("Browser konnte nicht automatisch geöffnet werden: " + e.getMessage());
 			}
 		}
+	}
+
+	/// TODO: Maximale Sicherheit!
+	/// Aktuell kann der User selber bestimmen, ob er Admin sein will.
+	public static boolean isAdmin(Context ctx)
+	{
+		return "admin".equals(getViewName(ctx));
 	}
 
 	/**

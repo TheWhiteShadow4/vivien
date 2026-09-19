@@ -52,9 +52,9 @@ public class PreviewApi implements Api
 				return;
 			}
 
-			if (config.mode == ServerMode.SETUP && "setup.toml".equals(file))
+			if (Server.isAdmin(ctx) && Config.CONFIG_FILE_NAME.equals(file))
 			{
-				sendSetupConfig(ctx);
+				sendSystemFile(ctx, file);
 				return;
 			}
 
@@ -80,9 +80,9 @@ public class PreviewApi implements Api
 		return handlerMap.get(fileExt);
 	}
 
-	private void sendSetupConfig(Context ctx) throws IOException
+	private void sendSystemFile(Context ctx, String file) throws IOException
 	{
-		Path path = Path.of("vivien-server.toml");
+		Path path = Path.of(file);
 		String content = Files.readString(path);
 
 		var meta = new FileObject.FileObjectMeta();

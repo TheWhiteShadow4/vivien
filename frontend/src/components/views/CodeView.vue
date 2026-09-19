@@ -68,7 +68,6 @@ watch(model, (newContent) => {
 });
 
 const editorExtensions = computed(() => {
-	console.log("CodeView compute:", props.file);
 	const extensions = [
 		dracula,
 		lintGutter(), // Fehlerleiste Links

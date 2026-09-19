@@ -48,7 +48,7 @@ const isRemoved = computed(() => {
 
 const canDelete = computed(() => {
 	return store.git && store.git.missing.indexOf(props.element.path) == -1
-					 && !isRemoved.value ;
+					 && !isRemoved.value && "vivien-server.toml" !== props.element.name ;
 });
 
 async function changeStaged(op: GitStageOperation)

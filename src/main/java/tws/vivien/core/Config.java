@@ -1,15 +1,19 @@
 package tws.vivien.core;
 
 
-import com.electronwill.nightconfig.core.file.FileConfig;
+import com.electronwill.nightconfig.toml.TomlParser;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tws.vivien.dto.ElementType;
+import tws.vivien.dto.RepositoryElement;
 import tws.vivien.plugins.EnginePlugin;
 
 import javax.inject.Singleton;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,11 +63,9 @@ public class Config
 			initSetupConfig();
 		}
 
-		try
+		try(var inputStream = new FileInputStream(configFile))
 		{
-			FileConfig reader = FileConfig.of(configFile);
-			reader.load();
-			readConfig(reader);
+			this.load(inputStream);
 		}
 		catch (Exception e)
 		{
@@ -73,18 +75,26 @@ public class Config
 		return this;
 	}
 
+	public Config load(InputStream inputStream)
+	{
+		errors.clear();
+		TomlParser parser = new TomlParser();
+		readConfig(parser.parse(inputStream));
+		return this;
+	}
+
 	public ConfigView getView(String name)
 	{
 		ConfigView view = views.get(name);
 		if (view == null)
 		{
-			System.err.println("View "+name+" ist nicht in der Server Konfig.");
-			return new ConfigView("Admin");
+			LOG.warn("View {} ist nicht in der Server Konfig.", name);
+			return new ConfigView("admin");
 		}
 		return view;
 	}
 
-	private void readConfig(FileConfig config)
+	private void readConfig(com.electronwill.nightconfig.core.Config config)
 	{
 		mode = CReader.readString(this, config, "mode")
 				.map(ServerMode::fromString).withDefault(ServerMode.SETUP).get();
@@ -145,7 +155,7 @@ public class Config
 		};
 	}
 
-	private void loadViews(FileConfig config)
+	private void loadViews(com.electronwill.nightconfig.core.Config config)
 	{
 		var table = (com.electronwill.nightconfig.core.Config) config.get("views");
 		if (table != null)
@@ -172,7 +182,7 @@ public class Config
 		}
 	}
 
-	private void loadUsers(FileConfig config)
+	private void loadUsers(com.electronwill.nightconfig.core.Config config)
 	{
 		try
 		{
@@ -184,7 +194,7 @@ public class Config
 		}
 	}
 
-	private void loadEnginePlugin(FileConfig config)
+	private void loadEnginePlugin(com.electronwill.nightconfig.core.Config config)
 	{
 		String cls = CReader.readString(this, config, "engine_plugin").get();
 		if (cls != null)
@@ -225,7 +235,7 @@ public class Config
 		private ConfigException error;
 		private T value;
 
-		public static CReader<String, String> readString(Config config, FileConfig toml, String configName)
+		public static CReader<String, String> readString(Config config, com.electronwill.nightconfig.core.Config toml, String configName)
 		{
 			CReader<String, String> reader = new CReader<>();
 			reader.config = config;
@@ -235,7 +245,7 @@ public class Config
 			return reader;
 		}
 
-		public static <S> CReader<S, S> read(Config config, FileConfig toml, String configName)
+		public static <S> CReader<S, S> read(Config config, com.electronwill.nightconfig.core.Config toml, String configName)
 		{
 			CReader<S, S> reader = new CReader<>();
 			reader.config = config;
@@ -306,10 +316,13 @@ public class Config
 		}
 	}
 
-	// Abgesicherter Modus
-	private void initSafeConfig()
+	public List<RepositoryElement> getConfigFileList()
 	{
-		mode = ServerMode.SAFE;
+		var element = new RepositoryElement();
+		element.name = CONFIG_FILE_NAME;
+		element.path = CONFIG_FILE_NAME;
+		element.type = ElementType.FILE;
+		return List.of(element);
 	}
 
 	// Konfiguration Setup

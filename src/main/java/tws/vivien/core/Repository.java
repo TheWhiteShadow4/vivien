@@ -15,6 +15,8 @@ import tws.vivien.dto.*;
 import javax.inject.Singleton;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -80,7 +82,7 @@ public class Repository
 		{
 			this.config = config;
 			this.rootPath = config.repository;
-			this.gitApi = Git.init().setGitDir(rootPath.toFile()).call();
+			this.gitApi = Git.init().setDirectory(rootPath.toFile()).call();
 			cache = new RepositoryCache(rootPath, gitApi.getRepository());
 			return this;
 		}
@@ -257,7 +259,7 @@ public class Repository
 	public void pull() throws Exception
 	{
 		LOG.info("git pull");
-		var result = gitApi.pull().setCredentialsProvider(config.credentials).setStrategy(config.mergeStrategy) .call();
+		var result = gitApi.pull().setCredentialsProvider(config.credentials).setStrategy(config.mergeStrategy).call();
 		if (!result.isSuccessful())
 		{
 			throw new Exception("Pull fehlgeschlagen");
@@ -361,5 +363,11 @@ public class Repository
 	public String getRelativePath(Path path)
 	{
 		return rootPath.relativize(path).toString().replace("\\", "/");
+	}
+
+	public String getUrl(Path path) throws URISyntaxException
+	{
+		var relPath = getRelativePath(path);
+		return new URI(null, null, "/file/" + relPath, null).getRawPath();
 	}
 }

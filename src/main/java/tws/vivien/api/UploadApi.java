@@ -10,10 +10,13 @@ import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -44,20 +47,35 @@ public class UploadApi implements Api
 		try
 		{
 			lockService.gitLock.readLock().lock();
-			if (config.mode == ServerMode.SETUP && "setup.toml".equals(fileOrFolder))
+			if (Server.isAdmin(ctx) && Config.CONFIG_FILE_NAME.equals(fileOrFolder))
 			{
-				acceptSetupConfig(ctx);
+				acceptSystemFile(ctx);
+				gitStatusApi.handle(ctx);
 				return;
 			}
 
 			Path targetPath = repository.resolve(fileOrFolder);
 			if (Files.isDirectory(targetPath)) // Multi Upload in Ordner
 			{
+				List<ServerError> errors = new ArrayList<>();
 				for (var file : ctx.uploadedFiles("files"))
 				{
 					checkUserLock(ctx, fileOrFolder);
 					Path fullPath = targetPath.resolve(file.filename());
-					writeFile(ctx, fullPath, file);
+					try
+					{
+						writeFile(ctx, fullPath, file);
+					}
+					catch(IOException e)
+					{
+						errors.add(ServerError.fromError(e));
+					}
+				}
+				if (errors.size() > 0)
+				{
+					LOG.error("Upload Fehler {}", errors.getFirst());
+					ctx.status(500);
+					ctx.json(errors.stream().toList());
 				}
 			}
 			else if (Files.isRegularFile(targetPath)) // Single Upload
@@ -75,9 +93,9 @@ public class UploadApi implements Api
 		}
 		catch(Exception e)
 		{
-			LOG.error("uploadFiles", e);
+			LOG.error("Request Fehler", e);
 			ctx.status(500);
-			ctx.json(ServerError.fromError(e));
+			ctx.json(List.of(ServerError.fromError(e)));
 		}
 		finally
 		{
@@ -104,10 +122,28 @@ public class UploadApi implements Api
 		repository.trackFile(path);
 	}
 
-	private void acceptSetupConfig(Context ctx) throws IOException
+	private void acceptSystemFile(Context ctx) throws IOException
 	{
 		var file = ctx.uploadedFiles("files").getFirst();
-		FileUtils.copyInputStreamToFile(file.content(), new File(Config.CONFIG_FILE_NAME));
+
+		if (file.filename().equals(Config.CONFIG_FILE_NAME))
+		{
+			var buf = new BufferedInputStream(file.content());
+			buf.mark(0);
+			// Wir testen zunächst, ob die neue Konfig gültig ist. Shadow-Load
+			Config config = new Config().load(buf);
+			if (!config.errors.isEmpty())
+			{
+				ctx.status(400);
+				ctx.json(config.errors.stream().map(ServerError::fromError).toList());
+				return;
+			}
+			buf.reset();
+			config.load(buf);
+			LOG.info("Neue Konfiguration geladen");
+			buf.reset();
+		}
+		FileUtils.copyInputStreamToFile(file.content(), new File(file.filename()));
 	}
 
 	private boolean isValidUploadFile(String filename)

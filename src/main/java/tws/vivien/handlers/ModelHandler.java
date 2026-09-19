@@ -1,10 +1,6 @@
 package tws.vivien.handlers;
 
-import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.dircache.DirCache;
-import org.eclipse.jgit.dircache.DirCacheEntry;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectInserter;
+import org.apache.commons.io.FilenameUtils;
 import tws.vivien.core.Cache;
 import tws.vivien.core.Config;
 import tws.vivien.core.Repository;
@@ -31,54 +27,22 @@ public class ModelHandler implements IHandler
 		Path path = repository.resolveFile(file);
 		if (path == null) throw new FileNotFoundException();
 
-		var ext = file.substring(file.lastIndexOf('.')+1);
-		var gitRepo = repository.getApi().getRepository();
-		String hash = null;
-		byte[] fileBytes = null;
+		var filename = path.getFileName().toString();
+		var ext = FilenameUtils.getExtension(file);
 
-		DirCache index = gitRepo.readDirCache();
-		DirCacheEntry entry = index.getEntry(path.toString());
-		if (entry != null)
+		FileObject.FileObjectMeta meta = new FileObject.FileObjectMeta();
+		meta.mimeType = "application/" + ext;
+		String url = repository.getUrl(path);
+
+		if ("obj".equals(ext))
 		{
-			hash = entry.getObjectId().name();
-		}
-		if (hash == null)
-		{
-			try(ObjectInserter inserter = gitRepo.newObjectInserter())
+			Path additionalPath = path.getParent().resolve(filename.replace("obj", "mtl"));
+			if (Files.exists(additionalPath))
 			{
-				fileBytes = Files.readAllBytes(path);
-
-				// Berechnet den Hash genau wie Git es intern tut, ohne die Datei im Repo zu speichern
-				hash = inserter.idFor(Constants.OBJ_BLOB, fileBytes).name();
+				meta.additional = "mtl:" + repository.getUrl(additionalPath);
 			}
 		}
 
-		var cacheEntry = cache.get(hash);
-		if (cacheEntry != null)
-		{
-			var meta = (FileObject.FileObjectMeta) cacheEntry.metadata;
-			return new FileObject(pathToUrl(config.webRoot, cacheEntry.path), path.getFileName().toString(), meta);
-		}
-		else
-		{
-			if (fileBytes == null) fileBytes = Files.readAllBytes(path);
-
-			FileObject.FileObjectMeta meta = new FileObject.FileObjectMeta();
-			meta.size = fileBytes.length;
-			meta.mimeType = "application/" + ext;
-
-			Path outputPath = config.webRoot.resolve("cache/" + hash + "." + ext).toAbsolutePath();
-			Files.createDirectories(outputPath.getParent());
-			FileUtils.writeByteArrayToFile(outputPath.toFile(), fileBytes);
-			cache.add(outputPath, hash, meta);
-
-			return new FileObject(pathToUrl(config.webRoot, outputPath), path.getFileName().toString(), meta);
-		}
-	}
-
-	private String pathToUrl(Path webRoot, Path path)
-	{
-		Path relativePath = webRoot.relativize(path);
-		return "/" + relativePath.toString().replace("\\", "/");
+		return new FileObject(url, filename, meta);
 	}
 }
