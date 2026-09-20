@@ -119,7 +119,7 @@ public class Config
 		addEnv(configData,"git.remote");
 		addEnv(configData,"server.host");
 		addEnv(configData,"server.port");
-		addEnvArray(configData,"server.user");
+		addEnvArray(configData,"server.users");
 		addEnv(configData,"server.secret");
 		addEnv(configData,"server.password");
 		addEnv(configData,"server.formats");
@@ -135,13 +135,13 @@ public class Config
 
 	private void addEnv(com.electronwill.nightconfig.core.Config config, String key)
 	{
-		var val = System.getenv(key);
+		var val = System.getenv(key.replace('.', '_'));
 		if (val != null) config.add(key, val);
 	}
 
 	private void addEnvArray(com.electronwill.nightconfig.core.Config config, String key)
 	{
-		var val = System.getenv(key);
+		var val = System.getenv(key.replace('.', '_'));
 		if (val != null) config.add(key, val.split(","));
 	}
 

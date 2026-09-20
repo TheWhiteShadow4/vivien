@@ -55,6 +55,7 @@ public class Repository
 				{
 					if (config.gitUrl != null)
 					{
+						LOG.info("Klone Repository: {}", config.gitUrl);
 						this.gitApi = Git.cloneRepository()
 								.setCredentialsProvider(config.credentials)
 								.setURI(config.gitUrl)
@@ -64,7 +65,11 @@ public class Repository
 					}
 					else
 					{
-						this.gitApi = Git.init().setGitDir(rootPath.toFile()).call();
+						LOG.info("Erstelle neues Repository");
+						this.gitApi = Git.init()
+								.setDirectory(rootPath.toFile())
+								.setBare(false)
+								.call();
 					}
 				}
 				cache = new RepositoryCache(rootPath, gitApi.getRepository());
