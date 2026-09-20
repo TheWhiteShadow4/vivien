@@ -58,9 +58,17 @@ public class Config
 		webRoot = Paths.get(".").toAbsolutePath();
 		File configFile = new File(CONFIG_FILE_NAME);
 
-		if (!configFile.exists()) {
-			System.out.println("⚠ Keine Konfigurationsdatei gefunden. Wechsle in SETUP-Modus.");
-			initSetupConfig();
+		if (!configFile.exists())
+		{
+			if ("hosted".equals(System.getProperty("mode")))
+			{
+				loadFromEnvVars();
+			}
+			else
+			{
+				System.out.println("⚠ Keine Konfigurationsdatei gefunden. Wechsle in SETUP-Modus.");
+				initSetupConfig();
+			}
 		}
 
 		try(var inputStream = new FileInputStream(configFile))
@@ -92,6 +100,42 @@ public class Config
 			return new ConfigView("admin");
 		}
 		return view;
+	}
+
+	private void loadFromEnvVars()
+	{
+		var configData = com.electronwill.nightconfig.core.Config.inMemory();
+		addEnv(configData,"mode");
+		addEnv(configData,"repo_path");
+		addEnv(configData,"git.remote");
+		addEnv(configData,"git.url");
+		addEnv(configData,"git.branch");
+		addEnv(configData,"git.resolve");
+		addEnv(configData,"git.remote");
+		addEnv(configData,"server.host");
+		addEnv(configData,"server.port");
+		addEnvArray(configData,"server.user");
+		addEnv(configData,"server.password");
+		addEnv(configData,"server.formats");
+		addEnv(configData,"preview.compression");
+		addEnv(configData,"preview.output");
+		addEnv(configData,"git.token");
+		addEnvArray(configData,"views.admin.includes");
+		addEnvArray(configData,"views.admin.excludes");
+		addEnvArray(configData,"views.artist.includes");
+		addEnvArray(configData,"views.artist.excludes");
+	}
+
+	private void addEnv(com.electronwill.nightconfig.core.Config config, String key)
+	{
+		var val = System.getProperty(key);
+		if (val != null) config.add(key, val);
+	}
+
+	private void addEnvArray(com.electronwill.nightconfig.core.Config config, String key)
+	{
+		var val = System.getProperty(key);
+		if (val != null) config.add(key, val.split(","));
 	}
 
 	private void readConfig(com.electronwill.nightconfig.core.Config config)

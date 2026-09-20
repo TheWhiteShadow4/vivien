@@ -60,5 +60,5 @@ frontend/.env.*.local
 /node
 /frontend/src/types/vivien-generated.d.ts
 
-/vivien-conf/
-/vivien-data/
+/docker-compose.yml
+/vivien-volume/
