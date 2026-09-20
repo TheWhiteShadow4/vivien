@@ -62,7 +62,7 @@ public class Config
 		{
 			if ("hosted".equals(System.getProperty("mode")))
 			{
-				loadFromEnvVars();
+				readConfig(initFromEnvVars());
 			}
 			else
 			{
@@ -102,7 +102,7 @@ public class Config
 		return view;
 	}
 
-	private void loadFromEnvVars()
+	private com.electronwill.nightconfig.core.Config initFromEnvVars()
 	{
 		var configData = com.electronwill.nightconfig.core.Config.inMemory();
 		addEnv(configData,"mode");
@@ -124,6 +124,7 @@ public class Config
 		addEnvArray(configData,"views.admin.excludes");
 		addEnvArray(configData,"views.artist.includes");
 		addEnvArray(configData,"views.artist.excludes");
+		return configData;
 	}
 
 	private void addEnv(com.electronwill.nightconfig.core.Config config, String key)
@@ -146,9 +147,9 @@ public class Config
 		repository = CReader.readString(this, config, "repo_path").required("")
 				.map(Path::of).get();
 
-		gitRemote = CReader.readString(this, config, "git.remote").get();
+		gitRemote = CReader.readString(this, config, "git.remote").withDefault("origin").get();
+		gitBranch = CReader.readString(this, config, "git.branch").withDefault("master").get();
 		gitUrl = CReader.readString(this, config, "git.url").get();
-		gitBranch = CReader.readString(this, config, "git.branch").get();
 		mergeStrategy = CReader.readString(this, config, "git.resolve")
 				.map(this::mapMergeStrategy).withDefault(MergeStrategy.OURS).get();
 

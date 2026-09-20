@@ -16,12 +16,11 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Erstelle den Ordner für deine Daten im Container
-RUN mkdir -p /app/conf
 RUN mkdir -p /app/data
 
 # Dateien kopieren
 COPY --from=build /app/target/Vivien-*.jar Vivien.jar
-RUN ln -s /app/conf/vivien-server.toml /app/vivien-server.toml
+RUN ln -s /app/data/conf/vivien-server.toml /app/vivien-server.toml
 
 # JVM-Flags
 ENV JAVA_OPTS="-Xmx512m -Xms512m"
