@@ -41,38 +41,40 @@ public class Repository
 
 	public Repository open(Config config)
 	{
-		if (config.mode == ServerMode.SETUP) return null;
-		try
+		if (config.mode != ServerMode.SETUP)
 		{
-			this.config = config;
-			this.rootPath = config.repository;
 			try
 			{
-				this.gitApi = Git.open(rootPath.toFile());
+				this.config = config;
+				this.rootPath = config.repository;
+				try
+				{
+					this.gitApi = Git.open(rootPath.toFile());
+				}
+				catch (RepositoryNotFoundException e)
+				{
+					if (config.gitUrl != null)
+					{
+						this.gitApi = Git.cloneRepository()
+								.setCredentialsProvider(config.credentials)
+								.setURI(config.gitUrl)
+								.setDirectory(rootPath.toFile())
+								.setBare(false)
+								.call();
+					}
+					else
+					{
+						this.gitApi = Git.init().setGitDir(rootPath.toFile()).call();
+					}
+				}
+				cache = new RepositoryCache(rootPath, gitApi.getRepository());
 			}
-			catch(RepositoryNotFoundException e)
+			catch (Exception e)
 			{
-				if (config.gitUrl != null)
-				{
-					this.gitApi = Git.cloneRepository()
-							.setCredentialsProvider(config.credentials)
-							.setURI(config.gitUrl)
-							.setDirectory(rootPath.toFile())
-							.setBare(false)
-							.call();
-				}
-				else
-				{
-					this.gitApi = Git.init().setGitDir(rootPath.toFile()).call();
-				}
+				throw new RuntimeException(e);
 			}
-			cache = new RepositoryCache(rootPath, gitApi.getRepository());
-			return this;
 		}
-		catch(Exception e)
-		{
-			throw new RuntimeException(e);
-		}
+		return this;
 	}
 
 	// Momentan nur für Tests
@@ -322,7 +324,7 @@ public class Repository
 
 	public void close()
 	{
-		gitApi.close();
+		if (gitApi != null)	gitApi.close();
 	}
 
 	/**

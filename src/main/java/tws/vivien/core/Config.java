@@ -13,6 +13,7 @@ import tws.vivien.plugins.EnginePlugin;
 import javax.inject.Singleton;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,32 +59,35 @@ public class Config
 		webRoot = Paths.get(".").toAbsolutePath();
 		File configFile = new File(CONFIG_FILE_NAME);
 
-		if (!configFile.exists())
+		try
 		{
-			if ("hosted".equals(System.getProperty("mode")))
+			if (configFile.exists())
 			{
+				try(var inputStream = new FileInputStream(configFile))
+				{
+					this.load(inputStream);
+				}
+			}
+			else if ("hosted".equals(System.getenv("mode")))
+			{
+				LOG.info("Lese Konfiguration aus Umgebungsvariablen.");
 				readConfig(initFromEnvVars());
 			}
 			else
 			{
-				System.out.println("⚠ Keine Konfigurationsdatei gefunden. Wechsle in SETUP-Modus.");
+				LOG.warn("⚠ Keine Konfigurationsdatei gefunden. Wechsle in SETUP-Modus.");
 				initSetupConfig();
 			}
 		}
-
-		try(var inputStream = new FileInputStream(configFile))
-		{
-			this.load(inputStream);
-		}
 		catch (Exception e)
 		{
-			System.out.println("⚠ Fehlerhafte Konfiguration (" + e.getMessage() + "). Wechsle in SETUP-Modus.");
+			LOG.error("⚠ Fehlerhafte Konfiguration (" + e.getMessage() + "). Wechsle in SETUP-Modus.", e);
 			initSetupConfig();
 		}
 		return this;
 	}
 
-	public Config load(InputStream inputStream)
+	public Config load(InputStream inputStream) throws IOException
 	{
 		errors.clear();
 		TomlParser parser = new TomlParser();
@@ -129,17 +133,17 @@ public class Config
 
 	private void addEnv(com.electronwill.nightconfig.core.Config config, String key)
 	{
-		var val = System.getProperty(key);
+		var val = System.getenv(key);
 		if (val != null) config.add(key, val);
 	}
 
 	private void addEnvArray(com.electronwill.nightconfig.core.Config config, String key)
 	{
-		var val = System.getProperty(key);
+		var val = System.getenv(key);
 		if (val != null) config.add(key, val.split(","));
 	}
 
-	private void readConfig(com.electronwill.nightconfig.core.Config config)
+	private void readConfig(com.electronwill.nightconfig.core.Config config) throws IOException
 	{
 		mode = CReader.readString(this, config, "mode")
 				.map(ServerMode::fromString).withDefault(ServerMode.SETUP).get();
@@ -259,12 +263,16 @@ public class Config
 		}
 	}
 
-	private void validateRepository(Path repository)
+	private void validateRepository(Path repository) throws IOException
 	{
 		String str = repository.toString();
 		if (str.isEmpty() || str.equals("."))
 		{
 			throw new InvalidParameterException("Repository Pfad ist ungültig.");
+		}
+		if (!Files.isDirectory(repository))
+		{
+			Files.createDirectories(repository);
 		}
 		if (!Files.isDirectory(repository))
 		{

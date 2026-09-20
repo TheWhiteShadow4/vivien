@@ -140,6 +140,8 @@ public class UploadApi implements Api
 			}
 			buf.reset();
 			config.load(buf);
+			repository.close();
+			repository.open(config);
 			LOG.info("Neue Konfiguration geladen");
 			buf.reset();
 		}

@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.net.URI;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -82,12 +81,12 @@ public class Server
 			});
 
 			var repo = component.repository();
-			if (repo != null && Files.isDirectory(repo.getRoot()))
+			if (repo != null && repo.getRoot() != null)
 			{
 				c.staticFiles.add(staticFiles ->
 				{
 					staticFiles.hostedPath = "/file";
-					staticFiles.directory = component.repository().getRoot().toString();
+					staticFiles.directory = repo.getRoot().toString();
 					staticFiles.location = Location.EXTERNAL;
 					staticFiles.skipFileFunction = (req) ->
 					{
