@@ -31,13 +31,13 @@ public class StageApi implements Api
 	@Override
 	public void handle(Context ctx)
 	{
+		var request = ctx.bodyAsClass(GitStageRequest.class);
+
+		if (request.email == null) throw new NullPointerException("email ist null");
+		if (request.file == null) throw new NullPointerException("file ist null");
+
 		try
 		{
-			var request = ctx.bodyAsClass(GitStageRequest.class);
-
-			if (request.email == null) throw new NullPointerException("email ist null");
-			if (request.file == null) throw new NullPointerException("file ist null");
-
 			lockService.gitLock.readLock().lock();
 			Path file = repository.resolve(request.file);
 

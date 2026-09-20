@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, RepositoryElement, ServerError } from './types/vivien-generated';
+import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, LoginRequest, RepositoryElement, ServerError } from './types/vivien-generated';
 import { getFileExtension, getFilename } from '@/config';
 
 
@@ -24,6 +24,24 @@ export async function fetchWithView(url: string, options: RequestInit = {}): Pro
 		...options,
 		headers
 	});
+}
+
+export async function sendLogin(): Promise<boolean>
+{
+	const store = useStore();
+	if (!store.settings?.credentials) return false;
+
+	const [user, pass] = atob(store.settings.credentials)?.split(':');
+	const options: RequestInit = {
+		method: "POST",
+		body: JSON.stringify({
+			user: user,
+			pass: pass,
+			view: store.settings.view
+		} as LoginRequest)
+	};
+	const resp = await fetch("/api/login", options);
+	return resp.ok;
 }
 
 export async function sendChangeStaged(file: string, op: GitStageOperation): Promise<Response>

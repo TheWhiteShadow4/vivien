@@ -5,12 +5,14 @@ import TextInput from '../base/TextInput.vue'
 import { ref, computed } from 'vue'
 import BasePanel from '../base/BasePanel.vue';
 import BaseButton from '../base/BaseButton.vue';
+import { sendLogin } from '@/client.ts';
 
 
 const store = useStore();
 
 const emit = defineEmits(["submit", "cancel"])
 
+const isLoading = ref<boolean>(true)
 const name = ref(store.settings.username ?? '')
 const email = ref(store.settings.email ?? '')
 const password = ref('')
@@ -28,22 +30,31 @@ const backdropStyles = 'fixed inset-0 z-50 flex items-center justify-center p-4 
 const titleStyles = `text-xl font-bold text-vit-text-main font-sans
 tracking-wide border-b border-vit-border pb-2 mb-4`
 
-function submitLogin()
+async function submitLogin()
 {
 	if (!isFormValid.value) return
 
 	const tname = name.value.trim();
-
-	store.updateSetting("username", tname);
-	store.updateSetting("email", email.value.trim());
-
-	if (password.value.length > 0)
+	try
 	{
-		const credentials = btoa(`${tname}:${password.value}`)
-		store.updateSetting("credentials", credentials);
+		isLoading.value = true;
+		
+		store.updateSetting("username", tname);
+		store.updateSetting("email", email.value.trim());
+
+		if (password.value.length > 0)
+		{
+			const credentials = btoa(`${tname}:${password.value}`)
+			store.updateSetting("credentials", credentials);
+		}
+		const ret = await sendLogin();
+		
+		if (ret) emit("submit"); // App.vue
 	}
-	
-	emit("submit"); // App.vue
+	finally
+	{
+		isLoading.value = false;
+	}
 }
 </script>
 

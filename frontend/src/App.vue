@@ -8,14 +8,14 @@ import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
 import RepoFileView from './components/views/RepoFileView.vue'
 import ThePreviewPanel from './components/ThePreviewPanel.vue'
-import { checkGitStatus, emitDisconectError, fetchWithView, updatePreview } from './client'
+import { checkGitStatus, emitDisconectError, fetchWithView, sendLogin, updatePreview } from './client'
 import { useStore } from './store/index'
 import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt'
 import Splitter from './components/base/Splitter.vue'
 import { useGit } from './handler/useGit'
-import { getFileExtension, README_FILE, SETUP_FILE, SUPPORTED_PREVIEW_TYPES } from './config.ts'
+import { getFileExtension, README_FILE, SETUP_FILE, SUPPORTED_PREVIEW_TYPES } from './config'
 
 const store = useStore();
 
@@ -55,6 +55,13 @@ async function checkBackendStatus(): Promise<boolean>
 
 async function startupFunction()
 {
+	const loggedIn = await sendLogin();
+	if (!loggedIn)
+	{
+		showLoginDialog.value = true;
+		return;
+	}
+
 	await checkBackendStatus();
 	if (store.server?.mode == 'SETUP')
 	{
@@ -91,7 +98,6 @@ const { commit } = useGit();
 
 function onGitCommand(arg: string)
 {
-	console.log("onGitCommand " + arg);
 	switch (arg)
 	{
 		case "commit": showCommitDialog.value = true; break;

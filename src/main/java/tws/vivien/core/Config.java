@@ -34,6 +34,7 @@ public class Config
 	public SecurityMode security;
 	public String serverHost = "localhost";
 	public int port = 8080;
+	public String secret = null;
 	public Object cert = null;
 	public String user = null;
 	public String password = null;
@@ -119,6 +120,7 @@ public class Config
 		addEnv(configData,"server.host");
 		addEnv(configData,"server.port");
 		addEnvArray(configData,"server.user");
+		addEnv(configData,"server.secret");
 		addEnv(configData,"server.password");
 		addEnv(configData,"server.formats");
 		addEnv(configData,"preview.compression");
@@ -164,6 +166,7 @@ public class Config
 		serverHost = CReader.readString(this, config, "server.host").withDefault(serverHost).get();
 		port = CReader.<Integer>read(this, config, "server.port").withDefault(port).get();
 
+		secret = CReader.readString(this, config, "server.secret").get();
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 

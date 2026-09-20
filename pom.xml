@@ -21,6 +21,7 @@
         <commons.version>2.15.1</commons.version>
         <jackson.version>2.22.2</jackson.version>
         <imageio.version>3.15.1</imageio.version>
+        <auth.version>4.6.1</auth.version>
         <dagger.version>2.60.1</dagger.version>
     </properties>
 
@@ -88,6 +89,12 @@
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-tga</artifactId>
             <version>${imageio.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>${auth.version}</version>
         </dependency>
 
         <!-- Dependency Injection Lib -->

@@ -1,19 +1,25 @@
 package tws.vivien.core;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import io.javalin.Javalin;
 import io.javalin.compression.CompressionStrategy;
 import io.javalin.http.Context;
+import io.javalin.http.HandlerType;
 import io.javalin.http.UnauthorizedResponse;
 import io.javalin.http.staticfiles.Location;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tws.vivien.dto.LoginRequest;
 
 import java.awt.*;
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class Server
 {
@@ -111,7 +117,8 @@ public class Server
 					}));
 
 			// Basic Auth Absicherung
-			c.routes.before("/api/*", this::authFilter);
+			c.routes.post("/api/login", this::handleLogin);
+			c.routes.before("/*", this::authFilter);
 
 			c.routes.get("/api/state", ctx -> component.serverStateApi().handle(ctx));
 			c.routes.get("/api/preview", ctx -> component.previewApi().handle(ctx));
@@ -146,44 +153,52 @@ public class Server
 
 	private void authFilter(Context ctx)
 	{
-		if (config.password != null)
+		String token = ctx.cookie("auth_token");
+		if (token == null)
 		{
-			try
-			{
-				var credentials = ctx.basicAuthCredentials();
-				if (credentials != null && Objects.equals(config.password, credentials.getPassword()))
-				{
-					if (config.validUsers == null)
-					{
-						setUsername(ctx);
-						return;
-					}
-					if (config.validUsers.contains(credentials.getUsername()))
-					{
-						ctx.header(APP_USER, credentials.getUsername());
-						return;
-					}
-				}
-			}
-			catch(Exception e)
-			{
-				LOG.error("Authorization Fehler", e);
-			}
+			if ("/api/login".equals(ctx.path())) return;
 
-			ctx.header("WWW-Authenticate", "Basic realm=\"Protected Area\"");
-			throw new UnauthorizedResponse("Zugriff verweigert");
+			ctx.status(401).result("Nicht eingeloggt");
 		}
 		else
 		{
-			setUsername(ctx);
+			try
+			{
+				DecodedJWT jwt = JWT.require(Algorithm.HMAC256(config.secret)).build().verify(token);
+				ctx.attribute("user", jwt.getClaim("user").asString());
+				ctx.attribute("view", jwt.getClaim("view").asString());
+			}
+			catch (JWTVerificationException e)
+			{
+				ctx.status(401).result("Ungültiger Token");
+			}
 		}
 	}
 
-	private void setUsername(Context ctx)
+	private void handleLogin(Context ctx)
 	{
-		var val = ctx.header(APP_USER);
-		if (val == null || val.isEmpty()) val = DEFAULT_USER;
-		ctx.header(APP_USER, val);
+		if (ctx.method() == HandlerType.POST)
+		{
+			LoginRequest request = ctx.bodyAsClass(LoginRequest.class);
+			if (request.user != null)
+			{
+				if (config.password != null && !config.password.equals(request.pass)) throw new UnauthorizedResponse("Login Fehler");
+				if (config.validUsers != null && !config.validUsers.contains(request.user)) throw new UnauthorizedResponse("Login Fehler");
+
+				// TODO: Passwort pro User konfigurierbar machen.
+
+				int expires = 60 * 60 * 48;
+				String token = JWT.create()
+						.withClaim("user", request.user)
+						.withClaim("view", request.view)
+						.withExpiresAt(Instant.now().plusSeconds(expires))
+						.sign(Algorithm.HMAC256(config.secret));
+
+				ctx.header("Set-Cookie", "auth_token=" + token + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=" + expires);
+				return;
+			}
+		}
+		ctx.status(401).result("Login Fehler");
 	}
 
 	public void openBrowser()
