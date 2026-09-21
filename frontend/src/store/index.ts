@@ -1,7 +1,7 @@
 // src\store\index.ts
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import type { RepositoryElement, GitBranchStatus, StageInfo, ServerState } from '@/types/vivien-generated';
+import type { RepositoryElement, GitBranchStatus, ServerState } from '@/types/vivien-generated';
 
 export interface UserSettings
 {

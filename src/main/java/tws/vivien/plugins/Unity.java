@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import tws.vivien.dto.ImportSetting;
+import tws.vivien.dto.TypedData;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,13 +28,13 @@ public class Unity implements EnginePlugin
 	}
 
 	@Override
-	public Map<String, ImportSetting> getImportData(Path file)
+	public Map<String, TypedData> getImportData(Path file)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 		if (!Files.exists(importFile)) return null;
 		try
 		{
-			Map<String, ImportSetting> settings = new HashMap<>();
+			Map<String, TypedData> settings = new HashMap<>();
 
 			JsonNode rootNode = yamlMapper.readTree(importFile.toFile());
 
@@ -51,11 +51,11 @@ public class Unity implements EnginePlugin
 				JsonNode textureSettings = textureImporter.get("textureSettings");
 				int filterMode = textureSettings.get("filterMode").asInt();
 
-				settings.put("textureType", new ImportSetting("Type", textureType));
-				settings.put("maxTextureSize", new ImportSetting("Max Size", maxTextureSize));
-				settings.put("compressionQuality", new ImportSetting("Compression", compressionQuality));
-				settings.put("sRGBTexture", new ImportSetting("sRGB", sRGBTexture));
-				settings.put("filterMode", new ImportSetting("Filter", filterMode));
+				settings.put("textureType", new TypedData("textureType", "Type", textureType));
+				settings.put("maxTextureSize", new TypedData("maxTextureSize", "Max Size", maxTextureSize));
+				settings.put("compressionQuality", new TypedData("compressionQuality", "Compression", compressionQuality));
+				settings.put("sRGBTexture", new TypedData("sRGBTexture", "sRGB", sRGBTexture));
+				settings.put("filterMode", new TypedData("filterMode","Filter", filterMode));
 			}
 			return settings;
 		}
@@ -68,7 +68,7 @@ public class Unity implements EnginePlugin
 	}
 
 	@Override
-	public boolean setImportData(Path file, Map<String, ImportSetting> settings)
+	public boolean setImportData(Path file, Map<String, TypedData> settings)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 		if (!Files.exists(importFile)) return false;
