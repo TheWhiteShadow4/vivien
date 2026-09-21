@@ -1,5 +1,6 @@
 package tws.vivien.core;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import tws.vivien.dto.*;
 
 import javax.inject.Singleton;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -47,19 +49,21 @@ public class Repository
 			{
 				this.config = config;
 				this.rootPath = config.repository;
+				File root = rootPath.toFile();
 				try
 				{
-					this.gitApi = Git.open(rootPath.toFile());
+					this.gitApi = Git.open(root);
 				}
 				catch (RepositoryNotFoundException e)
 				{
 					if (config.gitUrl != null)
 					{
 						LOG.info("Klone Repository: {}", config.gitUrl);
+						FileUtils.cleanDirectory(root);
 						this.gitApi = Git.cloneRepository()
 								.setCredentialsProvider(config.credentials)
 								.setURI(config.gitUrl)
-								.setDirectory(rootPath.toFile())
+								.setDirectory(root)
 								.setBare(false)
 								.call();
 					}
@@ -67,7 +71,7 @@ public class Repository
 					{
 						LOG.info("Erstelle neues Repository");
 						this.gitApi = Git.init()
-								.setDirectory(rootPath.toFile())
+								.setDirectory(root)
 								.setBare(false)
 								.call();
 					}
