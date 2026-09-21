@@ -1,5 +1,5 @@
 # Schritt 1: App bauen mit Java 21
-FROM azul-zulu:25 AS build
+FROM azul-zulu:21 AS build
 WORKDIR /app
 
 # Kopiere Datein

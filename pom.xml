@@ -10,7 +10,6 @@
 
     <properties>
         <java.version>21</java.version>
-        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Versions-Definitionen -->
@@ -185,17 +184,17 @@
                 <executions>
                     <execution>
                         <id>copy-resources</id>
-                        <phase>process-resources</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
                             <!-- Ziel: Wo Javalin nach statischen Ressourcen sucht -->
-                            <outputDirectory>${basedir}/target/classes/public</outputDirectory>
+                            <outputDirectory>${project.basedir}/target/classes/public</outputDirectory>
                             <resources>
                                 <resource>
                                     <!-- Quelle: Der dist-Ordner deines Vue-Projekts -->
-                                    <directory>${basedir}/frontend/dist</directory>
+                                    <directory>${project.basedir}/frontend/dist</directory>
                                     <filtering>false</filtering>
                                 </resource>
                             </resources>

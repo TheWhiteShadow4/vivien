@@ -44,7 +44,7 @@
         </executions>
         <configuration>
           <workingDirectory>frontend</workingDirectory>
-          <installDirectory>.</installDirectory>
+          <installDirectory>target</installDirectory>
         </configuration>
       </plugin>
       <plugin>
@@ -206,16 +206,15 @@
   </dependencies>
   <properties>
     <commons.version>2.15.1</commons.version>
-    <java.version>21</java.version>
-    <auth.version>4.6.1</auth.version>
-    <jackson.version>2.22.2</jackson.version>
-    <jgit.version>7.7.1.202607240634-r</jgit.version>
-    <maven.compiler.target>21</maven.compiler.target>
     <slf4j.version>2.0.18</slf4j.version>
+    <java.version>21</java.version>
     <imageio.version>3.15.1</imageio.version>
+    <auth.version>4.6.1</auth.version>
     <dagger.version>2.60.1</dagger.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <tomlj.version>3.9.0</tomlj.version>
+    <jackson.version>2.22.2</jackson.version>
     <javalin.version>7.2.3</javalin.version>
+    <jgit.version>7.7.1.202607240634-r</jgit.version>
   </properties>
 </project>
