@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Singleton
 public class Config
@@ -166,7 +167,7 @@ public class Config
 		serverHost = CReader.readString(this, config, "server.host").withDefault(serverHost).get();
 		port = CReader.<Integer>read(this, config, "server.port").withDefault(port).get();
 
-		secret = CReader.readString(this, config, "server.secret").get();
+		secret = CReader.readString(this, config, "server.secret").withDefault(Config::generateSecret).get();
 		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
@@ -283,6 +284,13 @@ public class Config
 		}
 	}
 
+	private static String generateSecret()
+	{
+		byte[] array = new byte[32];
+		new Random().nextBytes(array);
+		return new String(array);
+	}
+
 	private static class CReader<S, T>
 	{
 		private Config config;
@@ -322,6 +330,12 @@ public class Config
 		public CReader<S, T> withDefault(T defaultValue)
 		{
 			if (value == null) value = defaultValue;
+			return this;
+		}
+
+		public CReader<S, T> withDefault(Supplier<T> defaultProvider)
+		{
+			if (value == null) value = defaultProvider.get();
 			return this;
 		}
 

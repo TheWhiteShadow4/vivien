@@ -118,7 +118,9 @@ public class Server
 
 			// Basic Auth Absicherung
 			c.routes.post("/api/login", this::handleLogin);
-			c.routes.before("/*", this::authFilter);
+			c.routes.before("/api/*", this::authFilter);
+			c.routes.before("/cache/*", this::authFilter);
+			c.routes.before("/file/*", this::authFilter);
 
 			c.routes.get("/api/state", ctx -> component.serverStateApi().handle(ctx));
 			c.routes.get("/api/preview", ctx -> component.previewApi().handle(ctx));
