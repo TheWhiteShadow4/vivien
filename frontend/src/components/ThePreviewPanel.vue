@@ -33,6 +33,7 @@ const props = defineProps<{
 const codeEditorFile = ref<EditorFile | null>(null);
 const codeEditorModel = ref<string>("");
 const isSaving = ref<boolean>(false);
+const toolbarModel = ref<{edit: boolean | null}>({edit: false});
 
 
 function isValidEditorType(mimeType: string | undefined): mimeType is EditorTypes
@@ -52,6 +53,7 @@ function isValidAudio(mimeType: string | undefined): mimeType is AudioType
 
 watch(() => props.fileObject, (fileObject) => {
 	const mimeType = fileObject?.metadata?.mimeType;
+	toolbarModel.value.edit = fileObject?.fileParams ? false : null;
 	if (isValidEditorType(mimeType))
 	{
 		const editorFile = {
@@ -132,10 +134,14 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
 		</div>
-		<Toolbar v-if="element" :element="element" :editButton="editButton" @lock="getFileLock()" @unlock="saveFile(true)" />
+		<Toolbar v-if="element" :element="element" :editButton="editButton" v-model="toolbarModel" @lock="getFileLock()" @unlock="saveFile(true)"/>
 		<div v-if="isLocked" class="h-7 px-2 bg-vit-accent-bg">Die Datei ist gerade gesperrt durch <strong>{{ lockHolder }}</strong></div>
 		<div v-if="isSetup" class="h-7 px-2 bg-vit-accent-bg">Server Setup Modus</div>
-		<!--<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
+		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
+			<div v-if="toolbarModel.edit">
+				<FormView :fileObject="fileObject" />
+			</div>
+
 			<div v-if="fileObject.metadata.mimeType.startsWith('image')" class="flex flex-col items-center">
 				<img :src="fileObject.url" :width="fileObject.metadata.width" :height="fileObject.metadata.height" />
 			</div>
@@ -159,12 +165,7 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">
 				<code class="text-s">{{ fileObject.url }}</code>
 			</div>
-			
+		</div>
 
-
-		</div>-->
-			<div>
-				<FormView />
-			</div>
 	</article>
 </template>

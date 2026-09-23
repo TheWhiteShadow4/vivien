@@ -16,13 +16,16 @@ import IconSync from '@/icons/IconSync.vue';
 import { sendDelete } from '@/services/git';
 import IconExport from '@/icons/IconExport.vue';
 import IconEdit from '@/icons/IconEdit.vue';
+import IconSettings from '@/icons/IconSettings.vue';
 
 const store = useStore();
 
 const props = defineProps<{
   element: RepositoryElement,
-  editButton: 'hidden' | 'edit' | 'unedit'
+  editButton: 'hidden' | 'edit' | 'unedit',
 }>();
+
+const model = defineModel<{edit: boolean | null}>({ required: true });
 
 const emit = defineEmits(["lock", "unlock"]);
 
@@ -239,6 +242,16 @@ async function handleFileChange(event: Event)
 			class="flex flex-col items-center">
 			<IconEdit />
 			<span class="text-sm">Freigeben</span>
+		</BaseIconButton>
+
+		<BaseIconButton
+			v-if="model.edit !== null"
+			@click="model.edit = !model.edit"
+			:disabled="isLoading || isRemoved"
+			:variant="model.edit ? 'secondary' : 'normal'" size="xl"
+			class="flex flex-col items-center">
+			<IconSettings />
+			<span class="text-sm">Meta Data</span>
 		</BaseIconButton>
 
 		<BaseIconButton

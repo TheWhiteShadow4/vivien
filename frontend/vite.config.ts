@@ -11,7 +11,10 @@ export default defineConfig({
 		tailwindcss(),
 	],
 	resolve: {
-		tsconfigPaths: true 
+		tsconfigPaths: true
+	},
+	build: {
+		chunkSizeWarningLimit: 2000,
 	},
 	server: {
 		port: 3000, // Der Port deines Frontend Dev-Servers
@@ -33,5 +36,5 @@ export default defineConfig({
 				secure: false,
 			}
 		}
-	}
+	},
 })

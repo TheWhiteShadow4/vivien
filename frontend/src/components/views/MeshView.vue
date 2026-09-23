@@ -1,8 +1,8 @@
 <!-- src\views\MeshView.vue -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { vue3dLoader } from 'vue-3d-loader'
 import type { FileObject } from '@/types/vivien-generated';
+import { vue3dLoader } from 'vue-3d-loader'
 import * as THREE from 'three'
 
 const props = defineProps<{

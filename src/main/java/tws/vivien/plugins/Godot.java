@@ -2,20 +2,21 @@ package tws.vivien.plugins;
 
 import org.apache.commons.configuration2.INIConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import tws.vivien.dto.TypedData;
 
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.List;
 
 public class Godot implements EnginePlugin
 {
 	static String IMPORT_PATTERN = ".import";
 
 	@Override
-	public Map<String, Object> getImportData(Path file)
+	public List<TypedData> getImportData(Path file)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 		if (!Files.exists(importFile)) return null;
@@ -40,7 +41,7 @@ public class Godot implements EnginePlugin
 	}
 
 	@Override
-	public boolean setImportData(Path file, Map<String, Object> settings)
+	public boolean setImportData(Path file, List<TypedData> settings)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 

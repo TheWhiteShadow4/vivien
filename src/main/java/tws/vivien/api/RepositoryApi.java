@@ -7,6 +7,8 @@ import tws.vivien.core.Config;
 import tws.vivien.core.ConfigView;
 import tws.vivien.core.Repository;
 import tws.vivien.core.Server;
+import tws.vivien.dto.ElementType;
+import tws.vivien.dto.RepositoryElement;
 import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
@@ -33,22 +35,24 @@ public class RepositoryApi
 
 			if (q != null)
 			{
+				RepositoryElement root = new RepositoryElement("query", "", ElementType.VIRTUAL);
 				if (":config".equals(q))
 				{
-					var list = config.getConfigFileList();
-					ctx.json(list);
+					root.children =  config.getConfigFileList();
 				}
 				else
 				{
-					ctx.json(repository.searchFiles(view, q));
+					root.children = repository.searchFiles(view, q);
 				}
-				return;
+				ctx.json(root);
 			}
+			else
+			{
+				String path = ctx.queryParam("path");
 
-			String path = ctx.queryParam("path");
-
-			ctx.header("Cache-Control", "no-cache");
-			ctx.json(repository.getView(view, path));
+				ctx.header("Cache-Control", "no-cache");
+				ctx.json(repository.getView(view, path));
+			}
 		}
 		catch (IOException e)
 		{

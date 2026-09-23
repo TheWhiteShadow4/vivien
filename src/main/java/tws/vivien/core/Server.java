@@ -13,9 +13,10 @@ import io.javalin.http.staticfiles.Location;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.dto.LoginRequest;
+import tws.vivien.dto.*;
 
 import java.awt.*;
+import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -128,7 +129,7 @@ public class Server
 			if (config.mode != ServerMode.SETUP)
 			{
 				c.routes.get("/api/repo", ctx -> component.repositoryApi().handle(ctx));
-				c.routes.get("/api/git", ctx -> component.gitStaturApi().handle(ctx));
+				c.routes.get("/api/git", ctx -> component.gitStatusApi().handle(ctx));
 				c.routes.get("/api/download", ctx -> component.downloadApi().handle(ctx));
 
 				c.routes.post("/api/delete", ctx -> component.deleteApi().handle(ctx));
@@ -142,7 +143,7 @@ public class Server
 				c.routes.post("/api/create", ctx -> component.createApi().handle(ctx));
 				c.routes.post("/api/move", ctx -> component.moveApi().handle(ctx));
 				c.routes.post("/api/filelock", ctx -> component.fileLockApi().handle(ctx));
-				c.routes.get("/api/plugin", ctx -> component.pluginDataApi().handle(ctx));
+				c.routes.post("/api/plugin", ctx -> component.pluginDataApi().handle(ctx));
 			}
 		});
 		app.start(config.port);
@@ -165,11 +166,13 @@ public class Server
 		}
 		else
 		{
+			//String view = ctx.header(APP_VIEW);
+			//if (view == null) view = "admin";
 			try
 			{
 				DecodedJWT jwt = JWT.require(Algorithm.HMAC256(config.secret)).build().verify(token);
 				ctx.attribute("user", jwt.getClaim("user").asString());
-				ctx.attribute("view", jwt.getClaim("view").asString());
+				//ctx.attribute("view", view);
 			}
 			catch (JWTVerificationException e)
 			{
@@ -198,6 +201,28 @@ public class Server
 						.sign(Algorithm.HMAC256(config.secret));
 
 				ctx.header("Set-Cookie", "auth_token=" + token + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=" + expires);
+				ctx.attribute("user", request.user);
+				ctx.attribute("view", request.view);
+
+				// Bootstrapping App Start
+				ServerState state = component.serverStateApi().getServerState(ctx);
+				RepositoryElement repo = null;
+
+				if (request.path != null)
+				{
+					try
+					{
+						ConfigView view = config.getView(request.view);
+						repo = component.repository().getView(view, request.path);
+					}
+					catch(IOException e)
+					{
+						LOG.error("Fehler bei Request", e);
+						state.serverErrors.add(ServerError.fromError(e));
+					}
+				}
+
+				ctx.status(200).json(new LoginResult(state, repo));
 				return;
 			}
 		}
@@ -225,22 +250,18 @@ public class Server
 	}
 
 	/**
-	 * Liest den Benutzer View aus dem Header aus.
+	 * Liest den Benutzer View aus der Session aus.
 	 */
 	public static String getViewName(Context ctx)
 	{
-		String view = ctx.header(APP_VIEW);
-		if (view == null) view = "admin";
-		return view;
+		return ctx.header(APP_VIEW);
 	}
 
 	/**
-	 * Liest den Benutzer Name aus dem Header aus.
+	 * Liest den Benutzer Name aus der Session aus.
 	 */
 	public static String getUserName(Context ctx)
 	{
-		String view = ctx.header(APP_USER);
-		if (view == null) view = DEFAULT_USER;
-		return view;
+		return ctx.attribute(APP_USER);
 	}
 }

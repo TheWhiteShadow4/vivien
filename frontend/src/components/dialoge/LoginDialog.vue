@@ -47,7 +47,8 @@ async function submitLogin()
 			const credentials = btoa(`${tname}:${password.value}`)
 			store.updateSetting("credentials", credentials);
 		}
-		const ret = await sendLogin();
+		const path = window.location.pathname.substring(1);
+		const ret = await sendLogin(path);
 		
 		if (ret) emit("submit"); // App.vue
 	}

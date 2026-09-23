@@ -2,39 +2,60 @@
 <!-- src/components/base/SelectInput.vue -->
 <script setup lang="ts">
 import IconArrow from '@/icons/IconArrow.vue';
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const isOpen = ref<boolean>(false);
+const dropdownRef = ref<HTMLElement | null>(null);
 
 interface Props {
+	mode: "value" | "index"
 	label?: string
 	id?: string
 	disabled?: boolean
 	values: string[]
 }
-defineProps<Props>();
+const props = defineProps<Props>();
 
-const model = defineModel<number>({ required: true });
+const model = defineModel<string | number>({ required: true });
 
 function onSelect(index: number)
 {
-	model.value = index;
+	if (props.mode === "value")
+		model.value = props.values[index] as string;
+	else
+		model.value = index;
 	isOpen.value = false;
 }
 
+const currentValue = computed(() => {
+	if (props.mode === "value")
+		return model.value;
+	else
+		return props.values[model.value as number];
+});
+
 const containerStyle = computed(() => isOpen.value ? "" : "");
 const dropdownStyle = computed(() => isOpen.value ? "" : "hidden");
+
+const handleClickOutside = (event: MouseEvent) => {
+	if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) isOpen.value = false
+}
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <template>
-	<div class="relative">
+	<div class="relative" ref="dropdownRef">
 		<div class="container" :class="containerStyle" @click="isOpen = !isOpen">
 			<label v-if="label" :for="id">{{ label }}</label>
-			<button> {{ model !== undefined ? values[model] : "-" }} <IconArrow /></button>
+			<button> {{ currentValue }} <IconArrow /></button>
 		</div>
 		<div class="dropdown" :class="dropdownStyle">
 			<ul>
-				<li v-for="(text, index) in values" :key="text" class="hover:bg-vit-bg" @click="onSelect(index)">{{ text }}</li>
+				<template v-for="(text, index) in values" :key="text">
+				<li v-if="!text.startsWith('-')" class="hover:bg-vit-bg" @click="onSelect(index)">{{ text }}</li>
+				</template>
 			</ul>
 		</div>
 	</div>

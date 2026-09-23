@@ -18,7 +18,7 @@ defineEmits<{
 }>()
 
 const variantStyles = {
-  primary: `bg-vit-primary text-vit-text-main font-bold shadow-vit-inset hover:bg-gradient-to-b
+  primary: `primary-gradient hover:primary-gradient-h text-vit-text-main font-bold shadow-vit-inset
   active:translate-y-[2px] primary-gradient`,
 
   secondary: `bg-vit-secondary/10 border-vit-secondary text-vit-text-main border

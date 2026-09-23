@@ -29,7 +29,7 @@ import 'splitpanes/dist/splitpanes.css'
 }
 
 .splitpanes--dragging {
-  user-select: none;
-  -webkit-user-select: none;
+	user-select: none;
+	-webkit-user-select: none;
 }
 </style>

@@ -27,13 +27,18 @@ public class ServerStateApi implements Api
 	@Override
 	public void handle(Context ctx)
 	{
+		ctx.json(getServerState(ctx));
+	}
+
+	public ServerState getServerState(Context ctx)
+	{
 		var state = new ServerState();
 		state.mode = config.mode;
 		state.view = Server.getViewName(ctx);
 		var user = Server.getUserName(ctx);
 		state.serverErrors = Stream.concat(errorBacklog.getSystemErrors().stream(),
-										   errorBacklog.readRequestErrors(user).stream())
-								   .map(ServerError::fromError).toList();
-		ctx.json(state);
+						errorBacklog.readRequestErrors(user).stream())
+				.map(ServerError::fromError).toList();
+		return state;
 	}
 }

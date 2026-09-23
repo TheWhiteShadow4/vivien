@@ -3,14 +3,14 @@ package tws.vivien.dto;
 import jakarta.annotation.Nullable;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
 
 public class FileObject
 {
 	public String url;
 	public String filename;
 	public FileObjectMeta metadata;
-	public Map<String, Object> fileParams;
+	public List<TypedData> fileParams;
 	
 	public FileObject(String url, String filename, FileObjectMeta metadata)
 	{

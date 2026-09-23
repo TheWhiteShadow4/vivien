@@ -13,7 +13,6 @@ import tws.vivien.dto.ServerError;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.file.Path;
-import java.util.Map;
 
 @Singleton
 public class PluginDataApi implements Api
@@ -47,10 +46,8 @@ public class PluginDataApi implements Api
 				ctx.status(400);
 				return;
 			}
-			LOG.info(String.valueOf(request.data));
-
 			Path path = repository.resolveFile(request.file);
-			config.enginePlugin.setImportData(path, (Map<String, Object>) request.data);
+			config.enginePlugin.setImportData(path, request.data);
 		}
 		catch (Exception e)
 		{

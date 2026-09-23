@@ -16,6 +16,15 @@ public class RepositoryElement
 	@Nullable
 	public List<RepositoryElement> children;
 
+	public RepositoryElement() {}
+
+	public RepositoryElement(String name, String path, ElementType type)
+	{
+		this.name = name;
+		this.path = path;
+		this.type = type;
+	}
+
 	public RepositoryElement flatCopyWithChildren()
 	{
 		var copy = flatCopy();

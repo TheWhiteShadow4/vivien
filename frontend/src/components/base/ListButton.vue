@@ -31,8 +31,8 @@ const VariantStyle = computed(() => {
 		return "text-vit-text-muted hover:text-vit-text-muted";
 	}
 	else return {
-		primary: `bg-vit-primary text-vit-text-main font-bold shadow-vit-inset hover:bg-gradient-to-b
-		active:translate-y-[2px] bg-gradient-to-t from-vit-primary to-vit-primary2`,
+		primary: `primary-gradient hover:primary-gradient-h text-vit-text-main font-bold
+		shadow-vit-inset active:translate-y-[2px]`,
 
 		secondary: `bg-vit-secondary/20 text-vit-text-main active:translate-y-[1px]
 		hover:bg-vit-secondary/50 hover:text-vit-text-main`,

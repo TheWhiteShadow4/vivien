@@ -1,13 +1,15 @@
 package tws.vivien.plugins;
 
+import tws.vivien.dto.TypedData;
+
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.List;
 
 public interface EnginePlugin
 {
-	Map<String, Object> getImportData(Path file);
+	List<TypedData> getImportData(Path file);
 
-	boolean setImportData(Path file, Map<String, Object> settings);
+	boolean setImportData(Path file, List<TypedData> settings);
 
 	void createImportData(Path file);
 }

@@ -1,46 +1,34 @@
 <!-- src\views\FormView.vue -->
 <script setup lang="ts">
-import { ref } from "vue";
-import schema from "./schema.json"
+import { reactive } from "vue";
 import TextInput from "@/base/TextInput.vue";
 import Checkbox from "@/base/Checkbox.vue";
 import NumberInput from "@/base/NumberInput.vue";
 import SelectInput from "@/base/SelectInput.vue";
 import BaseButton from "@/base/BaseButton.vue";
 import { sendPluginData } from "@/client";
-import type { PluginRequest } from "@/types/vivien-generated";
+import type { FileObject, PluginRequest, TypedData } from "@/types/vivien-generated";
 
-interface Props {
-	label?: string
-	id?: string
-	disabled?: boolean
-}
-defineProps<Props>();
 
-const data = ref<Record<string, string | number | boolean | null>>({
-	text: "Anna",
-	janein: false,
-	nummer: 0,
-	list: null,
-	referenz: null
-});
+const props = defineProps<{
+	fileObject: FileObject
+}>();
 
-function getstr(key: string): string
+const data = reactive<TypedData[]>(props.fileObject.fileParams);
+
+function getstr(data: TypedData): string
 {
-	if (typeof(data.value[key]) == "string")
-		return data.value[key];
-	else
-		return "";
+	return data.value as string;
 }
 
-function getbool(key: string): boolean
+function getbool(data: TypedData): boolean
 {
-	return (typeof(data.value[key]) == "boolean") ? data.value[key] : false;
+	return (data.type == "bool") ? data.value as boolean : false;
 }
 
-function getint(key: string): number
+function getint(data: TypedData): number
 {
-	return (typeof(data.value[key]) == "number") ? data.value[key] : 0;
+	return (data.type == "int") ? data.value as number : 0;
 }
 
 function id(key: string): string
@@ -51,45 +39,55 @@ function id(key: string): string
 function onSubmit()
 {
 	console.log("Senden")
-	sendPluginData({ file: , data: data.value } as PluginRequest);
+	sendPluginData({ file: props.fileObject.filename, data: data } as PluginRequest);
 }
 </script>
 
 <template>
 	<div class="@container">
+	<h2 class="text-lg p-1 mb-2">Import Einstellungen</h2>
 	<div class="grid @xs:grid-cols-1 @lg:grid-cols-2 gap-2 gap-x-8">
-		<div v-for="(value, key) in schema" :key="key" class="grid grid-cols-[40%_60%] p-2">
+		<div v-for="(data, index) in fileObject.fileParams" :key="data.name" class="grid grid-cols-[40%_60%] p-1">
 			<span class="text-md text-vit-text-muted"
-				v-if="value.label !== false" :for="id(key)">
-				{{ value.label ?? key }}
+				:for="id(data.name)">
+				{{ data.label }}
 			</span>
 			<TextInput
-				v-if="value.type == 'string'"
-				:id="id(key)"
+				v-if="data.type == 'string'"
+				:id="id(data.name)"
 				:small="false"
-				:model-value="getstr(key)"
+				v-model="data.value"
 			/>
 			<Checkbox
-				v-if="value.type == 'bool'"
-				:model-value="getbool(key)"
+				v-if="data.type == 'bool'"
+				v-model="data.value"
 			/>
 			<NumberInput
-				v-if="value.type == 'int'"
-				:model-value="getint(key)"
+				v-if="data.type == 'int' && !data.options"
+				v-model="data.value"
 			/>
 			<SelectInput
-				v-if="value.type == 'enum' && value.values"
-				:model-value="getint(key)"
-				:values="value.values"
+				v-if="data.type == 'int' && data.options"
+				mode="index"
+				v-model="data.value"
+				:values="data.options"
+			/>
+			<SelectInput
+				v-if="data.type == 'enum' && data.options"
+				mode="value"
+				v-model="data.value"
+				:values="data.options"
 			/>
 			<TextInput
-				v-if="value.type == 'asset'"
+				v-if="data.type == 'asset'"
 				type="search"
 				:small="false"
-				:model-value="getstr(key)"
+				v-model="data.value"
 			/>
+			</div>
 		</div>
-	</div>
-	<BaseButton @click="onSubmit">Senden</BaseButton>
+		<div class="flex justify-end m-2">
+			<BaseButton @click="onSubmit">Übernehmen</BaseButton>
+		</div>
 	</div>
 </template>

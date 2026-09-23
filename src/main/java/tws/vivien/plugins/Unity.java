@@ -3,19 +3,23 @@ package tws.vivien.plugins;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tws.vivien.dto.TypedData;
 
+import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Unity implements EnginePlugin
 {
-	private static final Logger log = LoggerFactory.getLogger(Unity.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Unity.class);
 	static String IMPORT_PATTERN = ".meta";
 	static String IMPORT_TEMPLATE = "/unity-meta.temp";
 
@@ -30,13 +34,13 @@ public class Unity implements EnginePlugin
 	}
 
 	@Override
-	public Map<String, Object> getImportData(Path file)
+	public List<TypedData> getImportData(Path file)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 		if (!Files.exists(importFile)) return null;
 		try
 		{
-			Map<String, Object> settings = new HashMap<>();
+			List<TypedData> settings = new ArrayList<>();
 
 			JsonNode rootNode = yamlMapper.readTree(importFile.toFile());
 
@@ -44,8 +48,6 @@ public class Unity implements EnginePlugin
 			{
 				JsonNode textureImporter = rootNode.get("TextureImporter");
 				int textureType = textureImporter.path("textureType").asInt();
-				int maxTextureSize = textureImporter.path("maxTextureSize").asInt();
-				int compressionQuality = textureImporter.path("compressionQuality").asInt();
 
 				JsonNode mipmaps = textureImporter.get("mipmaps");
 				int sRGBTexture = mipmaps.get("sRGBTexture").asInt();
@@ -53,52 +55,78 @@ public class Unity implements EnginePlugin
 				JsonNode textureSettings = textureImporter.get("textureSettings");
 				int filterMode = textureSettings.get("filterMode").asInt();
 
-				settings.put("textureType", new TypedData("textureType", "Type", textureType));
-				settings.put("maxTextureSize", new TypedData("maxTextureSize", "Max Size", maxTextureSize));
-				settings.put("compressionQuality", new TypedData("compressionQuality", "Compression", compressionQuality));
-				settings.put("sRGBTexture", new TypedData("sRGBTexture", "sRGB", sRGBTexture));
-				settings.put("filterMode", new TypedData("filterMode","Filter", filterMode));
+				JsonNode defaultPlatform = textureImporter.get("platformSettings").get(0);
+				int maxTextureSize = defaultPlatform.path("maxTextureSize").asInt();
+				int textureCompression = defaultPlatform.path("textureCompression").asInt();
+				int compressionQuality = defaultPlatform.path("compressionQuality").asInt();
+
+				settings.add(TypedData.asInt("textureType", "Type", textureType)
+						.withOptions(List.of("Default", "Normal", "Editor GUI", "Cookie", "-", "-", "-Lightmap", "Cursor", "Sprite (2D)")));
+				settings.add(TypedData.asEnum("maxTextureSize", "Max Size", maxTextureSize)
+						.withOptions(List.of("32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384")));
+				settings.add(TypedData.asInt("textureCompression", "Compression", textureCompression)
+						.withOptions(List.of("None", "Normal", "High", "Low")));
+				settings.add(TypedData.asInt("compressionQuality", "Compressor Quality", compressionQuality));
+				settings.add(TypedData.asBool("sRGBTexture", "sRGB", sRGBTexture));
+				settings.add( TypedData.asInt("filterMode","Filter", filterMode)
+						.withOptions(List.of("Point", "Bilinear", "Trilinear")));
 			}
-			log.info(String.valueOf(settings));
+			LOG.info("export {}", settings);
+
 			return settings;
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			LOG.error("Fehler in Unity Plugin", e);
 		}
 
 		return null;
 	}
 
 	@Override
-	public boolean setImportData(Path file, Map<String, Object> settings)
+	public boolean setImportData(Path file, List<TypedData> settings)
 	{
-		log.info(String.valueOf(settings));
-		/*Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
+		LOG.info("import {}", settings);
+
+		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 		if (!Files.exists(importFile)) return false;
 		try
 		{
+			Map<String, TypedData> settingsMap = settings.stream().collect(Collectors.toMap(TypedData::key, d -> d));
+
 			ObjectNode rootNode = (ObjectNode) yamlMapper.readTree(importFile.toFile());
 
 			if (rootNode.has("TextureImporter"))
 			{
 				ObjectNode textureImporter = (ObjectNode) rootNode.get("TextureImporter");
-				textureImporter.put("textureType", settings.get("textureType").intValue());
-				textureImporter.put("maxTextureSize", settings.get("maxTextureSize").intValue());
-				textureImporter.put("compressionQuality", settings.get("compressionQuality").intValue());
+				textureImporter.put("textureType", settingsMap.get("textureType").intValue());
+
+				if (textureImporter.has("platformSettings"))
+				{
+					ObjectNode defaultPlatform = (ObjectNode) textureImporter.get("platformSettings").get(0);
+					defaultPlatform.put("maxTextureSize", settingsMap.get("maxTextureSize").intValue());
+					defaultPlatform.put("textureCompressions", settingsMap.get("textureCompression").intValue());
+					defaultPlatform.put("compressionQuality", settingsMap.get("compressionQuality").intValue());
+				}
 
 				ObjectNode mipmaps = (ObjectNode) textureImporter.get("mipmaps");
-				mipmaps.put("sRGBTexture", settings.get("sRGBTexture").intValue());
+				mipmaps.put("sRGBTexture", settingsMap.get("sRGBTexture").intValue());
 
 				ObjectNode textureSettings = (ObjectNode) textureImporter.get("textureSettings");
-				textureSettings.put("filterMode", settings.get("filterMode").intValue());
+				textureSettings.put("filterMode", settingsMap.get("filterMode").intValue());
+
+				try(FileOutputStream out = new FileOutputStream(importFile.toFile()))
+				{
+					var writer = yamlMapper.writerWithDefaultPrettyPrinter().writeValues(out);
+					writer.write(rootNode);
+				}
 			}
 			return true;
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
-		}*/
+			LOG.error("Fehler in Unity Plugin", e);
+		}
 
 		return false;
 	}

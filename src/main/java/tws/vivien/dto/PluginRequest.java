@@ -1,7 +1,9 @@
 package tws.vivien.dto;
 
+import java.util.List;
+
 public class PluginRequest
 {
 	public String file;
-	public Object data;
+	public List<TypedData> data;
 }

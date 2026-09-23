@@ -102,8 +102,9 @@ public class Config
 		ConfigView view = views.get(name);
 		if (view == null)
 		{
-			LOG.warn("View {} ist nicht in der Server Konfig.", name);
-			return new ConfigView("admin");
+			throw new RuntimeException("Panic!");
+			//LOG.warn("View {} ist nicht in der Server Konfig.", name);
+			//return new ConfigView("admin");
 		}
 		return view;
 	}

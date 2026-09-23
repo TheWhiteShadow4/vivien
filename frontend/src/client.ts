@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, LoginRequest, PluginRequest, RepositoryElement, ServerError } from './types/vivien-generated';
+import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, LoginRequest, LoginResult, PluginRequest, RepositoryElement, ServerError } from './types/vivien-generated';
 import { getFileExtension, getFilename } from '@/config';
 
 
@@ -11,8 +11,8 @@ export async function fetchWithView(url: string, options: RequestInit = {}): Pro
 
 	const headers = new Headers(options.headers);
 
+	// Der View wird momentan immer gesendet
 	headers.set('X-App-View', store.settings.view);
-	headers.set('X-App-User', store.settings.username ?? "");
 	headers.set('Authorization', `Basic ${store.settings.credentials}`);
 
 	if (!headers.has('Content-Type') && (options.method === 'POST'))
@@ -26,10 +26,10 @@ export async function fetchWithView(url: string, options: RequestInit = {}): Pro
 	});
 }
 
-export async function sendLogin(): Promise<boolean>
+export async function sendLogin(path: string): Promise<LoginResult | null>
 {
 	const store = useStore();
-	if (!store.settings?.credentials) return false;
+	if (!store.settings?.credentials) return null;
 
 	const [user, pass] = atob(store.settings.credentials)?.split(':');
 	const options: RequestInit = {
@@ -37,11 +37,16 @@ export async function sendLogin(): Promise<boolean>
 		body: JSON.stringify({
 			user: user,
 			pass: pass,
-			view: store.settings.view
+			view: store.settings.view,
+			path: path
 		} as LoginRequest)
 	};
 	const resp = await fetch("/api/login", options);
-	return resp.ok;
+	if (resp.ok)
+	{
+		return await resp.json();
+	}
+	return null;
 }
 
 export async function sendChangeStaged(file: string, op: GitStageOperation): Promise<Response>

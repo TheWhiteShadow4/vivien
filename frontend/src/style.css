@@ -73,3 +73,12 @@ input::placeholder {
 		var(--color-vit-primary2)
 	);
 }
+
+@utility primary-gradient-h
+{
+	background-image: linear-gradient(
+    	to bottom, 
+		var(--color-vit-primary), 
+		var(--color-vit-primary2)
+	);
+}

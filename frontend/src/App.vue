@@ -55,14 +55,20 @@ async function checkBackendStatus(): Promise<boolean>
 
 async function startupFunction()
 {
-	const loggedIn = await sendLogin();
-	if (!loggedIn)
+	const path = window.location.pathname.substring(1);
+	const loggedIn = await sendLogin(path);
+	if (loggedIn == null)
 	{
 		showLoginDialog.value = true;
 		return;
 	}
 
-	await checkBackendStatus();
+	store.server = loggedIn.state;
+	if (loggedIn.element)
+	{
+		store.folder = loggedIn.element;
+	}
+
 	if (store.server?.mode == 'SETUP')
 	{
 		onRefreshPreview(SETUP_FILE as RepositoryElement, true);

@@ -37,6 +37,7 @@ export const useStore = defineStore('settings', () => {
 	const server = ref<ServerState | null>(null);
 	const git = ref<GitBranchStatus>();
 	const clipboard = ref<RepositoryElement | null>(null);
+	const folder = ref<RepositoryElement | null>(null);
 	const editor = ref<EditorFile | null>(null);
 
 	// 1. Initialisierung: Versuche aus dem LocalStorage zu laden, sonst nimm Defaults
@@ -75,6 +76,7 @@ export const useStore = defineStore('settings', () => {
 		server,
 		git,
 		clipboard,
+		folder,
 		settings,
 		editor,
 		addFavorite,

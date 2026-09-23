@@ -39,7 +39,6 @@ const errorMessage = ref<string | null>(null);
 const folderCache: Map<string, RepositoryElement> = new Map([]);
 
 const previousFolder = ref<RepositoryElement | null>(null);
-const currentFolder = ref<RepositoryElement | null>(null);
 const selectedElement = ref<RepositoryElement | null>(null);
 
 const showCreateDialog = ref(false);
@@ -48,9 +47,9 @@ const searchQuery = ref('');
 
 function selectParent()
 {
-	if (currentFolder.value != null)
+	if (store.folder != null)
 	{
-		const el = currentFolder.value;
+		const el = store.folder;
 		if (el.type == "FOLDER")
 		{
 			const parentPath = el.path.substring(0, el.path.lastIndexOf("/"));
@@ -78,12 +77,12 @@ function selectParent()
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function selectElement(element: RepositoryElement, doppelt: boolean)
 {
-	if (currentFolder.value != null && element.type == 'FOLDER')
+	if (store.folder != null && element.type == 'FOLDER')
 	{
 		const child = folderCache.get(element.path);
 		if (child != null)
 		{
-			currentFolder.value = child;
+			store.folder = child;
 		}
 		fetchRepository(element.path);
 		selectedElement.value = null;
@@ -157,14 +156,12 @@ async function fetchSearch(query: string)
 				return
 			}
 
-			const childs = await response.json();
-			serachRoot = { name: query, path: "", type: "VIRTUAL" };
-			serachRoot.children = childs;
+			serachRoot = await response.json();
 		}
 
-		if (currentFolder.value?.type != "VIRTUAL")
+		if (store.folder?.type != "VIRTUAL")
 		{
-			previousFolder.value = currentFolder.value;
+			previousFolder.value = store.folder;
 		}
 		navigateToQuery(serachRoot, query);
 	}
@@ -219,7 +216,7 @@ async function fetchRepository(path: string)
 
 function navigateToFolder(folder: RepositoryElement, isBrowserBackAction = false)
 {
-	currentFolder.value = folder
+	store.folder = folder
 
 	// Wenn die Aktion VOM Browser (Zurück-Taste) kam, dürfen wir keinen NEUEN Eintrag in die History pushen!
 	if (!isBrowserBackAction)
@@ -234,7 +231,7 @@ function navigateToFolder(folder: RepositoryElement, isBrowserBackAction = false
 
 function navigateToQuery(result: RepositoryElement, query: string)
 {
-	currentFolder.value = result
+	store.folder = result
 
 	const url = new URL(window.location.origin)
 	url.searchParams.set("q", query);
@@ -272,9 +269,9 @@ const fileInput = ref<HTMLInputElement | null>(null);
 
 async function handleFileChange(event: Event)
 {
-	if (!currentFolder.value) return;
+	if (!store.folder) return;
 
-	await uploadFiles(event, currentFolder.value.path);
+	await uploadFiles(event, store.folder.path);
 }
 
 function openFileBrowser()
@@ -284,7 +281,7 @@ function openFileBrowser()
 
 function refreshFolder()
 {
-	fetchRepository(currentFolder.value ? currentFolder.value.path : "");
+	fetchRepository(store.folder ? store.folder.path : "");
 }
 
 async function refreshFile(path: string)
@@ -292,7 +289,7 @@ async function refreshFile(path: string)
 	const d = path.lastIndexOf('/');
 	const folder = (d != -1) ? path.substring(0, d) : "/";
 	await fetchRepository(folder);
-	const el = currentFolder.value?.children?.find(e => e.path == path);
+	const el = store.folder?.children?.find(e => e.path == path);
 	if (el != null)
 	{
 		selectedElement.value = el;
@@ -301,23 +298,21 @@ async function refreshFile(path: string)
 
 function moveClipboardFile()
 {
-	if (!store.clipboard || !currentFolder.value) return;
+	if (!store.clipboard || !store.folder) return;
 
 	const file = store.clipboard.path;
 	const d = file.lastIndexOf('/');
 	const folder = (d != -1) ? file.substring(0, d) : "/";
 
-	if (folder == currentFolder.value.path) return;
+	if (folder == store.folder.path) return;
 	folderCache.delete(folder);
 
-	gitApi.move(file, currentFolder.value.path);
+	gitApi.move(file, store.folder.path);
 
 	store.clipboard = null;
 }
 
 onMounted(() => {
-	const path = window.location.pathname.substring(1);
-	fetchRepository(path);
 	window.addEventListener('popstate', handleBrowserNavigation);
 	emitter.on("refresh-folder", refreshFolder);
 	emitter.on("refresh-file", s => refreshFile(s as string));
@@ -352,7 +347,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 		<BaseIconButton :disabled="true"><IconNewFolder /></BaseIconButton>
 		</Tooltip>
 		<Tooltip text="Dateien hochladen">
-		<BaseIconButton variant="primary" :disabled="!currentFolder" @click="openFileBrowser()">
+		<BaseIconButton variant="primary" :disabled="!store.folder" @click="openFileBrowser()">
 			<IconUpload />
 		</BaseIconButton>
 		</Tooltip>
@@ -364,13 +359,13 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			@change="handleFileChange" 
 			/>
 		<Tooltip text="Ordner erstellen">
-		<BaseIconButton variant="secondary" :disabled="!currentFolder" @click="showCreateDialog = true">
+		<BaseIconButton variant="secondary" :disabled="!store.folder" @click="showCreateDialog = true">
 			<IconAddFolder />
 		</BaseIconButton>
 		</Tooltip>
 		<div class="w-80 flex items-center gap-3">
 			<template v-if="!!store.clipboard">
-				<BaseIconButton variant="normal" :disabled="!currentFolder" @click="moveClipboardFile()">
+				<BaseIconButton variant="normal" :disabled="!store.folder" @click="moveClipboardFile()">
 					<IconImport />
 				</BaseIconButton>
 				<span class="text-vit-text-muted">{{ store.clipboard.name }}</span>
@@ -378,7 +373,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 		</div>
 	</Teleport>
 	<Teleport to="body">
-		<NewFolderDialog v-if="showCreateDialog" :parent="currentFolder!.path" @close="showCreateDialog = false" />
+		<NewFolderDialog v-if="showCreateDialog" :parent="store.folder!.path" @close="showCreateDialog = false" />
 	</Teleport>
 	<Teleport v-if="isMounted" to="#repo-nav">
 		<ListButton
@@ -410,7 +405,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 		<!-- Liste der Elemente -->
 		<div class="flex-1 overflow-auto">
 			<!-- Lade-Zustand -->
-			<div v-if="!currentFolder && isTreeLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
+			<div v-if="!store.folder && isTreeLoading" class="p-8 text-center text-vit-text-muted animate-pulse">
 				Repository wird geladen...
 			</div>
 
@@ -420,25 +415,25 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			</div>
 
 			<!-- Render der einzelnen Zeilen (nur wenn Daten vorhanden) -->
-			<template v-else-if="currentFolder">
-				<div v-if="currentFolder?.type != 'ROOT'">
+			<template v-else-if="store.folder">
+				<div v-if="store.folder?.type != 'ROOT'">
 					<RepoElement
 						label=".."
-						:element="currentFolder"
+						:element="store.folder"
 						:selected="false"
 						@clicked="selectParent()" />
 				</div>
 
 				<!-- Falls das Verzeichnis leer ist -->
-				<div v-if="currentFolder.children && currentFolder.children.length === 0"
+				<div v-if="store.folder.children && store.folder.children.length === 0"
 					class="p-8 text-center text-vit-text-muted">
 					Hier ist nix drin.
 				</div>
 				<RepoElement
-					v-for="el in currentFolder.children"
+					v-for="el in store.folder.children"
 					:key="el.name"
 					:element="el"
-					:folder="currentFolder.type == 'VIRTUAL'"
+					:folder="store.folder.type == 'VIRTUAL'"
 					:selected="el == selectedElement"
 					@clicked="selectElement(el, $event)"
 				/>

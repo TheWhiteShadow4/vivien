@@ -22,7 +22,7 @@ public interface ServerComponent
 	Cache serverCache();
 	ErrorBacklog errorBacklog();
 	ServerStateApi serverStateApi();
-	GitStatusApi gitStaturApi();
+	GitStatusApi gitStatusApi();
 	DownloadApi downloadApi();
 	DeleteApi deleteApi();
 	StageApi stageApi();
