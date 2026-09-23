@@ -9,6 +9,7 @@ export type InputVariant = 'default' | 'success' | 'failed'
 interface Props {
 	modelValue: string
 	type?: 'text' | 'search' | 'password'
+	small?: boolean
 	placeholder?: string
 	label?: string
 	id?: string
@@ -18,6 +19,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
 	type: 'text',
+	small: false,
 	placeholder: '',
 	disabled: false,
 	variant: 'default'
@@ -35,10 +37,8 @@ const value = computed({
 	set: (newValue) => emit('update:modelValue', newValue)
 })
 
-// REGLER 5: Design-Entscheidungen (Farben, Radien, Rahmen) ausgelagert
-const containerStyles = 'relative flex items-center w-full bg-vit-surface rounded-vit-panel-radius border transition-all duration-200'
+const containerStyles = 'relative flex items-center w-full bg-vit-surface rounded-vit-panel-radius border transition-all duration-200 box-content'
 
-// REGLER 4 & 6: Varianten-Muster mit visuellem Feedback für Focus und Hover
 const variantStyles: Record<InputVariant, string> = {
 	default: 'border-vit-border hover:border-vit-btn-hover focus-within:border-vit-accent focus-within:ring-1 focus-within:ring-vit-accent',
 	success: 'border-vit-succes focus-within:ring-1 focus-within:ring-vit-succes',
@@ -47,7 +47,7 @@ const variantStyles: Record<InputVariant, string> = {
 
 const inputStyles = 'w-full bg-transparent text-vit-text-main text-base focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed pl-1'
 
-const labelStyles = 'text-sm font-medium text-vit-text-muted select-none'
+const labelStyles = 'text-sm text-vit-text-muted select-none'
 
 function handleKeyDownEnter() {
 	emit('enter')
@@ -77,7 +77,7 @@ function clearInput() {
 			</div>
 
 			<input :id="id" v-model="value" :type="type" :placeholder="placeholder" :disabled="disabled"
-				:class="[inputStyles, (type === 'search') ? 'pr-2' : 'pr-3', 'py-2']"
+				:class="[inputStyles, (type === 'search') ? 'pr-2' : 'pr-3', small ? 'py-2' : 'py-0.5']"
 				@keydown.enter="handleKeyDownEnter" />
 
 			 <BaseIconButton

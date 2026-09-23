@@ -7,7 +7,6 @@ import tws.vivien.core.Repository;
 import tws.vivien.dto.FileObject;
 
 import javax.inject.Inject;
-import java.io.FileNotFoundException;
 import java.nio.file.Path;
 
 public class AudioHandler implements IHandler
@@ -19,11 +18,8 @@ public class AudioHandler implements IHandler
 	@Inject public AudioHandler() {}
 
 	@Override
-	public FileObject generatePreview(String file) throws Exception
+	public FileObject generatePreview(String file, Path path) throws Exception
 	{
-		Path path = repository.resolveFile(file);
-		if (path == null) throw new FileNotFoundException();
-
 		var extension = FilenameUtils.getExtension(path.toString());
 		String mimeType = switch (extension)
 		{

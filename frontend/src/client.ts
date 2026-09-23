@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, LoginRequest, RepositoryElement, ServerError } from './types/vivien-generated';
+import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, LoginRequest, PluginRequest, RepositoryElement, ServerError } from './types/vivien-generated';
 import { getFileExtension, getFilename } from '@/config';
 
 
@@ -164,4 +164,14 @@ export async function updatePreview(el: RepositoryElement): Promise<FileObject |
 	{
 		return null;
 	}
+}
+
+export async function sendPluginData(data: PluginRequest)
+{
+	const options: RequestInit = {
+		method: "POST",
+		body: JSON.stringify(data)
+	};
+	const resp = await fetch("/api/plugin", options);
+	return resp.ok;
 }

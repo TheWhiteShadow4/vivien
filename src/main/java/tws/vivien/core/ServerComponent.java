@@ -36,4 +36,5 @@ public interface ServerComponent
 	CreateApi createApi();
 	MoveApi moveApi();
 	FileLockApi fileLockApi();
+	PluginDataApi pluginDataApi();
 }

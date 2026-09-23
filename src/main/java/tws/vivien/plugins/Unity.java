@@ -3,8 +3,9 @@ package tws.vivien.plugins;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tws.vivien.dto.TypedData;
 
 import java.nio.file.Files;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 public class Unity implements EnginePlugin
 {
+	private static final Logger log = LoggerFactory.getLogger(Unity.class);
 	static String IMPORT_PATTERN = ".meta";
 	static String IMPORT_TEMPLATE = "/unity-meta.temp";
 
@@ -28,13 +30,13 @@ public class Unity implements EnginePlugin
 	}
 
 	@Override
-	public Map<String, TypedData> getImportData(Path file)
+	public Map<String, Object> getImportData(Path file)
 	{
 		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 		if (!Files.exists(importFile)) return null;
 		try
 		{
-			Map<String, TypedData> settings = new HashMap<>();
+			Map<String, Object> settings = new HashMap<>();
 
 			JsonNode rootNode = yamlMapper.readTree(importFile.toFile());
 
@@ -57,6 +59,7 @@ public class Unity implements EnginePlugin
 				settings.put("sRGBTexture", new TypedData("sRGBTexture", "sRGB", sRGBTexture));
 				settings.put("filterMode", new TypedData("filterMode","Filter", filterMode));
 			}
+			log.info(String.valueOf(settings));
 			return settings;
 		}
 		catch(Exception e)
@@ -68,9 +71,10 @@ public class Unity implements EnginePlugin
 	}
 
 	@Override
-	public boolean setImportData(Path file, Map<String, TypedData> settings)
+	public boolean setImportData(Path file, Map<String, Object> settings)
 	{
-		Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
+		log.info(String.valueOf(settings));
+		/*Path importFile = file.getParent().resolve(file.getFileName().toString() + IMPORT_PATTERN);
 		if (!Files.exists(importFile)) return false;
 		try
 		{
@@ -94,7 +98,7 @@ public class Unity implements EnginePlugin
 		catch(Exception e)
 		{
 			e.printStackTrace();
-		}
+		}*/
 
 		return false;
 	}

@@ -7,6 +7,7 @@ import { ALLOWED_AUDIO_TYPES, ALLOWED_EDITOR_TYPES, ALLOWED_MODEL_TYPES, useStor
 import { useFiles } from '@/handler/useFiles';
 import { uploadEditorContent } from '@/client';
 import emitter from '@/mitt';
+import FormView from '@/components/views/FormView.vue';
 
 const MarkdownView = defineAsyncComponent(() =>
   import('@/components/views/MarkdownView.vue')
@@ -134,7 +135,7 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 		<Toolbar v-if="element" :element="element" :editButton="editButton" @lock="getFileLock()" @unlock="saveFile(true)" />
 		<div v-if="isLocked" class="h-7 px-2 bg-vit-accent-bg">Die Datei ist gerade gesperrt durch <strong>{{ lockHolder }}</strong></div>
 		<div v-if="isSetup" class="h-7 px-2 bg-vit-accent-bg">Server Setup Modus</div>
-		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
+		<!--<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
 			<div v-if="fileObject.metadata.mimeType.startsWith('image')" class="flex flex-col items-center">
 				<img :src="fileObject.url" :width="fileObject.metadata.width" :height="fileObject.metadata.height" />
 			</div>
@@ -158,7 +159,12 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">
 				<code class="text-s">{{ fileObject.url }}</code>
 			</div>
+			
 
-		</div>
+
+		</div>-->
+			<div>
+				<FormView />
+			</div>
 	</article>
 </template>

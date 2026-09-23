@@ -142,6 +142,7 @@ public class Server
 				c.routes.post("/api/create", ctx -> component.createApi().handle(ctx));
 				c.routes.post("/api/move", ctx -> component.moveApi().handle(ctx));
 				c.routes.post("/api/filelock", ctx -> component.fileLockApi().handle(ctx));
+				c.routes.get("/api/plugin", ctx -> component.pluginDataApi().handle(ctx));
 			}
 		});
 		app.start(config.port);

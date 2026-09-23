@@ -19,7 +19,6 @@ import javax.inject.Singleton;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -38,11 +37,8 @@ public class ImageHandler implements IHandler
 	@Inject public ImageHandler() {}
 
 	@Override
-	public FileObject generatePreview(String file) throws Exception
+	public FileObject generatePreview(String file, Path path) throws Exception
 	{
-		Path path = repository.resolveFile(file);
-		if (path == null) throw new FileNotFoundException();
-
 		//GitStatus status = repository.getStatus(path);
 		var gitRepo = repository.getApi().getRepository();
 		String hash = null;

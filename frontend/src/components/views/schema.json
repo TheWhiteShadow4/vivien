@@ -1,3 +1,28 @@
 {
-	
+	"text": {
+		"type": "string",
+		"label": "Text"
+	},
+	"janein": {
+		"type": "bool",
+		"label": "Ja/Nein"
+	},
+	"nummer": {
+		"type": "int",
+		"label": "Nummer",
+		"min": 0,
+		"max": 4
+	},
+	"list": {
+		"type": "enum",
+		"label": "Auswahl",
+		"values": [
+			"Eins", "Zwei", "Drei"
+		]
+	},
+	"referenz": {
+		"type": "asset",
+		"label": "Link",
+		"filter": "texture"
+	}
 }

@@ -6,7 +6,6 @@ import tws.vivien.dto.FileObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -19,11 +18,8 @@ public class TextHandler implements IHandler
 	@Inject public TextHandler() {}
 
 	@Override
-	public FileObject generatePreview(String file) throws Exception
+	public FileObject generatePreview(String file, Path path) throws Exception
 	{
-		Path path = repository.resolveFile(file);
-		if (path == null) throw new FileNotFoundException();
-
 		String content = Files.readString(path);
 		String filename = file.toLowerCase();
 

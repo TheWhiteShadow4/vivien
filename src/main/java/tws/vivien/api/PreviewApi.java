@@ -44,6 +44,8 @@ public class PreviewApi implements Api
 
 		try
 		{
+			Path path = repository.resolveFile(file);
+			if (path == null) throw new FileNotFoundException();
 
 			IHandler handler = forFile(file);
 			if (handler == null)
@@ -58,7 +60,11 @@ public class PreviewApi implements Api
 				return;
 			}
 
-			FileObject obj = handler.generatePreview(file);
+			FileObject obj = handler.generatePreview(file, path);
+			if (config.enginePlugin != null)
+			{
+				obj.fileParams = config.enginePlugin.getImportData(path);
+			}
 			ctx.json(obj);
 		}
 		catch(FileNotFoundException e)

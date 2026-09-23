@@ -48,6 +48,10 @@ public class CreateApi implements Api
 			else
 			{
 				Files.createFile(newElement);
+				if (config.enginePlugin != null)
+				{
+					config.enginePlugin.createImportData(newElement);
+				}
 			}
 		}
 		catch (Exception e)
