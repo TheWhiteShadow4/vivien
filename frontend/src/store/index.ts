@@ -13,7 +13,7 @@ export interface UserSettings
 	favorites: RepositoryElement[];
 }
 
-export const ALLOWED_EDITOR_TYPES = ["text/json", "text/yaml", "text/toml"] as const;
+export const ALLOWED_EDITOR_TYPES = ["text/json", "text/yaml", "text/toml", "text/markdown"] as const;
 export type EditorTypes = typeof ALLOWED_EDITOR_TYPES[number];
 
 export const ALLOWED_MODEL_TYPES = ["application/fbx", "application/gltf", "application/glb", "application/obj"] as const;

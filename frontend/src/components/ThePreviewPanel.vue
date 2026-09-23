@@ -139,7 +139,7 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 				<img :src="fileObject.url" :width="fileObject.metadata.width" :height="fileObject.metadata.height" />
 			</div>
 
-			<div v-else-if="fileObject.metadata.mimeType == 'text/markdown'" class="flex-1 overflow-auto">
+			<div v-else-if="fileObject.metadata.mimeType == 'text/markdown' && codeEditorFile?.readOnly" class="flex-1 overflow-auto">
 				<MarkdownView :content="fileObject.url" />
 			</div>
 
