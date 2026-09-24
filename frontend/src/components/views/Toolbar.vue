@@ -79,7 +79,6 @@ async function changeStaged(op: GitStageOperation)
 function copyFile()
 {
 	store.clipboard = props.element;
-	//emitter.emit("clipboard", props.element);
 }
 
 async function deleteFile()

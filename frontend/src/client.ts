@@ -31,7 +31,7 @@ export async function sendLogin(path: string): Promise<LoginResult | null>
 	const store = useStore();
 	if (!store.settings?.credentials) return null;
 
-	const [user, pass] = atob(store.settings.credentials)?.split(':');
+	const [user, pass] = atob(store.settings.credentials).split(':');
 	const options: RequestInit = {
 		method: "POST",
 		body: JSON.stringify({

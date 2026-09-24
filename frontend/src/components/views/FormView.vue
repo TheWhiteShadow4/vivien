@@ -16,21 +16,6 @@ const props = defineProps<{
 
 const data = reactive<TypedData[]>(props.fileObject.fileParams);
 
-function getstr(data: TypedData): string
-{
-	return data.value as string;
-}
-
-function getbool(data: TypedData): boolean
-{
-	return (data.type == "bool") ? data.value as boolean : false;
-}
-
-function getint(data: TypedData): number
-{
-	return (data.type == "int") ? data.value as number : 0;
-}
-
 function id(key: string): string
 {
 	return `form-${key}`;
@@ -47,7 +32,7 @@ function onSubmit()
 	<div class="@container">
 	<h2 class="text-lg p-1 mb-2">Import Einstellungen</h2>
 	<div class="grid @xs:grid-cols-1 @lg:grid-cols-2 gap-2 gap-x-8">
-		<div v-for="(data, index) in fileObject.fileParams" :key="data.name" class="grid grid-cols-[40%_60%] p-1">
+		<div v-for="(data) in fileObject.fileParams" :key="data.name" class="grid grid-cols-[40%_60%] p-1">
 			<span class="text-md text-vit-text-muted"
 				:for="id(data.name)">
 				{{ data.label }}
@@ -63,7 +48,7 @@ function onSubmit()
 				v-model="data.value"
 			/>
 			<NumberInput
-				v-if="data.type == 'int' && !data.options"
+				v-if="(data.type == 'int' || data.type == 'float') && !data.options"
 				v-model="data.value"
 			/>
 			<SelectInput

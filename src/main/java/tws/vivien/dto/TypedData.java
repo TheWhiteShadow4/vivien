@@ -32,6 +32,11 @@ public class TypedData
 		return new TypedData("int", name, label, value);
 	}
 
+	public static TypedData asFloat(String name, String label, float value)
+	{
+		return new TypedData("float", name, label, value);
+	}
+
 	public static TypedData asBool(String name, String label, int value)
 	{
 		return new TypedData("bool", name, label, value > 0);
@@ -60,6 +65,14 @@ public class TypedData
 		if (cls == Integer.class) return (Integer) value;
 		if (cls == Boolean.class) return ((Boolean) value) ? 1 : 0;
 		if (cls == String.class) return Integer.parseInt((String) value);
+		throw new UnsupportedOperationException();
+	}
+
+	public float floatValue()
+	{
+		var cls = value.getClass();
+		if (cls == Float.class) return (Float) value;
+		if (cls == Integer.class) return (Integer) value;
 		throw new UnsupportedOperationException();
 	}
 

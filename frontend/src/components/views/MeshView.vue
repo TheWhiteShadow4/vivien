@@ -1,4 +1,5 @@
 <!-- src\views\MeshView.vue -->
+<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import type { FileObject } from '@/types/vivien-generated';
