@@ -6,6 +6,8 @@ import BaseIconButton from './base/BaseIconButton.vue';
 import IconArrow from '@/icons/IconArrow.vue';
 import { computed } from 'vue';
 import { useStore } from '@/store/index';
+import ListButton from './base/ListButton.vue';
+import IconHistory from '@/icons/IconHistory.vue';
 
 const store = useStore();
 
@@ -49,6 +51,16 @@ const headerLayoutStyles  = computed(() => {
 			:variant="store.settings.sidebar ? 'full' : 'small'"
 			@git="emit('git', $event)"
 			/>
+
+		<div>
+			<ListButton
+				color="normal"
+				label="Historie"
+				:minified="!store.settings.sidebar"
+				@click="emit('git', 'unstash')">
+				<IconHistory />
+			</ListButton>
+		</div>
 
 	<!--<div class="flex flex-col gap-3">
         <h3 class="text-xs font-semibold text-vit-text-muted uppercase tracking-wider">Base Buttons</h3>

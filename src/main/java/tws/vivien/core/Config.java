@@ -114,6 +114,7 @@ public class Config
 		var configData = com.electronwill.nightconfig.core.Config.inMemory();
 		addEnv(configData,"mode");
 		addEnv(configData,"repo_path");
+		addEnv(configData,"engine_plugin");
 		addEnv(configData,"git.remote");
 		addEnv(configData,"git.url");
 		addEnv(configData,"git.branch");
