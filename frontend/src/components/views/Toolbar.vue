@@ -94,7 +94,7 @@ async function deleteFile()
 			if (response.ok)
 			{
 				emitter.emit("refresh-folder");
-				emitter.emit("refresh-preview");
+				if (store.selected == props.element) store.selected = null;
 			}
 		}
 		else

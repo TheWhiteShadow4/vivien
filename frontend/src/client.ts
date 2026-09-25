@@ -5,6 +5,29 @@ import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, L
 import { getFileExtension, getFilename } from '@/config';
 
 
+export async function checkBackendStatus(): Promise<boolean>
+{
+	const store = useStore();
+	
+	if (store.settings.username == null) return false;
+	try
+	{
+		const response = await fetchWithView("/api/state")
+
+		if (!response.ok) {
+			emitDisconectError(response.statusText);
+			return false;
+		}
+
+		store.server = await response.json();
+	}
+	catch (err: unknown)
+	{
+		console.log(err);
+	}
+	return false;
+}
+
 export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
 {
 	const store = useStore();

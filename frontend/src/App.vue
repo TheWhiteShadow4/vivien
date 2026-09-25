@@ -1,57 +1,24 @@
 <!-- src/App.vue -->
 <script setup lang="ts">
 
-import { ref, onMounted, onUnmounted } from 'vue'
-import type { FileObject, RepositoryElement, ServerError } from './types/vivien-generated'
+import { onMounted, onUnmounted } from 'vue'
+import type { RepositoryElement, ServerError } from './types/vivien-generated'
 import ErrorBannerList from './components/ErrorBannerList.vue'
 import TheHeader from './components/TheHeader.vue'
 import TheSidebar from './components/TheSidebar.vue'
 import RepoFileView from './components/views/RepoFileView.vue'
 import ThePreviewPanel from './components/ThePreviewPanel.vue'
-import { checkGitStatus, emitDisconectError, fetchWithView, sendLogin, updatePreview } from './client'
+import { checkBackendStatus, checkGitStatus, sendLogin } from './client'
 import { useStore } from './store/index'
 import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt'
 import Splitter from './components/base/Splitter.vue'
 import { useGit } from './handler/useGit'
-import { getFileExtension, README_FILE, SETUP_FILE, SUPPORTED_PREVIEW_TYPES } from './config'
+import { README_FILE, SETUP_FILE } from './config'
 
 const store = useStore();
 
-const isSidebarOpen = ref(true)
-const showCommitDialog = ref(false)
-const showLoginDialog = ref(false)
-const isLoading = ref<boolean>(true)
-const previewImage = ref<FileObject | null>(null);
-const selectedElement = ref<RepositoryElement |null>(null);
-
-async function checkBackendStatus(): Promise<boolean>
-{
-	if (store.settings.username == null) return false;
-	try
-	{
-		isLoading.value = true
-
-		const response = await fetchWithView("/api/state")
-
-		if (!response.ok) {
-			emitDisconectError(response.statusText);
-			return false;
-		}
-
-		store.server = await response.json();
-	}
-	catch (err: unknown)
-	{
-		console.log(err);
-	}
-	finally
-	{
-		isLoading.value = false
-	}
-	return false;
-}
 
 async function startupFunction()
 {
@@ -59,7 +26,7 @@ async function startupFunction()
 	const loggedIn = await sendLogin(path);
 	if (loggedIn == null)
 	{
-		showLoginDialog.value = true;
+		store.showLoginDialog = true;
 		return;
 	}
 
@@ -71,32 +38,12 @@ async function startupFunction()
 
 	if (store.server?.mode == 'SETUP')
 	{
-		onRefreshPreview(SETUP_FILE as RepositoryElement, true);
+		store.selected = SETUP_FILE as RepositoryElement;
 	}
 	else
 	{
 		checkGitStatus();
-		onRefreshPreview(README_FILE as RepositoryElement, false);
-	}
-}
-
-async function onRefreshPreview(el: RepositoryElement | null, select: boolean = false)
-{
-	if (el == null)
-	{
-		if (select)
-			selectedElement.value = null;
-		return;
-	}
-	if (el.type != "FILE") return;
-
-	if (select)
-		selectedElement.value = el;
-
-	const ext = getFileExtension(el.name);
-	if (ext && SUPPORTED_PREVIEW_TYPES.includes(ext))
-	{
-		previewImage.value = await updatePreview(el);
+		store.selected = README_FILE as RepositoryElement;
 	}
 }
 
@@ -106,19 +53,19 @@ function onGitCommand(arg: string)
 {
 	switch (arg)
 	{
-		case "commit": showCommitDialog.value = true; break;
+		case "commit": store.showCommitDialog = true; break;
 		case "push": commit(""); break;
 	}
 }
 
 function closeCommitDialog()
 {
-	showCommitDialog.value = false;
+	store.showCommitDialog = false;
 }
 
 function closeLoginDialog(needRefresh: boolean)
 {
-	showLoginDialog.value = false;
+	store.showLoginDialog = false;
 	if (needRefresh)
 	{
 		checkBackendStatus().then(() => checkGitStatus());
@@ -128,10 +75,9 @@ function closeLoginDialog(needRefresh: boolean)
 
 // Lifecycle-Hook: Wird ausgeführt, sobald die Komponente im Browser geladen ist
 onMounted(() => {
-	document.title = "Vivien";
 	if (store.settings.username == null || store.settings.email == null)
 	{
-		showLoginDialog.value = true;
+		store.showLoginDialog = true;
 	}
 	else
 	{
@@ -139,12 +85,10 @@ onMounted(() => {
 	}
 
 	emitter.on("error", (e) => store.server?.serverErrors.push(e as ServerError));
-	emitter.on("refresh-preview", (e) => onRefreshPreview(e as RepositoryElement));
 })
 
 onUnmounted(() => {
 	emitter.off("error", (e) => store.server?.serverErrors.push(e as ServerError));
-	emitter.off("refresh-preview", (e) => onRefreshPreview(e as RepositoryElement));
 })
 </script>
 
@@ -155,16 +99,16 @@ onUnmounted(() => {
 
 		<div class="flex flex-1 min-h-0">
 
-			<TheSidebar :is-open="isSidebarOpen" @git="onGitCommand($event)" @user="showLoginDialog = true" />
+			<TheSidebar @git="onGitCommand($event)" @user="store.showLoginDialog = true" />
 
 			<!-- Hauptbereich -->
 			<main class="w-full h-full bg-vit-bg p-1">
 				<Splitter>
 					<template v-slot:links>
-						<RepoFileView @select="(e) => onRefreshPreview(e, true)" />
+						<RepoFileView />
 					</template>
 					<template v-slot:rechts>
-						<ThePreviewPanel :element="selectedElement" :fileObject="previewImage" />
+						<ThePreviewPanel />
 					</template>
 				</Splitter>
 			</main>
@@ -172,8 +116,8 @@ onUnmounted(() => {
 			<ErrorBannerList />
 		</div>
 
-		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
-		<CommitDialog v-if="showCommitDialog" @submit="closeCommitDialog()" @cancel="closeCommitDialog()" />
-		<LoginDialog v-if="showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
+		<LoginDialog v-if="store.showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
+		<CommitDialog v-if="store.showCommitDialog" @submit="closeCommitDialog()" @cancel="closeCommitDialog()" />
+		<LoginDialog v-if="store.showLoginDialog" @submit="closeLoginDialog(true)" @cancel="closeLoginDialog(false)" />
 	</div>
 </template>

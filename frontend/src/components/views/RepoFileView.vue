@@ -27,11 +27,6 @@ const deleteCount = computed(() => {
 	return store.git ? (store.git.missing.length + store.git.removed.length) : 0;
 });
 
-const emit = defineEmits<{
-	(e: 'select', element: RepositoryElement | null): void
-}>()
-
-
 const isMounted = ref(false);
 const isTreeLoading = ref(true);
 const errorMessage = ref<string | null>(null);
@@ -39,8 +34,6 @@ const errorMessage = ref<string | null>(null);
 const folderCache: Map<string, RepositoryElement> = new Map([]);
 
 const previousFolder = ref<RepositoryElement | null>(null);
-const selectedElement = ref<RepositoryElement | null>(null);
-
 const showCreateDialog = ref(false);
 
 const searchQuery = ref('');
@@ -53,12 +46,9 @@ function selectParent()
 		if (el.type == "FOLDER")
 		{
 			const parentPath = el.path.substring(0, el.path.lastIndexOf("/"));
-			console.log("Parent path: " + parentPath);
-
 			const parent = folderCache.get(parentPath);
 			if (parent)
 			{
-				selectedElement.value = null;
 				navigateToFolder(parent);
 			}
 			else
@@ -70,7 +60,6 @@ function selectParent()
 		{
 			clearSearch();
 		}
-		emit('select', null);
 	}
 }
 
@@ -85,12 +74,11 @@ function selectElement(element: RepositoryElement, doppelt: boolean)
 			store.folder = child;
 		}
 		fetchRepository(element.path);
-		selectedElement.value = null;
+		//store.selected = null;
 	}
 	else
 	{
-		selectedElement.value = element;
-		emit('select', element);
+		store.selected = element;
 	}
 }
 
@@ -292,7 +280,7 @@ async function refreshFile(path: string)
 	const el = store.folder?.children?.find(e => e.path == path);
 	if (el != null)
 	{
-		selectedElement.value = el;
+		store.selected = el;
 	}
 }
 
@@ -434,7 +422,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					:key="el.name"
 					:element="el"
 					:folder="store.folder.type == 'VIRTUAL'"
-					:selected="el == selectedElement"
+					:selected="el.path == store.selected?.path"
 					@clicked="selectElement(el, $event)"
 				/>
 			</template>

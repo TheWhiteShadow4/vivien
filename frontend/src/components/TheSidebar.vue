@@ -11,7 +11,7 @@ import IconHistory from '@/icons/IconHistory.vue';
 
 const store = useStore();
 
-const emit = defineEmits(["git", "user"]);
+const emit = defineEmits(["git", "user", "hist"]);
 
 function toggleSidebar()
 {
@@ -57,30 +57,10 @@ const headerLayoutStyles  = computed(() => {
 				color="normal"
 				label="Historie"
 				:minified="!store.settings.sidebar"
-				@click="emit('git', 'unstash')">
+				@click="emit('hist')">
 				<IconHistory />
 			</ListButton>
 		</div>
-
-	<!--<div class="flex flex-col gap-3">
-        <h3 class="text-xs font-semibold text-vit-text-muted uppercase tracking-wider">Base Buttons</h3>
-        
-        <div class="grid grid-cols-2 gap-3">
-		<BaseButton variant="normal">Normal</BaseButton>
-		<BaseButton variant="primary">Primary</BaseButton>
-		<BaseButton variant="secondary">Secondary</BaseButton>
-		<BaseButton variant="danger">Warnung</BaseButton>
-		</div>
-	</div>
-
-	<div>
-		
-		<span class="text-vit-text-muted">Gemuteter Text</span><br />
-		<span class="text-vit-text-main">Normaler Text</span><br />
-		<span class="text-vit-highlight">Highlight Text</span><br />
-		<span class="text-vit-accent">Accent Text</span><br />
-	</div>-->
-	
 	</div>
   </aside>
 </template>

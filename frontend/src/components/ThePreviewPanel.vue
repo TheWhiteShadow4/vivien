@@ -1,13 +1,14 @@
 <!-- src\components\ThePreviewPanel.vue -->
 <script setup lang="ts">
 import type { FileObject, RepositoryElement, ServerError } from '@/types/vivien-generated';
-import { computed, defineAsyncComponent, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import Toolbar from './views/Toolbar.vue';
 import { ALLOWED_AUDIO_TYPES, ALLOWED_EDITOR_TYPES, ALLOWED_MODEL_TYPES, useStore, type AudioType, type EditorFile, type EditorTypes, type ModelType } from '@/store';
 import { useFiles } from '@/handler/useFiles';
-import { uploadEditorContent } from '@/client';
+import { updatePreview, uploadEditorContent } from '@/client';
 import emitter from '@/mitt';
 import FormView from '@/components/views/FormView.vue';
+import { getFileExtension, SUPPORTED_PREVIEW_TYPES } from '@/config';
 
 const MarkdownView = defineAsyncComponent(() =>
   import('@/components/views/MarkdownView.vue')
@@ -25,11 +26,7 @@ const AudioPlayer = defineAsyncComponent(() =>
 const store = useStore();
 const files = useFiles();
 
-const props = defineProps<{
-	element: RepositoryElement | null
-	fileObject: FileObject | null
-}>()
-
+const fileObject = ref<FileObject | null>(null);
 const codeEditorFile = ref<EditorFile | null>(null);
 const codeEditorModel = ref<string>("");
 const isSaving = ref<boolean>(false);
@@ -51,27 +48,57 @@ function isValidAudio(mimeType: string | undefined): mimeType is AudioType
 	return ALLOWED_AUDIO_TYPES.includes(mimeType as AudioType);
 }
 
-watch(() => props.fileObject, (fileObject) => {
-	const mimeType = fileObject?.metadata?.mimeType;
-	toolbarModel.value.edit = fileObject?.fileParams ? false : null;
-	if (isValidEditorType(mimeType))
-	{
-		const editorFile = {
-			path: props.element?.path,
-			content: fileObject!.url,
-			type: mimeType,
-			isDirty: false
-		} as EditorFile;
-		store.editor = editorFile;
-		const lockHolder = fileObject!.metadata.lockHolder;
-		editorFile.readOnly = lockHolder == null || lockHolder !== store.settings.username;
+watch(() => store.selected, async (el) => {
+	refreshPreview(el);
+});
 
-		codeEditorFile.value = editorFile;
-		codeEditorModel.value = editorFile.content;
+async function refreshPreview(el: RepositoryElement | null)
+{
+	if (el == null)
+	{
+		fileObject.value = null;
+		codeEditorFile.value = null;
 		return;
 	}
+	if (el.type != "FILE") return;
+
+	const ext = getFileExtension(el.name);
+	console.log("refreshPreview", el, ext)
+	if (ext && SUPPORTED_PREVIEW_TYPES.includes(ext))
+	{
+		fileObject.value = await updatePreview(el);
+
+		if (!fileObject.value)
+		{
+			codeEditorFile.value = null;
+			return;
+		}
+
+		const mimeType = fileObject.value.metadata?.mimeType;
+		toolbarModel.value.edit = fileObject.value.fileParams ? false : null;
+		if (isValidEditorType(mimeType))
+		{
+			const editorFile = {
+				path: store.selected?.path,
+				content: fileObject.value.url,
+				type: mimeType,
+				isDirty: false
+			} as EditorFile;
+			store.editor = editorFile;
+			const lockHolder = fileObject.value.metadata.lockHolder;
+			editorFile.readOnly = lockHolder == null || lockHolder !== store.settings.username;
+
+			codeEditorFile.value = editorFile;
+			codeEditorModel.value = editorFile.content;
+			return;
+		}
+	}
+	else
+	{
+		fileObject.value = null;
+	}
 	codeEditorFile.value = null;
-}, { immediate: true })
+}
 
 async function saveFile(final: boolean)
 {
@@ -110,7 +137,7 @@ async function getFileLock()
 	}
 }
 
-const lockHolder = computed(() => props.fileObject?.metadata.lockHolder);
+const lockHolder = computed(() => fileObject.value?.metadata.lockHolder);
 const isLocked = computed(() => lockHolder.value && lockHolder.value !== store.settings.username);
 const isSetup = computed(() => store.server?.mode === 'SETUP');
 
@@ -120,7 +147,15 @@ const editButton = computed(() => {
 })
 
 const previewContainer = "w-2/5 bg-vit-surface border border-vit-border flex flex-col h-full w-full"
-const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(props.fileObject.metadata.size / 1024) : 0);
+const filesize = computed(() => fileObject.value ? Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(fileObject.value.metadata.size / 1024) : 0);
+
+onMounted(() => {
+	emitter.on("refresh-preview", () => refreshPreview(store.selected));
+})
+
+onUnmounted(() => {
+	emitter.off("refresh-preview", () => refreshPreview(store.selected));
+})
 </script>
 
 <template>
@@ -134,7 +169,7 @@ const filesize = computed(() => props.fileObject ? Intl.NumberFormat("de-DE", { 
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
 		</div>
-		<Toolbar v-if="element" :element="element" :editButton="editButton" v-model="toolbarModel" @lock="getFileLock()" @unlock="saveFile(true)"/>
+		<Toolbar v-if="store.selected" :element="store.selected" :editButton="editButton" v-model="toolbarModel" @lock="getFileLock()" @unlock="saveFile(true)"/>
 		<div v-if="isLocked" class="h-7 px-2 bg-vit-accent-bg">Die Datei ist gerade gesperrt durch <strong>{{ lockHolder }}</strong></div>
 		<div v-if="isSetup" class="h-7 px-2 bg-vit-accent-bg">Server Setup Modus</div>
 		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">

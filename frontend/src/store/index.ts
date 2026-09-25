@@ -31,7 +31,6 @@ export interface EditorFile
 	isDirty: boolean
 }
 
-// Der Name 'settings' ist der eindeutige Identifier des Stores
 export const useStore = defineStore('settings', () => {
 
 	const server = ref<ServerState | null>(null);
@@ -39,8 +38,12 @@ export const useStore = defineStore('settings', () => {
 	const clipboard = ref<RepositoryElement | null>(null);
 	const folder = ref<RepositoryElement | null>(null);
 	const editor = ref<EditorFile | null>(null);
+	const showCommitDialog = ref(false)
+	const showLoginDialog = ref(false)
+	const selected = ref<RepositoryElement | null>(null);
+	
 
-	// 1. Initialisierung: Versuche aus dem LocalStorage zu laden, sonst nimm Defaults
+	// Initialisierung: Versuche aus dem LocalStorage zu laden, sonst nimm Defaults
 	const settings = ref<UserSettings>({
 		view: 'artist',
 		sidebar: true,
@@ -48,7 +51,7 @@ export const useStore = defineStore('settings', () => {
 		...JSON.parse(localStorage.getItem('vivian_user') || '{}')
 	})
 
-	// 2. Aktion (Methode) zum Ändern einzelner Werte
+	// Aktion (Methode) zum Ändern einzelner Werte
 	function updateSetting<K extends keyof UserSettings>(key: K, value: UserSettings[K]) {
 		settings.value[key] = value
 	}
@@ -62,7 +65,7 @@ export const useStore = defineStore('settings', () => {
 		if (index > -1) settings.value.favorites.splice(index, 1);
 	}
 
-	// 3. Watcher: Jedes Mal, wenn sich ein Wert im Objekt ändert, in LocalStorage schreiben
+	// Watcher: Jedes Mal, wenn sich ein Wert im Objekt ändert, in LocalStorage schreiben
 	watch(
 		settings,
 		(newSettings) => {
@@ -71,16 +74,18 @@ export const useStore = defineStore('settings', () => {
 		{ deep: true } // Wichtig bei Objekten, um Änderungen tief im Inneren zu bemerken
 	)
 
-	// Alles zurückgeben, was in Komponenten/Dateien verfügbar sein soll
 	return {
 		server,
 		git,
 		clipboard,
 		folder,
+		selected,
 		settings,
 		editor,
 		addFavorite,
 		delFavorite,
+		showCommitDialog,
+		showLoginDialog,
 		updateSetting
 	}
 })
