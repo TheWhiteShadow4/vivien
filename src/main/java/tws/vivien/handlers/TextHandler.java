@@ -49,7 +49,7 @@ public class TextHandler implements IHandler
 		var meta = new FileObject.FileObjectMeta();
 		meta.mimeType = mimeType;
 		meta.size = content.length();
-		meta.lockHolder = lockHolder;
+		meta.owner = lockHolder;
 
 		return new FileObject(content, path.getFileName().toString(), meta);
 	}

@@ -14,7 +14,6 @@ import LoginDialog from './components/dialoge/LoginDialog.vue'
 import CommitDialog from './components/dialoge/CommitDialog.vue'
 import emitter from './mitt'
 import Splitter from './components/base/Splitter.vue'
-import { useGit } from './handler/useGit'
 import { README_FILE, SETUP_FILE } from './config'
 
 const store = useStore();
@@ -44,17 +43,6 @@ async function startupFunction()
 	{
 		checkGitStatus();
 		store.selected = README_FILE as RepositoryElement;
-	}
-}
-
-const { commit } = useGit();
-
-function onGitCommand(arg: string)
-{
-	switch (arg)
-	{
-		case "commit": store.showCommitDialog = true; break;
-		case "push": commit(""); break;
 	}
 }
 
@@ -99,7 +87,7 @@ onUnmounted(() => {
 
 		<div class="flex flex-1 min-h-0">
 
-			<TheSidebar @git="onGitCommand($event)" @user="store.showLoginDialog = true" />
+			<TheSidebar />
 
 			<!-- Hauptbereich -->
 			<main class="w-full h-full bg-vit-bg p-1">

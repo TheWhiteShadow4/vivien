@@ -13,7 +13,6 @@ import tws.vivien.dto.ServerError;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 
 @Singleton
 public class RepositoryApi
@@ -38,7 +37,11 @@ public class RepositoryApi
 				RepositoryElement root = new RepositoryElement("query", "", ElementType.VIRTUAL);
 				if (":config".equals(q))
 				{
-					root.children =  config.getConfigFileList();
+					root.children = config.getConfigFileList();
+				}
+				else if (":history".equals(q))
+				{
+					root.children = repository.getHistory(10);
 				}
 				else
 				{
@@ -54,7 +57,7 @@ public class RepositoryApi
 				ctx.json(repository.getView(view, path));
 			}
 		}
-		catch (IOException e)
+		catch (Exception e)
 		{
 			LOG.error("Fehler bei Request", e);
 			ctx.status(500);

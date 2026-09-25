@@ -4,14 +4,15 @@ import jakarta.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class RepositoryElement
 {
 	public String name;
 	public String path;
 	public ElementType type;
-	//@Nullable
-	//public Map<String, Object> importProps;
+	@Nullable
+	public Map<String, String> metadata;
 
 	@Nullable
 	public List<RepositoryElement> children;

@@ -194,6 +194,19 @@ export async function updatePreview(el: RepositoryElement): Promise<FileObject |
 	}
 }
 
+export async function updateCommitPreview(el: RepositoryElement): Promise<FileObject | null>
+{
+	const response = await fetchWithView(`/api/commits?q=${el.path}`);
+	if (response.ok)
+	{
+		return await response.json() as FileObject;
+	}
+	else
+	{
+		return null;
+	}
+}
+
 export async function sendPluginData(data: PluginRequest)
 {
 	const options: RequestInit = {

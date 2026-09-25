@@ -60,8 +60,16 @@ async function refreshPreview(el: RepositoryElement | null)
 		codeEditorFile.value = null;
 		return;
 	}
-	if (el.type != "FILE") return;
+	if (el.type === "FILE") refreshFileElement(el);
+	else if (el.type === "COMMIT") refreshGitEntry(el);
+	else 
+	{
+		codeEditorFile.value = null;
+	}
+}
 
+async function refreshFileElement(el: RepositoryElement)
+{
 	const ext = getFileExtension(el.name);
 	console.log("refreshPreview", el, ext)
 	if (ext && SUPPORTED_PREVIEW_TYPES.includes(ext))
@@ -85,8 +93,8 @@ async function refreshPreview(el: RepositoryElement | null)
 				isDirty: false
 			} as EditorFile;
 			store.editor = editorFile;
-			const lockHolder = fileObject.value.metadata.lockHolder;
-			editorFile.readOnly = lockHolder == null || lockHolder !== store.settings.username;
+			const owner = fileObject.value.metadata.owner;
+			editorFile.readOnly = owner == null || owner !== store.settings.username;
 
 			codeEditorFile.value = editorFile;
 			codeEditorModel.value = editorFile.content;
@@ -97,6 +105,16 @@ async function refreshPreview(el: RepositoryElement | null)
 	{
 		fileObject.value = null;
 	}
+	codeEditorFile.value = null;
+}
+
+async function refreshGitEntry(el: RepositoryElement)
+{
+	if (!el.metadata) return;
+	fileObject.value = {
+		url: el.metadata["message"],
+		metadata: {mimeType: "text", owner: el.metadata["author"]}
+	} as FileObject;
 	codeEditorFile.value = null;
 }
 
@@ -137,8 +155,8 @@ async function getFileLock()
 	}
 }
 
-const lockHolder = computed(() => fileObject.value?.metadata.lockHolder);
-const isLocked = computed(() => lockHolder.value && lockHolder.value !== store.settings.username);
+const lockHolder = computed(() => fileObject.value?.metadata.owner);
+const isLocked = computed(() => store.selected?.type == "FILE" && lockHolder.value && lockHolder.value !== store.settings.username);
 const isSetup = computed(() => store.server?.mode === 'SETUP');
 
 const editButton = computed(() => {
@@ -161,15 +179,20 @@ onUnmounted(() => {
 <template>
 	<article :class="previewContainer">
 		<div class="min-h-10 flex w-full justify-between p-2 bg-vit-accent-bg/30" role="contentinfo">
-			<template v-if="fileObject">
+			<template v-if="fileObject && store.selected?.metadata">
+				<span><span class="text-vit-text-muted">User: </span>{{ lockHolder }}</span>
+				<span><span class="text-vit-text-muted">Datum: </span>{{ store.selected.metadata['date'] }}</span>
+				<span><span class="text-vit-text-muted">Hash: </span>{{ store.selected.path }}</span>
+			</template>
+			<template v-else-if="fileObject">
 				<span><span class="text-vit-text-muted">File: </span>{{ fileObject.filename }}</span>
-				<!-- <span><span class="text-vit-text-muted">Type: </span>{{ fileObject.metadata.mimeType }}</span> -->
 				<span><span class="text-vit-text-muted">Breite: </span>{{ fileObject.metadata.srcWidth }}</span>
 				<span><span class="text-vit-text-muted">Höhe: </span>{{ fileObject.metadata.srcHeight }}</span>
 				<span><span class="text-vit-text-muted">Größe: </span>{{ filesize }}kb</span>
 			</template>
+
 		</div>
-		<Toolbar v-if="store.selected" :element="store.selected" :editButton="editButton" v-model="toolbarModel" @lock="getFileLock()" @unlock="saveFile(true)"/>
+		<Toolbar v-if="store.selected && store.selected.type !== 'COMMIT'" :element="store.selected" :editButton="editButton" v-model="toolbarModel" @lock="getFileLock()" @unlock="saveFile(true)"/>
 		<div v-if="isLocked" class="h-7 px-2 bg-vit-accent-bg">Die Datei ist gerade gesperrt durch <strong>{{ lockHolder }}</strong></div>
 		<div v-if="isSetup" class="h-7 px-2 bg-vit-accent-bg">Server Setup Modus</div>
 		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
@@ -182,7 +205,7 @@ onUnmounted(() => {
 			</div>
 
 			<div v-else-if="fileObject.metadata.mimeType == 'text/markdown' && codeEditorFile?.readOnly" class="flex-1 overflow-auto">
-				<MarkdownView :content="fileObject.url" />
+				<MarkdownView :content="codeEditorFile ? codeEditorFile.content : fileObject.url" />
 			</div>
 
 			<div v-else-if="codeEditorFile != null" class="flex-1 overflow-auto">

@@ -7,6 +7,7 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.BranchTrackingStatus;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.slf4j.Logger;
@@ -22,6 +23,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -124,12 +129,6 @@ public class Repository
 
 		element = element.flatCopyWithChildren();
 
-		// Reroot
-		/*if (!view.root.isEmpty() && "/".equals(path))
-		{
-			element = cache.getDirectory(view.root).flatCopyWithChildren();
-		}*/
-
 		// Filter
 		if (element.children != null && !element.children.isEmpty())
 		{
@@ -142,7 +141,6 @@ public class Repository
 	{
 		String lowerQuery = query.toLowerCase();
 
-		// Nutzt den performanten RAM-Lookup ohne Festplatten-I/O
 		return cache.getPathLookup().values().stream()
 				.filter(element -> element.type == ElementType.FILE) // Nur Dateien durchsuchen
 				.filter(element -> element.name.toLowerCase().contains(lowerQuery))
@@ -313,23 +311,42 @@ public class Repository
 		gitApi.add().addFilepattern(destination).call();
 	}
 
-	/*public GitFileStatus getStatus(Path path) throws Exception
+	public List<RepositoryElement> getHistory(int limit) throws Exception
 	{
-		Status status = gitApi.status().addPath(path.toString()).call();
-		if (!status.isClean())
-			return GitFileStatus.Clean;
-		if (!status.getUntracked().isEmpty())
-			return GitFileStatus.Untracked;
-		if (!status.getAdded().isEmpty())
-			return GitFileStatus.Added;
-		if (!status.getChanged().isEmpty())
-			return GitFileStatus.Modified;
-		if (!status.getConflicting().isEmpty())
-			return GitFileStatus.Conflict;
-		if (!status.getMissing().isEmpty())
-			return GitFileStatus.Deleted;
-		throw new Error("Unbekannter Git State");
-	}*/
+		List<RepositoryElement> elements = new ArrayList<>();
+		Iterable<RevCommit> log = gitApi.log().setMaxCount(limit).call();
+		for (RevCommit commit : log)
+		{
+			var element = new RepositoryElement(commit.getFirstMessageLine(), commit.getName(), ElementType.COMMIT);
+			element.metadata = new HashMap<>();
+			element.metadata.put("author", commit.getAuthorIdent().getName());
+			element.metadata.put("message", commit.getFullMessage());
+			element.metadata.put("date", formatRelativeTime(commit.getAuthorIdent().getWhenAsInstant()));
+			elements.add(element);
+		}
+		return elements;
+	}
+
+	public static String formatRelativeTime(Instant pastTime)
+	{
+		Instant now = Instant.now();
+		Duration duration = Duration.between(pastTime, now);
+
+		long seconds = duration.getSeconds();
+		long minutes = duration.toMinutes();
+		long hours = duration.toHours();
+		long days = duration.toDays();
+
+		if (seconds < 60) {
+			return "Gerade eben";
+		} else if (minutes < 60) {
+			return "vor " + minutes + (minutes == 1 ? " Minute" : " Minuten");
+		} else if (hours < 24) {
+			return "vor " + hours + (hours == 1 ? " Stunde" : " Stunden");
+		} else {
+			return "vor " + days + (days == 1 ? " Tag" : " Tagen");
+		}
+	}
 
 	public void close()
 	{

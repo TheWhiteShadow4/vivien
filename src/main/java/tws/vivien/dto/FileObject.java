@@ -28,7 +28,7 @@ public class FileObject
 		public int srcWidth;
 		public int srcHeight;
 		@Nullable
-		public String lockHolder;
+		public String owner;
 		@Nullable
 		public String additional;
 	}

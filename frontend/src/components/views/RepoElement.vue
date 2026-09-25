@@ -12,7 +12,7 @@ const store = useStore();
 const props = defineProps<{
   element: RepositoryElement,
   label?: string,
-  folder?: boolean,
+  hint?: string,
   selected: boolean,
 }>();
 
@@ -31,7 +31,17 @@ const normalStyle = "font-medium"
 const selectedStyle = "font-bold"
 
 // Typ-spezifische Farben und Icons
-const isFolder = computed(() => props.element.type !== 'FILE')
+const preIcon = computed(() => {
+	switch(props.element.type)
+	{
+		case 'VIRTUAL': return '🢨';
+		case 'FOLDER': return '📁';
+		case 'FILE': return '📄';
+		case 'COMMIT': return '🔀';
+		default: return '➤';
+	}
+})
+
 const stateBadge = computed(() => {
 	if (store.git)
 	{
@@ -61,29 +71,31 @@ function favorit(add: boolean)
 </script>
 
 <template>
-  <div :class="[rowContainer, selected ? selectedRowStyle : normalRowStyle]"
-  	@dblclick="$emit('clicked', true)"
-	@click="$emit('clicked', false)">
-    <!-- Linke Seite: Icon & Name -->
-    <div class="flex items-center gap-4">
-      <!-- Visuelles Feedback für den Typ -->
-      <span :class="iconStyle">
-        {{ isFolder ? '📁' : '📄' }}
-      </span>
-      
-      <span :class="[nameStyle, selected ? selectedStyle : normalStyle]">{{ label ? label : element.name }}</span>
-	  <span v-if="folder" class="text-vit-text-muted">(/{{ element.path }})</span>
-    </div>
+	<div :class="[rowContainer, selected ? selectedRowStyle : normalRowStyle]" @dblclick="$emit('clicked', true)"
+		@click="$emit('clicked', false)">
+		<!-- Linke Seite: Icon & Name -->
+		<div class="flex items-center gap-4">
+			<!-- Visuelles Feedback für den Typ -->
+			<span :class="iconStyle">{{ preIcon }}</span>
 
-	<div class="flex items-center text-vit-text-main">
-		<template v-if="selected">
-			<BaseIconButton v-if="store.settings.favorites.includes(element)" class="mx-2" @click.stop="favorit(false)"><IconStarFilled/></BaseIconButton>
-			<BaseIconButton v-else class="mx-2" @click.stop="favorit(true)"><IconStar/></BaseIconButton>
-		</template>
-		
-		<!-- Rechte Seite: Typ-Badge -->
-		<span class="w-3 h-3 ml-4 rounded-full flex" :class="stateBadge"></span>
+			<span :class="[nameStyle, selected ? selectedStyle : normalStyle]">{{ label ? label : element.name }}</span>
+			<span v-if="hint" class="text-vit-text-muted">({{ hint }})</span>
+		</div>
+
+		<div class="flex items-center text-vit-text-main">
+			<template v-if="selected">
+				<BaseIconButton v-if="store.settings.favorites.includes(element)" class="mx-2"
+					@click.stop="favorit(false)">
+					<IconStarFilled />
+				</BaseIconButton>
+				<BaseIconButton v-else class="mx-2" @click.stop="favorit(true)">
+					<IconStar />
+				</BaseIconButton>
+			</template>
+
+			<!-- Rechte Seite: Typ-Badge -->
+			<span class="w-3 h-3 ml-4 rounded-full flex" :class="stateBadge"></span>
+		</div>
+
 	</div>
-
-  </div>
 </template>

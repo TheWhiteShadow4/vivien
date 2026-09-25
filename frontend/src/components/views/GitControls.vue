@@ -12,8 +12,6 @@ import Tooltip from '@/base/Tooltip.vue'
 
 const store = useStore();
 
-const emit = defineEmits(["git", "bin"]);
-
 // Änderungen nicht in der Stage
 const gitChangeCount = computed(() => {
 	return store.git ? (store.git.untracked.length + store.git.modified.length + store.git.missing.length) : 0;
@@ -39,14 +37,23 @@ withDefaults(defineProps<Props>(), {
   variant: "full",
 })
 
-const { pull, reset, isLoading } = useGit();
+const { pull, reset, commit, isLoading } = useGit();
+
+function onGitCommand(arg: string)
+{
+	switch (arg)
+	{
+		case "commit": store.showCommitDialog = true; break;
+		case "push": commit(""); break;
+	}
+}
 
 function commitPush()
 {
 	if (gitStageCount.value > 0)
-		emit('git', 'commit');
+		onGitCommand('commit');
 	else
-		emit('git', 'push')
+		onGitCommand('push')
 }
 
 </script>
@@ -106,7 +113,7 @@ function commitPush()
 			label="Stash"
 			:minified="variant == 'small'"
 			:disabled="isLoading"
-			@click="emit('git', 'stash')">
+			@click="onGitCommand('stash')">
 			<IconPushStash />
 		</ListButton>
 
@@ -116,7 +123,7 @@ function commitPush()
 			label="Stash Pop"
 			:minified="variant == 'small'"
 			:disabled="isLoading"
-			@click="emit('git', 'unstash')">
+			@click="onGitCommand('unstash')">
 			<IconPushStash />
 		</ListButton>
 

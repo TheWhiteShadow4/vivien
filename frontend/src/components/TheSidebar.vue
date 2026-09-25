@@ -6,12 +6,8 @@ import BaseIconButton from './base/BaseIconButton.vue';
 import IconArrow from '@/icons/IconArrow.vue';
 import { computed } from 'vue';
 import { useStore } from '@/store/index';
-import ListButton from './base/ListButton.vue';
-import IconHistory from '@/icons/IconHistory.vue';
 
 const store = useStore();
-
-const emit = defineEmits(["git", "user", "hist"]);
 
 function toggleSidebar()
 {
@@ -39,7 +35,7 @@ const headerLayoutStyles  = computed(() => {
 			:small="!store.settings.sidebar"
 			:username="store.settings.username"
 			:view="store.settings.view"
-			@click="emit('user')"
+			@click="store.showLoginDialog = true"
 		/>	
 	</div>
 	<div v-if="store.settings.sidebar" :class="branchBadge">
@@ -47,20 +43,7 @@ const headerLayoutStyles  = computed(() => {
 		<span class="font-bold">{{ store.git?.branch }}</span>
 	</div>
 	<div :class="sidebarMenu">
-		<GitControls
-			:variant="store.settings.sidebar ? 'full' : 'small'"
-			@git="emit('git', $event)"
-			/>
-
-		<div>
-			<ListButton
-				color="normal"
-				label="Historie"
-				:minified="!store.settings.sidebar"
-				@click="emit('hist')">
-				<IconHistory />
-			</ListButton>
-		</div>
+		<GitControls :variant="store.settings.sidebar ? 'full' : 'small'" />
 	</div>
   </aside>
 </template>

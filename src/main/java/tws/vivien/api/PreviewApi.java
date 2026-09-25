@@ -94,7 +94,7 @@ public class PreviewApi implements Api
 		var meta = new FileObject.FileObjectMeta();
 		meta.mimeType = "text/toml";
 		meta.size = content.length();
-		meta.lockHolder = ctx.header(Server.APP_USER);
+		meta.owner = ctx.header(Server.APP_USER);
 		ctx.json(new FileObject(content, path.getFileName().toString(), meta));
 	}
 }

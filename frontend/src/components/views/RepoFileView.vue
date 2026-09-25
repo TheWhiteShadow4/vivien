@@ -19,6 +19,8 @@ import IconAddFolder from '@/icons/IconAddFolder.vue';
 import IconImport from '@/icons/IconImport.vue';
 import { useGit } from '@/handler/useGit';
 import IconStarFilled from '@/icons/IconStarFilled.vue';
+import IconRoot from '@/icons/IconRoot.vue';
+import IconHistory from '@/icons/IconHistory.vue';
 
 const store = useStore();
 const gitApi = useGit();
@@ -126,7 +128,7 @@ async function fetchSearch(query: string)
 	try
 	{
 		let serachRoot: RepositoryElement;
-		if (query.startsWith(':') && query !== ":config")
+		if (query.startsWith(':') && ![":config", ":history"].includes(query))
 		{
 			serachRoot = gitQuery(query)
 		}
@@ -176,6 +178,12 @@ async function fetchRepository(path: string)
 		isTreeLoading.value = true
 		errorMessage.value = null
 
+		const cached = folderCache.get(path);
+		if (cached && path !== store.folder?.path)
+		{
+			navigateToFolder(cached);
+		}
+
 		const response = await fetchWithView(`/api/repo?path=${path}`)
 
 		if (!response.ok)
@@ -190,7 +198,7 @@ async function fetchRepository(path: string)
 
 		const tree: RepositoryElement = await response.json();
 		folderCache.set(tree.path, tree);
-		navigateToFolder(tree);
+		navigateToFolder(tree, !!cached);
 	}
 	catch(err)
 	{
@@ -314,6 +322,22 @@ onUnmounted(() => {
 	isMounted.value = false;
 })
 
+const pathLabels = computed(() => {
+	if (!store.folder || store.folder.path.length == 0) return [];
+
+	const crumbs: [string, string | null][] = [];
+	const segments = store.folder!.path.split('/');
+
+	while(segments.length > 0)
+	{
+		const path = segments.join('/');
+		const seg = segments.pop() as string;
+		crumbs.push([seg, path]);
+	}
+	//crumbs[0]![1] = null;
+	return crumbs.reverse();
+});
+
 // Strukturierte Design-Klassen aus dem vit-Theme
 const tableWrapper = "w-full h-full flex flex-col border border-vit-border rounded-vit-radius bg-vit-surface shadow-vit-shadow"
 const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex justify-between items-center text-md font-semibold text-vit-text-muted"
@@ -353,9 +377,11 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 		</Tooltip>
 		<div class="w-80 flex items-center gap-3">
 			<template v-if="!!store.clipboard">
+				<Tooltip text="Datei aus Zwischenablage einfügen">
 				<BaseIconButton variant="normal" :disabled="!store.folder" @click="moveClipboardFile()">
 					<IconImport />
 				</BaseIconButton>
+				</Tooltip>
 				<span class="text-vit-text-muted">{{ store.clipboard.name }}</span>
 			</template>
 		</div>
@@ -382,11 +408,24 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			@click="fetchSearch(':fav')">
 			<IconStarFilled />
 		</ListButton>
+		<ListButton
+			color="ghost"
+			label="Historie"
+			:minified="!store.settings.sidebar"
+			@click="fetchSearch(':history')">
+			<IconHistory />
+		</ListButton>
 	</Teleport>
 	<div :class="tableWrapper">
 		<!-- Tabellen-Kopf -->
 		<div :class="tableHeader">
-			<span>Name</span>
+			<div v-if="store.folder">
+				<button data-href="/" class="crumb" @click="fetchRepository('/')"><IconRoot class="h-7 inline" /></button>
+				<template v-for="[label, path] of pathLabels" :key="label">
+					<span> / </span><a :data-href="path" :class="path ? 'crumb' : ''" @click="path && fetchRepository(path)">{{ label }}</a>
+				</template>
+			</div>
+			<span v-else></span>
 			<span class="w-16 text-right">Status</span>
 		</div>
 
@@ -421,7 +460,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 					v-for="el in store.folder.children"
 					:key="el.name"
 					:element="el"
-					:folder="store.folder.type == 'VIRTUAL'"
+					:hint="store.folder.type === 'VIRTUAL' ? (el.metadata ? el.metadata!['author'] : '/' + el.path ) : undefined"
 					:selected="el.path == store.selected?.path"
 					@clicked="selectElement(el, $event)"
 				/>
@@ -429,3 +468,12 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 		</div>
 	</div>
 </template>
+
+<style scoped>
+@import "tailwindcss";
+@import "@/style.css";
+
+.crumb {
+	@apply text-vit-text-main hover:text-vit-secondary cursor-pointer
+}
+</style>
