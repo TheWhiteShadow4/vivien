@@ -35,7 +35,7 @@ public class CommitApi implements Api
 			var status = repository.getBranchStatus();
 			if (status.hasStagedFiles()) // Haben wir Änderungen in der Stage
 			{
-				lockService.freeUserLocks(ctx.header(Server.APP_USER));
+				lockService.freeUserLocks(Server.getUserName(ctx));
 				repository.commit(request);
 			}
 			if (config.gitRemote != null)

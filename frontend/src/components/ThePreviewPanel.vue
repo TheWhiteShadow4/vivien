@@ -71,7 +71,6 @@ async function refreshPreview(el: RepositoryElement | null)
 async function refreshFileElement(el: RepositoryElement)
 {
 	const ext = getFileExtension(el.name);
-	console.log("refreshPreview", el, ext)
 	if (ext && SUPPORTED_PREVIEW_TYPES.includes(ext))
 	{
 		fileObject.value = await updatePreview(el);
@@ -94,7 +93,7 @@ async function refreshFileElement(el: RepositoryElement)
 			} as EditorFile;
 			store.editor = editorFile;
 			const owner = fileObject.value.metadata.owner;
-			editorFile.readOnly = owner == null || owner !== store.settings.username;
+			editorFile.readOnly = fileObject.value.metadata.readonly || owner == null || owner !== store.settings.username;
 
 			codeEditorFile.value = editorFile;
 			codeEditorModel.value = editorFile.content;
@@ -155,12 +154,13 @@ async function getFileLock()
 	}
 }
 
-const lockHolder = computed(() => fileObject.value?.metadata.owner);
-const isLocked = computed(() => store.selected?.type == "FILE" && lockHolder.value && lockHolder.value !== store.settings.username);
 const isSetup = computed(() => store.server?.mode === 'SETUP');
+const isReadonly = computed(() => !fileObject.value || fileObject.value.metadata.readonly);
+const lockHolder = computed(() => fileObject.value?.metadata.owner);
+const isLocked = computed(() => store.selected?.type === "FILE" && !!lockHolder.value && lockHolder.value !== store.settings.username);
 
-const editButton = computed(() => {
-	if (codeEditorFile.value == null) return "hidden";
+const showEditButton = computed(() => {
+	if (codeEditorFile.value == null || isReadonly.value) return "hidden";
 	return codeEditorFile.value.readOnly ? "edit" : "unedit";
 })
 
@@ -192,7 +192,14 @@ onUnmounted(() => {
 			</template>
 
 		</div>
-		<Toolbar v-if="store.selected && store.selected.type !== 'COMMIT'" :element="store.selected" :editButton="editButton" v-model="toolbarModel" @lock="getFileLock()" @unlock="saveFile(true)"/>
+		<Toolbar v-if="store.selected && store.selected.type !== 'COMMIT'"
+			:element="store.selected"
+			:editButton="showEditButton"
+			:readonly="isReadonly"
+			v-model="toolbarModel"
+			@lock="getFileLock()"
+			@unlock="saveFile(true)"
+		/>
 		<div v-if="isLocked" class="h-7 px-2 bg-vit-accent-bg">Die Datei ist gerade gesperrt durch <strong>{{ lockHolder }}</strong></div>
 		<div v-if="isSetup" class="h-7 px-2 bg-vit-accent-bg">Server Setup Modus</div>
 		<div v-if="fileObject" class="flex flex-col flex-1 min-h-0">
@@ -205,7 +212,7 @@ onUnmounted(() => {
 			</div>
 
 			<div v-else-if="fileObject.metadata.mimeType == 'text/markdown' && codeEditorFile?.readOnly" class="flex-1 overflow-auto">
-				<MarkdownView :content="codeEditorFile ? codeEditorFile.content : fileObject.url" />
+				<MarkdownView :folder="store.folder?.path" :content="codeEditorFile ? codeEditorFile.content : fileObject.url" />
 			</div>
 
 			<div v-else-if="codeEditorFile != null" class="flex-1 overflow-auto">
@@ -221,7 +228,7 @@ onUnmounted(() => {
 			</div>
 
 			<div v-else-if="fileObject.metadata.mimeType.startsWith('text')" class="flex-1 overflow-auto">
-				<code class="text-s">{{ fileObject.url }}</code>
+				<pre class="text-s">{{ fileObject.url }}</pre>
 			</div>
 		</div>
 

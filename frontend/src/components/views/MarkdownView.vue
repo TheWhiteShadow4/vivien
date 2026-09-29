@@ -1,31 +1,51 @@
 <!-- src\components\views\MarkdownView.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { marked } from 'marked'
+import { marked, type RendererObject } from 'marked';
 import DOMPurify from 'dompurify'
 
 const props = defineProps<{
-  content: string
+	folder: string | undefined,
+	content: string
 }>()
 
-// Wandelt Markdown sicher in HTML um
-const parsedHtml = computed(() => {
-  if (!props.content) return ''
-  
-  // Konfiguriere marked (z.B. für Zeilenumbrüche)
-  const rawHtml = marked.parse(props.content, { 
-    breaks: true, 
-    gfm: true 
-  }) as string
+const renderer: RendererObject = {
+	image({ href, title, text })
+	{
+		const isAbsolute = /^(https?:)?\/\//i.test(href);
+		if (!isAbsolute && props.folder)
+		{
+			href = `${location.origin}/file/${props.folder}/${href}`;
+		}
+		return `<img src="${href}" alt="${text}" ${title ? `title="\${title}"` : ''} />`;
+	},
+	link(this: unknown, { href, title, text }): string
+	{
+		const isAbsolute = /^(https?:)?\/\//i.test(href);
+		if (!isAbsolute && props.folder)
+		{
+			href = `${location.origin}/${props.folder}/${href}`;
+		}
+		const content = marked.parseInline(text);
+		return `<a href="${href}" ${title ? `title="\${title}"` : ''}>${content}</a>`;
+	}
+};
 
-  // Schutz vor Schadcode (XSS), falls jemand böswilligen HTML-Code in die MD einschleust
-  return DOMPurify.sanitize(rawHtml)
+const parsedHtml = computed(() => {
+	if (!props.content) return ''
+
+	marked.use({ renderer });
+
+	const rawHtml = marked.parse(props.content, {
+		breaks: true, 
+		gfm: true 
+	}) as string
+
+	return DOMPurify.sanitize(rawHtml)
 })
 
-// REGLER 5: Strukturelles Layout (Padding, Scroller)
 const containerStyles = 'p-4 bg-vit-surface border border-vit-border shadow-vit-inset'
 
-// REGLER 1 & 2: Wir stylen die HTML-Tags des Parsers über CSS-Variablen deines Themes
 // Das hält das HTML-Template komplett frei von Klassen-Ketten
 const markdownStyles = [
   'prose prose-invert max-w-none text-base font-sans text-vit-text-main',

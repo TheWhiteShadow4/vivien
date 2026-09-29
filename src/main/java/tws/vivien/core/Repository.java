@@ -132,9 +132,17 @@ public class Repository
 		// Filter
 		if (element.children != null && !element.children.isEmpty())
 		{
-			element.children = element.children.stream().filter(e -> view.getFilter().isIncluded(Path.of(e.path), e.type)).toList();
+			element.children = element.children.stream()
+				.filter(e -> view.getFilter()
+				.isIncluded(Path.of(e.path), e.type)).toList();
 		}
 		return element;
+	}
+
+	public RepositoryElement getParent(ConfigView view, RepositoryElement element) throws IOException
+	{
+		var folder = element.path.substring(0, element.path.lastIndexOf('/'));
+		return getView(view, folder);
 	}
 
 	public List<RepositoryElement> searchFiles(ConfigView view, String query)

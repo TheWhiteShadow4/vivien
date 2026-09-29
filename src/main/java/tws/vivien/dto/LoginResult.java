@@ -6,11 +6,13 @@ public class LoginResult
 {
 	public ServerState state;
 	@Nullable
-	public RepositoryElement element;
+	public RepositoryElement folder;
+	public int selected;
 
-	public LoginResult(ServerState state, @Nullable RepositoryElement element)
+	public LoginResult(ServerState state, @Nullable RepositoryElement folder, int selected)
 	{
 		this.state = state;
-		this.element = element;
+		this.folder = folder;
+		this.selected = selected;
 	}
 }

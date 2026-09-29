@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class RepositoryElement
 {
@@ -47,6 +48,20 @@ public class RepositoryElement
 		if (children != null && children.isEmpty())
 			copy.children = Collections.emptyList();
 		return copy;
+	}
+
+	@Override
+	public final boolean equals(Object o)
+	{
+		if (!(o instanceof RepositoryElement element)) return false;
+
+		return Objects.equals(path, element.path);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hashCode(path);
 	}
 
 	@Override

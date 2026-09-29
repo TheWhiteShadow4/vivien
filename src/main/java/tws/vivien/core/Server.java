@@ -26,10 +26,11 @@ public class Server
 {
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
-	public static final String APP_VIEW = "X-App-View";
-	public static final String APP_USER = "X-App-User";
-	public static final String DEFAULT_USER = "global";
+	//public static final String APP_VIEW = "X-App-View";
+	//public static final String APP_USER = "X-App-User";
+	public static final String JWT_COOKIE = "auth_token";
 
+	/// Dateien aus dem Repository, auf die direkt zugegriffen werden dürfen.
 	private static final java.util.List<String> REPO_ACCESS_FILES = List.of("fbx", "gltf", "glb", "obj", "bin", "mtl", "wav", "mp3", "ogg", "aac", "png", "jpg");
 
 	private final Config config;
@@ -132,6 +133,7 @@ public class Server
 				c.routes.get("/api/git", ctx -> component.gitStatusApi().handle(ctx));
 				c.routes.get("/api/download", ctx -> component.downloadApi().handle(ctx));
 
+				c.routes.post("/api/user", ctx -> component.userApi().handle(ctx));
 				c.routes.post("/api/delete", ctx -> component.deleteApi().handle(ctx));
 				c.routes.post("/api/staged", ctx -> component.stageApi().handle(ctx));
 				c.routes.post("/api/checkout", ctx -> component.checkoutApi().handle(ctx));
@@ -157,7 +159,7 @@ public class Server
 
 	private void authFilter(Context ctx)
 	{
-		String token = ctx.cookie("auth_token");
+		String token = ctx.cookie(JWT_COOKIE);
 		if (token == null)
 		{
 			if ("/api/login".equals(ctx.path())) return;
@@ -166,13 +168,11 @@ public class Server
 		}
 		else
 		{
-			//String view = ctx.header(APP_VIEW);
-			//if (view == null) view = "admin";
 			try
 			{
 				DecodedJWT jwt = JWT.require(Algorithm.HMAC256(config.secret)).build().verify(token);
 				ctx.attribute("user", jwt.getClaim("user").asString());
-				//ctx.attribute("view", view);
+				ctx.attribute("view", jwt.getClaim("view").asString());
 			}
 			catch (JWTVerificationException e)
 			{
@@ -206,14 +206,23 @@ public class Server
 
 				// Bootstrapping App Start
 				ServerState state = component.serverStateApi().getServerState(ctx);
-				RepositoryElement repo = null;
+				RepositoryElement startFolder = null;
+				int selected = -1;
 
 				if (request.path != null)
 				{
 					try
 					{
 						ConfigView view = config.getView(request.view);
-						repo = component.repository().getView(view, request.path);
+						startFolder = component.repository().getView(view, request.path);
+						if (startFolder != null && startFolder.type == ElementType.FILE)
+						{
+							RepositoryElement el = component.repository().getParent(view, startFolder);
+							// Eine Datei hat immer einen Ordner und dieser hat immer ein Kind!
+							assert el.children != null;
+							selected = el.children.indexOf(startFolder);
+							startFolder = el;
+						}
 					}
 					catch(IOException e)
 					{
@@ -222,7 +231,7 @@ public class Server
 					}
 				}
 
-				ctx.status(200).json(new LoginResult(state, repo));
+				ctx.status(200).json(new LoginResult(state, startFolder, selected));
 				return;
 			}
 		}
@@ -254,7 +263,7 @@ public class Server
 	 */
 	public static String getViewName(Context ctx)
 	{
-		return ctx.header(APP_VIEW);
+		return ctx.attribute("view");
 	}
 
 	/**
@@ -262,6 +271,6 @@ public class Server
 	 */
 	public static String getUserName(Context ctx)
 	{
-		return ctx.attribute(APP_USER);
+		return ctx.attribute("user");
 	}
 }

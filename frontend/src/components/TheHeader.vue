@@ -10,7 +10,7 @@ const headerContainer = "h-16 w-full bg-vit-surface border-b border-vit-border p
 <template>
   <header :class="headerContainer">
     <!-- Logo und Anwendungsname "Vivien" -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 select-none">
 		<img id="logo" src="/icon_192.png" width="48" height="48" alt="Logo" />
 	    <h1 class="text-xl font-bold tracking-wide bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
           Vivien

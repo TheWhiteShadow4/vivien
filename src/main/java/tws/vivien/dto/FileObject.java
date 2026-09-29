@@ -27,6 +27,7 @@ public class FileObject
 		public int height;
 		public int srcWidth;
 		public int srcHeight;
+		public boolean readonly;
 		@Nullable
 		public String owner;
 		@Nullable

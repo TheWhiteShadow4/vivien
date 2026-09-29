@@ -11,7 +11,7 @@ const props = defineProps<{
 
 <template>
 	<div class="text-vit-text-muted flex items-center gap-2 p-4">
-		<div class="w-8 h-8 rounded-full bg-vit-accent flex items-center justify-center text-vit-bg font-bold">
+		<div class="w-8 h-8 rounded-full bg-vit-accent flex items-center justify-center text-vit-bg font-bold select-none">
 			{{ props.username.charAt(0).toUpperCase() }}
 		</div>
 		<div v-if="!props.small">

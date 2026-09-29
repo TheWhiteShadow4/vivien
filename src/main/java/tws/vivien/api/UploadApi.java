@@ -57,6 +57,8 @@ public class UploadApi implements Api
 			Path targetPath = repository.resolve(fileOrFolder);
 			if (Files.isDirectory(targetPath)) // Multi Upload in Ordner
 			{
+				checkUserAccess(ctx, fileOrFolder);
+
 				List<ServerError> errors = new ArrayList<>();
 				for (var file : ctx.uploadedFiles("files"))
 				{
@@ -80,11 +82,12 @@ public class UploadApi implements Api
 			}
 			else if (Files.isRegularFile(targetPath)) // Single Upload
 			{
+				checkUserAccess(ctx, fileOrFolder);
 				checkUserLock(ctx, fileOrFolder);
 
 				if (Objects.equals(ctx.formParam("unlock"),"true"))
 				{
-					lockService.freeUserLocks(ctx.header(Server.APP_USER));
+					lockService.freeUserLocks(Server.getUserName(ctx));
 				}
 				var file = ctx.uploadedFiles("files").getFirst();
 				writeFile(ctx, targetPath, file);
@@ -103,10 +106,17 @@ public class UploadApi implements Api
 		}
 	}
 
+	private void checkUserAccess(Context ctx, String folder) throws IOException
+	{
+		ConfigView view = config.getView(Server.getViewName(ctx));
+		if (view.getFilter().isReadonly(folder))
+			throw new IOException("Keine Schreibberechtigung.");
+	}
+
 	private void checkUserLock(Context ctx, String file) throws IOException
 	{
 		String holder = lockService.fileLocks.get(file);
-		if (holder != null && !Objects.equals(holder, ctx.header(Server.APP_USER)))
+		if (holder != null && !Objects.equals(holder, Server.getUserName(ctx)))
 			throw new IOException("Die Datei ist von " + holder + " gesperrt.");
 	}
 

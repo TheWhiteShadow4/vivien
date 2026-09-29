@@ -28,7 +28,7 @@ public class ResetApi implements Api
 		try
 		{
 			lockService.gitLock.writeLock().lock();
-			lockService.freeUserLocks(ctx.header(Server.APP_USER));
+			lockService.freeUserLocks(Server.getUserName(ctx));
 			repository.reset();
 			gitStatusApi.handle(ctx);
 		}

@@ -65,6 +65,8 @@ public class PreviewApi implements Api
 			{
 				obj.fileParams = config.enginePlugin.getImportData(path);
 			}
+			ConfigView view = config.getView(Server.getViewName(ctx));
+			obj.metadata.readonly = view.getFilter().isReadonly(file);
 			ctx.json(obj);
 		}
 		catch(FileNotFoundException e)
@@ -94,7 +96,7 @@ public class PreviewApi implements Api
 		var meta = new FileObject.FileObjectMeta();
 		meta.mimeType = "text/toml";
 		meta.size = content.length();
-		meta.owner = ctx.header(Server.APP_USER);
+		meta.owner = Server.getUserName(ctx);
 		ctx.json(new FileObject(content, path.getFileName().toString(), meta));
 	}
 }

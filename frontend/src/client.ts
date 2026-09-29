@@ -1,7 +1,7 @@
 // src/client.ts
 import { useStore } from '@/store'
 import emitter from './mitt';
-import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, LoginRequest, LoginResult, PluginRequest, RepositoryElement, ServerError } from './types/vivien-generated';
+import type { FileObject, GitBranchStatus, GitStageOperation, GitStageRequest, LoginRequest, LoginResult, PluginRequest, RepositoryElement, ServerError, UserRequest } from './types/vivien-generated';
 import { getFileExtension, getFilename } from '@/config';
 
 
@@ -49,10 +49,10 @@ export async function fetchWithView(url: string, options: RequestInit = {}): Pro
 	});
 }
 
-export async function sendLogin(path: string): Promise<LoginResult | null>
+export async function sendLogin(path: string): Promise<LoginResult | number>
 {
 	const store = useStore();
-	if (!store.settings?.credentials) return null;
+	if (!store.settings?.credentials) return 0;
 
 	const [user, pass] = atob(store.settings.credentials).split(':');
 	const options: RequestInit = {
@@ -69,7 +69,17 @@ export async function sendLogin(path: string): Promise<LoginResult | null>
 	{
 		return await resp.json();
 	}
-	return null;
+	return resp.status;
+}
+
+export async function updateUser(req: UserRequest): Promise<boolean>
+{
+	const options: RequestInit = {
+		method: "POST",
+		body: JSON.stringify(req)
+	};
+	const resp = await fetch("/api/user", options);
+	return resp.ok;
 }
 
 export async function sendChangeStaged(file: string, op: GitStageOperation): Promise<Response>

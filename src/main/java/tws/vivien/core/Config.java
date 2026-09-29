@@ -102,8 +102,9 @@ public class Config
 		ConfigView view = views.get(name);
 		if (view == null)
 		{
+			LOG.error("View '{}' ist nicht in der Server Konfig.", name);
 			throw new RuntimeException("Panic!");
-			//LOG.warn("View {} ist nicht in der Server Konfig.", name);
+
 			//return new ConfigView("admin");
 		}
 		return view;
@@ -129,8 +130,10 @@ public class Config
 		addEnv(configData,"preview.compression");
 		addEnv(configData,"preview.output");
 		addEnv(configData,"git.token");
+		addEnvArray(configData,"views.admin.writes");
 		addEnvArray(configData,"views.admin.includes");
 		addEnvArray(configData,"views.admin.excludes");
+		addEnvArray(configData,"views.artist.writes");
 		addEnvArray(configData,"views.artist.includes");
 		addEnvArray(configData,"views.artist.excludes");
 		return configData;
@@ -222,15 +225,16 @@ public class Config
 					String name = entry.getKey();
 					var viewTable = (com.electronwill.nightconfig.core.Config) entry.getValue();
 					String displayName = (String)viewTable.getOptional("name").orElse(name);
-					String root = (String)viewTable.getOptional("root").orElse("");
+					List<String> writes = viewTable.get("writes");
 					List<String> includes = viewTable.get("includes");
 					List<String> excludes = viewTable.get("excludes");
 
-					views.put(name, new ConfigView(displayName, root, includes, excludes));
+					views.put(name, new ConfigView(displayName, writes, includes, excludes));
 
 				}
 				catch (Exception e)
 				{
+					LOG.error("Fehler beim Einlesen der View Listen", e);
 					errors.add(new ConfigException(entry.getKey(), e));
 				}
 			}

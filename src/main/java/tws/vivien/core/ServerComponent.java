@@ -37,4 +37,5 @@ public interface ServerComponent
 	MoveApi moveApi();
 	FileLockApi fileLockApi();
 	PluginDataApi pluginDataApi();
+	UserApi userApi();
 }

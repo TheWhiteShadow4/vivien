@@ -1,14 +1,35 @@
 <!-- src/components/ViewTypePanel.vue -->
 <script setup lang="ts">
+import { updateUser } from '@/client';
 import { useStore } from '@/store'
-import { computed } from 'vue';
+import type { UserRequest } from '@/types/vivien-generated';
+import { computed, ref } from 'vue';
 
 const store = useStore()
 const view = computed(() => store.settings.view);
 
-function toggleView()
+const isLoading = ref<boolean>(false);
+
+async function toggleView()
 {
-	store.settings.view = store.settings.view == "admin" ? "artist" : "admin"; 
+	if (isLoading.value) return;
+
+	const user = store.settings.username;
+	if (!user) return;
+	try
+	{
+		isLoading.value = true;
+
+		const newView = store.settings.view == "admin" ? "artist" : "admin"; 
+		if (await updateUser({ user: store.settings.username, view: newView } as UserRequest))
+		{
+			store.settings.view = newView;
+		}
+	}
+	finally
+	{
+		isLoading.value = false;
+	}
 }
 const badgeStyle = computed(() => {return{
 	admin: "bg-vit-highlight/30 border border-vit-text-danger",

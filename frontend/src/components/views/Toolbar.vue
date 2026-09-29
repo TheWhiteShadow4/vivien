@@ -22,6 +22,7 @@ const store = useStore();
 
 const props = defineProps<{
   element: RepositoryElement,
+  readonly: boolean,
   editButton: 'hidden' | 'edit' | 'unedit',
 }>();
 
@@ -196,7 +197,7 @@ async function handleFileChange(event: Event)
 		
 		<BaseIconButton
 			@click="openFileBrowser()"
-			:disabled="isLoading || isRemoved || editButton === 'unedit'"
+			:disabled="isLoading || isRemoved || readonly || editButton === 'unedit'"
 			variant="normal" size="xl" 
 			class="flex flex-col items-center">
 			<IconUpload />
@@ -215,7 +216,7 @@ async function handleFileChange(event: Event)
 
 		<BaseIconButton
 			@click="copyFile()"
-			:disabled="isLoading || isRemoved"
+			:disabled="isLoading || isRemoved || readonly"
 			variant="normal" size="xl"
 			class="flex flex-col items-center">
 			<IconExport />
@@ -226,7 +227,7 @@ async function handleFileChange(event: Event)
 		<BaseIconButton
 			v-if="editButton === 'edit'"
 			@click="emit('lock')"
-			:disabled="isLoading"
+			:disabled="isLoading || readonly"
 			variant="normal" size="xl"
 			class="flex flex-col items-center">
 			<IconEdit />
@@ -246,7 +247,7 @@ async function handleFileChange(event: Event)
 		<BaseIconButton
 			v-if="model.edit !== null"
 			@click="model.edit = !model.edit"
-			:disabled="isLoading || isRemoved"
+			:disabled="isLoading || isRemoved || readonly"
 			:variant="model.edit ? 'secondary' : 'normal'" size="xl"
 			class="flex flex-col items-center">
 			<IconSettings />
@@ -266,7 +267,7 @@ async function handleFileChange(event: Event)
 		<BaseIconButton
 			v-if="canDelete"
 			@click="deleteFile()"
-			:disabled="isLoading"
+			:disabled="isLoading || readonly"
 			variant="danger" size="xl"
 			class="flex flex-col items-center">
 			<IconClose />

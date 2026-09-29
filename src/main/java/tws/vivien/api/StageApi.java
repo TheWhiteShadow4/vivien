@@ -3,10 +3,7 @@ package tws.vivien.api;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tws.vivien.core.Config;
-import tws.vivien.core.ErrorBacklog;
-import tws.vivien.core.LockService;
-import tws.vivien.core.Repository;
+import tws.vivien.core.*;
 import tws.vivien.dto.GitStageOperation;
 import tws.vivien.dto.GitStageRequest;
 import tws.vivien.dto.ServerError;
@@ -40,6 +37,15 @@ public class StageApi implements Api
 		{
 			lockService.gitLock.readLock().lock();
 			Path file = repository.resolve(request.file);
+
+			String viewName = Server.getViewName(ctx);
+			ConfigView view = config.getView(viewName);
+			if (view.getFilter().isReadonly(request.file))
+			{
+				ctx.status(403);
+				ctx.json(new ServerError("Keine Schreibberechtigung.", null));
+				return;
+			}
 
 			switch (request.op)
 			{

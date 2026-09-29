@@ -23,16 +23,22 @@ async function startupFunction()
 {
 	const path = window.location.pathname.substring(1);
 	const loggedIn = await sendLogin(path);
-	if (loggedIn == null)
+	if (loggedIn === 502) return;
+	if (typeof(loggedIn) === 'number')
 	{
 		store.showLoginDialog = true;
 		return;
 	}
 
 	store.server = loggedIn.state;
-	if (loggedIn.element)
+	if (loggedIn.folder)
 	{
-		store.folder = loggedIn.element;
+		store.folder = loggedIn.folder;
+		store.selected = null;
+		if (loggedIn.selected >= 0)
+		{
+			store.selected = store.folder.children![loggedIn.selected]!;
+		}
 	}
 
 	if (store.server?.mode == 'SETUP')
@@ -42,7 +48,8 @@ async function startupFunction()
 	else
 	{
 		checkGitStatus();
-		store.selected = README_FILE as RepositoryElement;
+		if (store.selected == null)
+			store.selected = README_FILE as RepositoryElement;
 	}
 }
 
@@ -81,7 +88,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<div class="h-screen w-screen flex flex-col overflow-hidden select-none">
+	<div class="h-screen w-screen flex flex-col overflow-hidden">
 
 		<TheHeader />
 

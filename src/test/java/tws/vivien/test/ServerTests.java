@@ -11,15 +11,17 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import tws.vivien.api.Api;
-import tws.vivien.core.Server;
+import tws.vivien.core.ConfigView;
 import tws.vivien.dto.CommitRequest;
 import tws.vivien.dto.GitBranchStatus;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,6 +42,43 @@ public class ServerTests
 		Path file = component.repository().getRoot().resolve(name);
 		FileUtils.writeStringToFile(file.toFile(), name, Charset.defaultCharset());
 		return file;
+	}
+
+	@Test
+	public void filePattern()
+	{
+		var filter = new ConfigView("", List.of("/write/"), null, null).getFilter();
+		assertTrue(filter.isReadonly("test.txt"));
+		assertTrue(filter.isReadonly("write"));
+		assertTrue(filter.isReadonly("read/write/test.txt"));
+		assertFalse(filter.isReadonly("write/test.txt"));
+		assertFalse(filter.isReadonly("write/read/test.txt"));
+
+		filter = new ConfigView("", List.of("write/"), null, null).getFilter();
+		assertTrue(filter.isReadonly("test.txt"));
+		assertTrue(filter.isReadonly("write"));
+		assertFalse(filter.isReadonly("read/write/test.txt"));
+		assertFalse(filter.isReadonly("write/test.txt"));
+		assertFalse(filter.isReadonly("write/read/test.txt"));
+
+		filter = new ConfigView("", List.of("/write"), null, null).getFilter();
+		assertTrue(filter.isReadonly("test.txt"));
+		assertFalse(filter.isReadonly("write"));
+		assertTrue(filter.isReadonly("read/write/test.txt"));
+		assertTrue(filter.isReadonly("write/test.txt"));
+		assertTrue(filter.isReadonly("write/read/test.txt"));
+
+		filter = new ConfigView("", List.of("*.txt"), null, null).getFilter();
+		assertFalse(filter.isReadonly("test.txt"));
+		assertFalse(filter.isReadonly("write/test.txt"));
+		assertTrue(filter.isReadonly("read/test.md"));
+		assertTrue(filter.isReadonly("read/test"));
+
+		filter = new ConfigView("", List.of("test.txt"), null, null).getFilter();
+		assertFalse(filter.isReadonly("test.txt"));
+		assertFalse(filter.isReadonly("write/test.txt"));
+		assertTrue(filter.isReadonly("read/test.md"));
+		assertTrue(filter.isReadonly("read/test"));
 	}
 
 	@Test
@@ -95,7 +134,8 @@ public class ServerTests
 	{
 		var context = Mockito.mock(Context.class);
 		when(context.bodyAsClass(Mockito.any())).thenReturn(data);
-		when(context.header(Server.APP_USER)).thenReturn(user);
+		when(context.attribute("user")).thenReturn(user);
+		when(context.attribute("view")).thenReturn("admin");
 
 		api.handle(context);
 
@@ -106,7 +146,8 @@ public class ServerTests
 	{
 		var context = Mockito.mock(Context.class);
 		when(context.bodyAsClass(Mockito.any())).thenReturn(data);
-		when(context.header(Server.APP_USER)).thenReturn(user);
+		when(context.attribute("user")).thenReturn(user);
+		when(context.attribute("view")).thenReturn("admin");
 
 		api.handle(context);
 
