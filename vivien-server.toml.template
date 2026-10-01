@@ -27,6 +27,8 @@ compression = 0.5
 excludes = [ ".meta" ]
 
 [views.artist]
-root = "Assets"
+# Schreibbare Ordner
+writes = [ "/Assets/" ]
+# Sichtbare Ordner und Dateien
 includes = [ "*.png", "*.jpg", "*.tga", "*.tif", "*.svg", "*.md", "*.txt", "*.json", "*.yaml", "*.fbx", "*.obj", "*.gltf", "*.glb", "*.wav", "*.mp3", "*.ogg", "*.aac" ]
 excludes = [ ".idea/", ".git/", ".meta" ]
