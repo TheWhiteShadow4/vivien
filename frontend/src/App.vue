@@ -68,6 +68,38 @@ function closeLoginDialog(needRefresh: boolean)
 	}
 }
 
+function handleKeyDown(event: KeyboardEvent)
+{
+	const activeEl = document.activeElement
+	if (activeEl)
+	{
+		if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.hasAttribute('contenteditable')) return;
+	}
+
+	const isModifierPressed = event.ctrlKey || event.metaKey;
+	if (isModifierPressed && store.selected)
+	{
+		const key = event.key.toLowerCase();
+		switch (key)
+		{
+			case 'c':
+			event.preventDefault()
+			store.clipboard = store.selected;
+			break
+
+			case 'x':
+			event.preventDefault()
+			store.clipboard = store.selected;
+			break
+
+			case 'v':
+			event.preventDefault()
+			emitter.emit("paste-clipboard");
+			break
+		}
+	}
+}
+
 // Lifecycle-Hook: Wird ausgeführt, sobald die Komponente im Browser geladen ist
 onMounted(() => {
 	if (store.settings.username == null || store.settings.email == null)
@@ -80,10 +112,12 @@ onMounted(() => {
 	}
 
 	emitter.on("error", (e) => store.server?.serverErrors.push(e as ServerError));
+	window.addEventListener('keydown', handleKeyDown)
 })
 
 onUnmounted(() => {
 	emitter.off("error", (e) => store.server?.serverErrors.push(e as ServerError));
+	window.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 

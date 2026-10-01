@@ -331,6 +331,7 @@ onMounted(() => {
 	window.addEventListener('popstate', handleBrowserNavigation);
 	emitter.on("refresh-folder", refreshFolder);
 	emitter.on("refresh-file", s => refreshFile(s as string));
+	emitter.on("paste-clipboard", moveClipboardFile);
 	isMounted.value = true;
 })
 
@@ -338,6 +339,7 @@ onUnmounted(() => {
 	window.removeEventListener('popstate', handleBrowserNavigation);
 	emitter.off("refresh-folder", refreshFolder);
 	emitter.off("refresh-file", s => refreshFile(s as string));
+	emitter.off("paste-clipboard", moveClipboardFile);
 	isMounted.value = false;
 })
 
