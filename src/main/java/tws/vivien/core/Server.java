@@ -2,7 +2,6 @@ package tws.vivien.core;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.javalin.Javalin;
 import io.javalin.compression.CompressionStrategy;
@@ -72,12 +71,11 @@ public class Server
 			if (productionMode)
 			{
 				c.spaRoot.addFile("/", "/public/index.html", Location.CLASSPATH);
-				c.staticFiles.add(staticFiles ->
-				  {
-					  staticFiles.hostedPath = "/";
-					  staticFiles.directory = "public";
-					  staticFiles.location = Location.CLASSPATH;
-				  });
+				c.staticFiles.add(staticFiles -> {
+					staticFiles.hostedPath = "/";
+					staticFiles.directory = "public";
+					staticFiles.location = Location.CLASSPATH;
+				});
 			}
 
 			c.staticFiles.add(staticFiles -> {
@@ -105,20 +103,20 @@ public class Server
 			}
 
 			c.bundledPlugins.enableCors(cors ->
-					cors.addRule(rule ->
-					{
-						if (config.mode == ServerMode.SETUP || config.security == SecurityMode.LAX)
-						{
-							rule.anyHost(); // Aktiviert Cross-Origin-Requests
-						}
-						else
-						{
-							rule.reflectClientOrigin = true;
-							rule.allowCredentials = true;
-						}
-					}));
+				cors.addRule(rule ->
+			{
+				if (config.mode == ServerMode.SETUP || config.security == SecurityMode.LAX)
+				{
+					rule.anyHost(); // Aktiviert Cross-Origin-Requests
+				}
+				else
+				{
+					rule.reflectClientOrigin = true;
+					rule.allowCredentials = true;
+				}
+			}));
 
-			// Basic Auth Absicherung
+			// Auth Absicherung
 			c.routes.post("/api/login", this::handleLogin);
 			c.routes.before("/api/*", this::authFilter);
 			c.routes.before("/cache/*", this::authFilter);
@@ -159,25 +157,18 @@ public class Server
 
 	private void authFilter(Context ctx)
 	{
+		if ("/api/login".equals(ctx.path())) return;
+		
 		String token = ctx.cookie(JWT_COOKIE);
-		if (token == null)
+		try
 		{
-			if ("/api/login".equals(ctx.path())) return;
-
-			ctx.status(401).result("Nicht eingeloggt");
+			DecodedJWT jwt = JWT.require(Algorithm.HMAC256(config.secret)).build().verify(token);
+			ctx.attribute("user", jwt.getClaim("user").asString());
+			ctx.attribute("view", jwt.getClaim("view").asString());
 		}
-		else
+		catch (Exception e)
 		{
-			try
-			{
-				DecodedJWT jwt = JWT.require(Algorithm.HMAC256(config.secret)).build().verify(token);
-				ctx.attribute("user", jwt.getClaim("user").asString());
-				ctx.attribute("view", jwt.getClaim("view").asString());
-			}
-			catch (JWTVerificationException e)
-			{
-				ctx.status(401).result("Ungültiger Token");
-			}
+			throw new UnauthorizedResponse("Ungültiger Token");
 		}
 	}
 

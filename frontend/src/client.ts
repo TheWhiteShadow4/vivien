@@ -8,11 +8,11 @@ import { getFileExtension, getFilename } from '@/config';
 export async function checkBackendStatus(): Promise<boolean>
 {
 	const store = useStore();
-	
+
 	if (store.settings.username == null) return false;
 	try
 	{
-		const response = await fetchWithView("/api/state")
+		const response = await fetchWrapper('/api/state')
 
 		if (!response.ok) {
 			emitDisconectError(response.statusText);
@@ -28,28 +28,37 @@ export async function checkBackendStatus(): Promise<boolean>
 	return false;
 }
 
-export async function fetchWithView(url: string, options: RequestInit = {}): Promise<Response>
+export async function fetchWrapper(url: string, options: RequestInit = {}): Promise<Response>
 {
-	const store = useStore();
-
 	const headers = new Headers(options.headers);
-
-	// Der View wird momentan immer gesendet
-	headers.set('X-App-View', store.settings.view);
-	headers.set('Authorization', `Basic ${store.settings.credentials}`);
 
 	if (!headers.has('Content-Type') && (options.method === 'POST'))
 	{
 		headers.set('Content-Type', 'application/json');
 	}
 
-	return fetch(url, {
+	let result = await fetch(url, {
 		...options,
-		headers
+		headers,
 	});
+	console.log("fetchWrapper: ", result);
+	if (result.status == 401)
+	{
+		const loginResult = await sendLogin(undefined);
+		console.log("login: ", loginResult);
+		if (loginResult !== 401)
+		{
+			result = await fetch(url, {
+				...options,
+				headers,
+			});
+		}
+	}
+
+	return result;
 }
 
-export async function sendLogin(path: string): Promise<LoginResult | number>
+export async function sendLogin(path: string | undefined): Promise<LoginResult | number>
 {
 	const store = useStore();
 	if (!store.settings?.credentials) return 0;
@@ -64,7 +73,7 @@ export async function sendLogin(path: string): Promise<LoginResult | number>
 			path: path
 		} as LoginRequest)
 	};
-	const resp = await fetch("/api/login", options);
+	const resp = await fetch('/api/login', options)
 	if (resp.ok)
 	{
 		return await resp.json();
@@ -94,7 +103,7 @@ export async function sendChangeStaged(file: string, op: GitStageOperation): Pro
 			file: file
 		} as GitStageRequest)
 	};
-	return fetchWithView("/api/staged", options);
+	return fetchWrapper('/api/staged', options)
 }
 
 export function emitDisconectError(status: string)
@@ -109,7 +118,7 @@ export async function checkGitStatus()
 	const store = useStore();
 	try
 	{
-		const response = await fetchWithView("/api/git")
+		const response = await fetchWrapper('/api/git')
 
 		if (!response.ok) {
 			emitDisconectError(response.statusText);
@@ -159,15 +168,14 @@ export async function sendUploadRequest(formData: FormData): Promise<boolean>
 	return false;
 }
 
-export async function uploadFiles(event: Event, fileOrFolder: string): Promise<boolean>
+export async function uploadFiles(files: File[], fileOrFolder: string): Promise<boolean>
 {
-	const target = event.target as HTMLInputElement;
-	if (!target.files || target.files.length === 0) return false;
+	if (files.length === 0) return false;
 
 	const formData = new FormData();
 	formData.append('fileOrFolder', fileOrFolder);
 
-	Array.from(target.files).forEach((file) => {
+	Array.from(files).forEach((file) => {
 		formData.append('files', file);
 	});
 
@@ -177,10 +185,10 @@ export async function uploadFiles(event: Event, fileOrFolder: string): Promise<b
 export async function uploadEditorContent(path: string, content: string, final: boolean = false): Promise<boolean>
 {
 	const formData = new FormData();
-	
+
 	const ext = getFileExtension(path);
 	if (!ext) return false;
-	
+
 	const file = new File([content], getFilename(path), { type: 'text/plain' });
 
 	formData.append('fileOrFolder', path);
@@ -193,7 +201,7 @@ export async function uploadEditorContent(path: string, content: string, final: 
 
 export async function updatePreview(el: RepositoryElement): Promise<FileObject | null>
 {
-	const response = await fetchWithView(`/api/preview?file=${el.path}`);
+	const response = await fetchWrapper(`/api/preview?file=${el.path}`)
 	if (response.ok)
 	{
 		return await response.json() as FileObject;
@@ -206,7 +214,7 @@ export async function updatePreview(el: RepositoryElement): Promise<FileObject |
 
 export async function updateCommitPreview(el: RepositoryElement): Promise<FileObject | null>
 {
-	const response = await fetchWithView(`/api/commits?q=${el.path}`);
+	const response = await fetchWrapper(`/api/commits?q=${el.path}`)
 	if (response.ok)
 	{
 		return await response.json() as FileObject;

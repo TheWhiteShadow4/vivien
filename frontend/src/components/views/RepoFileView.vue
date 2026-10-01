@@ -3,7 +3,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import RepoElement from './RepoElement.vue'
 import type { GitBranchStatus, RepositoryElement } from '@/types/vivien-generated'
-import { emitDisconectError, fetchWithView, uploadFiles } from '@/client';
+import { emitDisconectError, fetchWrapper, uploadFiles } from '@/client';
 import TextInput from '../base/TextInput.vue';
 import IconSearch from '@/icons/IconSearch.vue';
 import BaseIconButton from '../base/BaseIconButton.vue';
@@ -137,7 +137,7 @@ async function fetchSearch(query: string)
 			isTreeLoading.value = true
 			errorMessage.value = null
 
-			const response = await fetchWithView(`/api/repo?q=${query}`)
+			const response = await fetchWrapper(`/api/repo?q=${query}`)
 
 			if (!response.ok)
 			{
@@ -184,7 +184,7 @@ async function fetchRepository(path: string)
 			navigateToFolder(cached);
 		}
 
-		const response = await fetchWithView(`/api/repo?path=${path}`)
+		const response = await fetchWrapper(`/api/repo?path=${path}`)
 
 		if (!response.ok)
 		{
@@ -267,7 +267,10 @@ async function handleFileChange(event: Event)
 {
 	if (!store.folder) return;
 
-	await uploadFiles(event, store.folder.path);
+	const target = event.target as HTMLInputElement;
+	if (!target.files) return false;
+
+	await uploadFiles(Array.from(target.files), store.folder.path);
 }
 
 function openFileBrowser()
@@ -289,6 +292,22 @@ async function refreshFile(path: string)
 	if (el != null)
 	{
 		store.selected = el;
+	}
+}
+
+function onDragOver(event: DragEvent)
+{
+	event.preventDefault()
+}
+
+function onDrop(event: DragEvent)
+{
+	event.preventDefault()
+	if (!store.folder) return;
+
+	if (event.dataTransfer?.files)
+	{
+		uploadFiles(Array.from(event.dataTransfer.files), store.folder.path);
 	}
 }
 
@@ -416,7 +435,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 			<IconHistory />
 		</ListButton>
 	</Teleport>
-	<div :class="tableWrapper">
+	<div :class="tableWrapper" @dragover="onDragOver" @drop="onDrop">
 		<!-- Tabellen-Kopf -->
 		<div :class="tableHeader">
 			<div v-if="store.folder">
@@ -458,7 +477,7 @@ const tableHeader = "bg-vit-bg/50 border-b border-vit-border px-4 py-3 flex just
 				</div>
 				<RepoElement
 					v-for="el in store.folder.children"
-					:key="el.name"
+					:key="el.path"
 					:element="el"
 					:hint="store.folder.type === 'VIRTUAL' ? (el.metadata ? el.metadata!['author'] : '/' + el.path ) : undefined"
 					:selected="el.path == store.selected?.path"

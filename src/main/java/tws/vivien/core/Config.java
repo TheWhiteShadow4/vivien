@@ -292,6 +292,7 @@ public class Config
 
 	private static String generateSecret()
 	{
+		LOG.warn("Generiere Secret-Key. Im Produktivbetrieb sollte ein statischer Key gesetzt werden.");
 		byte[] array = new byte[32];
 		new Random().nextBytes(array);
 		return new String(array);

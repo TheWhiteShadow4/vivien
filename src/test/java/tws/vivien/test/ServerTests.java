@@ -45,18 +45,19 @@ public class ServerTests
 	}
 
 	@Test
-	public void filePattern()
+	public void filePattern() throws IOException
 	{
 		var filter = new ConfigView("", List.of("/write/"), null, null).getFilter();
 		assertTrue(filter.isReadonly("test.txt"));
-		assertTrue(filter.isReadonly("write"));
 		assertTrue(filter.isReadonly("read/write/test.txt"));
+		assertFalse(filter.isReadonly("write/", true));
 		assertFalse(filter.isReadonly("write/test.txt"));
 		assertFalse(filter.isReadonly("write/read/test.txt"));
 
 		filter = new ConfigView("", List.of("write/"), null, null).getFilter();
 		assertTrue(filter.isReadonly("test.txt"));
-		assertTrue(filter.isReadonly("write"));
+		assertTrue(filter.isReadonly("write", false));
+		assertFalse(filter.isReadonly("write", true));
 		assertFalse(filter.isReadonly("read/write/test.txt"));
 		assertFalse(filter.isReadonly("write/test.txt"));
 		assertFalse(filter.isReadonly("write/read/test.txt"));
@@ -65,8 +66,8 @@ public class ServerTests
 		assertTrue(filter.isReadonly("test.txt"));
 		assertFalse(filter.isReadonly("write"));
 		assertTrue(filter.isReadonly("read/write/test.txt"));
-		assertTrue(filter.isReadonly("write/test.txt"));
-		assertTrue(filter.isReadonly("write/read/test.txt"));
+		assertFalse(filter.isReadonly("write/test.txt"));
+		assertFalse(filter.isReadonly("write/read/test.txt"));
 
 		filter = new ConfigView("", List.of("*.txt"), null, null).getFilter();
 		assertFalse(filter.isReadonly("test.txt"));

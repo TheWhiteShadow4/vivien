@@ -9,7 +9,7 @@ import IconDownload from '@/icons/IconDownload.vue';
 import { useStore } from '@/store/index';
 import type { GitBranchStatus, GitStageOperation, RepositoryElement, ServerError } from '@/types/vivien-generated.js';
 import { computed, ref } from 'vue';
-import { fetchWithView, sendChangeStaged, uploadFiles } from '@/client';
+import { fetchWrapper, sendChangeStaged, uploadFiles } from '@/client';
 import emitter from '@/mitt';
 import IconClose from '@/icons/IconClose.vue';
 import IconSync from '@/icons/IconSync.vue';
@@ -124,7 +124,7 @@ async function download()
 	{
 		if (isLoading.value) return;
 
-		const response = await fetchWithView(`/api/download?file=${props.element.path}`);
+		const response = await fetchWrapper(`/api/download?file=${props.element.path}`);
 
 		if (response.ok)
 		{
@@ -157,9 +157,11 @@ async function handleFileChange(event: Event)
 {
 	try
 	{
-		if (isLoading.value) return;
+		const target = event.target as HTMLInputElement;
+		if (isLoading.value || !target.files) return;
 
-		const success = await uploadFiles(event, props.element.path);
+		isLoading.value = true;
+		const success = await uploadFiles(Array.from(target.files), props.element.path);
 		if (success)
 		{
 			emitter.emit("refresh-preview", props.element);

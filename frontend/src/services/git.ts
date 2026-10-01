@@ -1,4 +1,4 @@
-import { fetchWithView } from "@/client";
+import { fetchWrapper } from '@/client'
 import type { CheckoutRequest, CommitRequest, GitStageRequest, MoveRequest } from "@/types/vivien-generated";
 
 
@@ -10,7 +10,7 @@ export async function sendCheckout(branch: string): Promise<Response>
 			branch,
 		} as CheckoutRequest)
 	};
-	return fetchWithView("/api/checkout", options);
+	return fetchWrapper('/api/checkout', options)
 }
 
 export async function sendPull(): Promise<Response>
@@ -18,7 +18,7 @@ export async function sendPull(): Promise<Response>
 	const options: RequestInit = {
 		method: "POST"
 	};
-	return fetchWithView("/api/pull", options);
+	return fetchWrapper('/api/pull', options)
 }
 
 export async function sendCommit(name: string, email: string, message: string): Promise<Response>
@@ -31,7 +31,7 @@ export async function sendCommit(name: string, email: string, message: string): 
 			message
 		} as CommitRequest)
 	};
-	return fetchWithView("/api/commit", options);
+	return fetchWrapper('/api/commit', options)
 }
 
 export async function sendReset(): Promise<Response>
@@ -39,7 +39,7 @@ export async function sendReset(): Promise<Response>
 	const options: RequestInit = {
 		method: "POST"
 	};
-	return fetchWithView("/api/reset", options);
+	return fetchWrapper('/api/reset', options)
 }
 
 export async function sendDelete(file: string): Promise<Response>
@@ -52,7 +52,7 @@ export async function sendDelete(file: string): Promise<Response>
 			file
 		} as GitStageRequest)
 	};
-	return fetchWithView("/api/delete", options);
+	return fetchWrapper('/api/delete', options)
 }
 
 export async function sendMove(src: string, dst: string): Promise<Response>
@@ -61,5 +61,5 @@ export async function sendMove(src: string, dst: string): Promise<Response>
 		method: "POST",
 		body: JSON.stringify({ src, dst } as MoveRequest)
 	};
-	return fetchWithView("/api/move", options);
+	return fetchWrapper('/api/move', options)
 }

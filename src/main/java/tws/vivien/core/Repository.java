@@ -134,7 +134,7 @@ public class Repository
 		{
 			element.children = element.children.stream()
 				.filter(e -> view.getFilter()
-				.isIncluded(Path.of(e.path), e.type)).toList();
+				.isIncluded(e.path, e.type)).toList();
 		}
 		return element;
 	}
@@ -152,7 +152,7 @@ public class Repository
 		return cache.getPathLookup().values().stream()
 				.filter(element -> element.type == ElementType.FILE) // Nur Dateien durchsuchen
 				.filter(element -> element.name.toLowerCase().contains(lowerQuery))
-				.filter(e -> view.getFilter().isIncluded(Path.of(e.path), e.type))
+				.filter(e -> view.getFilter().isIncluded(e.path, e.type))
 				.map(RepositoryElement::flatCopy)
 				.toList();
 	}

@@ -57,7 +57,7 @@ public class UploadApi implements Api
 			Path targetPath = repository.resolve(fileOrFolder);
 			if (Files.isDirectory(targetPath)) // Multi Upload in Ordner
 			{
-				checkUserAccess(ctx, fileOrFolder);
+				checkUserAccess(ctx, fileOrFolder, true);
 
 				List<ServerError> errors = new ArrayList<>();
 				for (var file : ctx.uploadedFiles("files"))
@@ -82,7 +82,7 @@ public class UploadApi implements Api
 			}
 			else if (Files.isRegularFile(targetPath)) // Single Upload
 			{
-				checkUserAccess(ctx, fileOrFolder);
+				checkUserAccess(ctx, fileOrFolder, false);
 				checkUserLock(ctx, fileOrFolder);
 
 				if (Objects.equals(ctx.formParam("unlock"),"true"))
@@ -106,10 +106,10 @@ public class UploadApi implements Api
 		}
 	}
 
-	private void checkUserAccess(Context ctx, String folder) throws IOException
+	private void checkUserAccess(Context ctx, String folder, boolean isDirectory) throws IOException
 	{
 		ConfigView view = config.getView(Server.getViewName(ctx));
-		if (view.getFilter().isReadonly(folder))
+		if (view.getFilter().isReadonly(folder, isDirectory))
 			throw new IOException("Keine Schreibberechtigung.");
 	}
 

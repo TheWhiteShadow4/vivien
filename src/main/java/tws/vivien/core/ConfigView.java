@@ -2,10 +2,6 @@ package tws.vivien.core;
 
 import tws.vivien.dto.ElementType;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigView
@@ -43,91 +39,50 @@ public class ConfigView
 
 	public static class ViewFilter
 	{
-		private final List<PathMatcher> writesMatchers = new ArrayList<>();
-		private final List<PathMatcher> includeMatchers = new ArrayList<>();
-		private final List<PathMatcher> excludeMatchers = new ArrayList<>();
+		private PathMatcher writesMatcher;
+		private PathMatcher includeMatcher;
+		private PathMatcher excludeMatcher;
 
 		public ViewFilter(ConfigView config)
 		{
 			if (config.writes != null)
 			{
-				for (String pattern : config.writes)
-				{
-					writesMatchers.add(createMatcher(pattern));
-				}
+				writesMatcher = new PathMatcher(config.writes);
 			}
 
 			if (config.includes != null)
 			{
-				for (String pattern : config.includes)
-				{
-					includeMatchers.add(createMatcher(pattern));
-				}
+				includeMatcher = new PathMatcher(config.includes);
 			}
 
 			if (config.excludes != null)
 			{
-				for (String pattern : config.excludes)
-				{
-					excludeMatchers.add(createMatcher(pattern));
-				}
+				excludeMatcher = new PathMatcher(config.excludes);
 			}
 		}
 
-		private PathMatcher createMatcher(String pattern)
+		public boolean isIncluded(String path, ElementType type)
 		{
-			String exp = pattern;
-			if (exp.endsWith("/"))
-			{
-				exp = exp + "**";
-			}
+			boolean isDir = type != ElementType.FILE;
+			if (excludeMatcher != null && excludeMatcher.matches(path, isDir)) return false;
 
-			if (pattern.startsWith("/"))
-			{
-				exp = "glob:" + exp.substring(1);
-			}
-			else
-			{
-				exp = "glob:**" + exp;
-			}
-
-			System.out.println("Matcher für " + pattern + " = " + exp);
-			return FileSystems.getDefault().getPathMatcher(exp);
-		}
-
-		public boolean isIncluded(Path path, ElementType type)
-		{
-			// 1. Exclude-Filter prüfen (Sobald ein Exclude-Pattern matcht -> direkt aussortieren)
-			for (PathMatcher matcher : excludeMatchers)
-			{
-				if (matcher.matches(path)) return false;
-			}
-
-			// Wenn keine Includes definiert sind, lassen wir standardmäßig alles durch (außer Excludes).
-			if (includeMatchers.isEmpty()) return true;
-
+			if (includeMatcher == null) return true;
 			if (type == ElementType.FOLDER) return true;
 
-			// Falls Includes definiert sind, MUSS mindestens eines davon matchen
-
-			for (PathMatcher matcher : includeMatchers)
-			{
-				if (matcher.matches(path)) return true;
-			}
+			if (includeMatcher.matches(path, isDir)) return true;
 			return false;
 		}
-
 		public boolean isReadonly(String file)
 		{
-			if (writesMatchers.isEmpty()) return false;
+			return isReadonly(file, false);
+		}
 
-			var path = Path.of(file);
-			System.out.println(path);
+		public boolean isReadonly(String file, boolean isDirectory)
+		{
+			System.out.println(file);
 
-			for (PathMatcher matcher : writesMatchers)
-			{
-				if (matcher.matches(path)) return false;
-			}
+			if (writesMatcher == null) return false;
+			if (writesMatcher.matches(file, isDirectory)) return false;
 			return true;
 		}
 	}

@@ -1,4 +1,4 @@
-import { fetchWithView } from "@/client";
+import { fetchWrapper } from "@/client";
 import emitter from "@/mitt";
 import { useStore } from "@/store";
 import type { FileLockRequest, FileLockResponse, RepositoryElement, ServerError } from "@/types/vivien-generated";
@@ -26,7 +26,7 @@ async function doCreateFolder(isLoading: Ref<boolean>, parent: string, name: str
 	{
 		isLoading.value = true;
 
-		const response = await fetchWithView('/api/create', {
+		const response = await fetchWrapper('/api/create', {
 			method: 'POST',
 			body: JSON.stringify({
 				name: name,
@@ -64,7 +64,7 @@ async function doLockFile(isLoading: Ref<boolean>, file: string, lock: boolean):
 		const store = useStore();
 		isLoading.value = true;
 
-		const response = await fetchWithView('/api/filelock', {
+		const response = await fetchWrapper('/api/filelock', {
 			method: 'POST',
 			body: JSON.stringify({
 				user: store.settings.username,

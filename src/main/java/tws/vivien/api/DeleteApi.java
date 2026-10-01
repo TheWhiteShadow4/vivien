@@ -36,7 +36,7 @@ public class DeleteApi implements Api
 
 			String viewName = Server.getViewName(ctx);
 			ConfigView view = config.getView(viewName);
-			if (view.getFilter().isReadonly(request.file))
+			if (view.getFilter().isReadonly(request.file, false))
 			{
 				ctx.status(403);
 				ctx.json(new ServerError("Keine Schreibberechtigung.", null));
