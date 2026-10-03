@@ -184,11 +184,12 @@ public class Config
 
 		previewOutputFormat = CReader.readString(this, config, "preview.output").get();
 
+		var gitUser = CReader.readString(this, config, "git.user").withDefault("access_token").get();
 		var gitToken = CReader.readString(this, config, "git.token").get();
 		if (gitToken != null)
 		{
 			//var gitUser = CReader.readString(this, config, "git.user").get();
-			credentials = new UsernamePasswordCredentialsProvider("access_token", gitToken);
+			credentials = new UsernamePasswordCredentialsProvider(gitUser, gitToken);
 		}
 
 		loadUsers(config);

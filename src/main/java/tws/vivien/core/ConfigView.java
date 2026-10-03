@@ -79,8 +79,6 @@ public class ConfigView
 
 		public boolean isReadonly(String file, boolean isDirectory)
 		{
-			System.out.println(file);
-
 			if (writesMatcher == null) return false;
 			if (writesMatcher.matches(file, isDirectory)) return false;
 			return true;
