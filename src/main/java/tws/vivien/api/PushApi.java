@@ -31,6 +31,7 @@ public class PushApi implements Api
 		}
 		catch (Exception e)
 		{
+			LOG.error("push", e);
 			ctx.status(500);
 			ctx.json(ServerError.fromError(e));
 		}

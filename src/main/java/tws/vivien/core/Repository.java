@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Git repository für Vivien.
@@ -58,6 +59,12 @@ public class Repository
 				try
 				{
 					this.gitApi = Git.open(root);
+					String currentBranch = gitApi.getRepository().getBranch();
+					if (!Objects.equals(currentBranch, config.gitBranch))
+					{
+						LOG.info("Wechsel Branch zu {}", config.gitBranch);
+						checkout(config.gitBranch);
+					}
 				}
 				catch (RepositoryNotFoundException e)
 				{
@@ -69,6 +76,7 @@ public class Repository
 								.setCredentialsProvider(config.credentials)
 								.setURI(config.gitUrl)
 								.setDirectory(root)
+								.setBranch(config.gitBranch)
 								.setBare(false)
 								.call();
 					}
@@ -77,6 +85,7 @@ public class Repository
 						LOG.info("Erstelle neues Repository");
 						this.gitApi = Git.init()
 								.setDirectory(root)
+								.setInitialBranch(config.gitBranch)
 								.setBare(false)
 								.call();
 					}
@@ -254,7 +263,7 @@ public class Repository
 		if (!stage.removed.isEmpty()) rm.call();*/
 
 		LOG.info("git commit -m {}", request.message);
-		gitApi.commit().setAuthor(request.name, request.email).setMessage(request.message).call();
+		gitApi.commit().setAuthor(request.name, request.email).setCommitter(request.name, request.email).setMessage(request.message).call();
 	}
 
 	public RemoteRefUpdate.Status push() throws Exception
