@@ -272,12 +272,8 @@ public class Repository
 		var results = gitApi.push().setCredentialsProvider(config.credentials).call();
 		for(PushResult result : results)
 		{
-			var iter = result.getRemoteUpdates().iterator();
-			if (iter.hasNext())
-			{
-				RemoteRefUpdate update = iter.next();
-				return update.getStatus();
-			}
+			RemoteRefUpdate update = result.getRemoteUpdate(config.gitRemote);
+			return update.getStatus();
 		}
 		return null;
 	}

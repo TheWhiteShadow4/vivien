@@ -46,6 +46,11 @@ public class CommitApi implements Api
 					ctx.status(409);
 					ctx.json(new ServerError("Speichern fehlgeschlagen. Aktualisierung erforderlich.", null));
 				}
+				if (result != RemoteRefUpdate.Status.OK && result != RemoteRefUpdate.Status.UP_TO_DATE)
+				{
+					ctx.status(409);
+					ctx.json(new ServerError("Speichern fehlgeschlagen.", null));
+				}
 			}
 			gitStatusApi.handle(ctx);
 		}
