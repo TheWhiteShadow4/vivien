@@ -29,6 +29,7 @@ public class Config
 	private static final Logger LOG = LoggerFactory.getLogger(Config.class);
 
 	public static final String CONFIG_FILE_NAME = "vivien-server.toml";
+	public static final String CACHE_PATH = "cache";
 
 	public Path webRoot;
 	public ServerMode mode;
@@ -37,7 +38,6 @@ public class Config
 	public int port = 8080;
 	public String secret = null;
 	public Object cert = null;
-	public String user = null;
 	public String password = null;
 	public String previewOutputFormat;
 	public List<String> validFileformats;
@@ -173,7 +173,6 @@ public class Config
 		port = CReader.<Integer>read(this, config, "server.port").withDefault(port).get();
 
 		secret = CReader.readString(this, config, "server.secret").withDefault(Config::generateSecret).get();
-		user = CReader.readString(this, config, "server.user").get();
 		password = CReader.readString(this, config, "server.password").get();
 
 		validFileformats = CReader.readString(this, config, "server.formats")

@@ -42,7 +42,7 @@ public class Server
 	{
 		this.productionMode = productionMode;
 
-		var module = new DependencyModule("cache");
+		var module = new DependencyModule(Config.CACHE_PATH);
 		this.component = DaggerServerComponent.builder()
 				.dependencyModule(module)
 				.previewModule(new PreviewModule())

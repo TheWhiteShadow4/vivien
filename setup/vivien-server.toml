@@ -5,7 +5,7 @@
 # local - Einzel Benutzer Betrieb für eine lokale Installation.
 # hosted - Mehr-Benutzer Betrieb für eine Server Installation.
 # setup - Erzwingt einen eingeschränkten Start und öffnet die Konfig über das Web Interface.
-mode = "hosted"
+mode = "local"
 
 # Das Git-Repository, auf dem Vivien arbeiten soll
 git.url = "<GIT_URL>"
@@ -15,16 +15,16 @@ git.remote = "origin"
 git.branch = "master"
 
 # Git Konflikt Verarbeitung
-# Siehe git Dokumentation zu: merge strategies
+# Siehe git Dokumentation: https://git-scm.com/docs/merge-strategies
 git.resolve = "ours"
 
 # Der lokale Pfad für das Repository. Wird angelegt, wenn nicht vorhanden.
-repo_path = "./game-repo"
+repo_path = "<REPOSITORY>"
 
 # Aktiviert ein zusätzliche Plugin für die Bearbeitung von Gameengine verwaltete Ressourcen.
 # Unity - Unity ab Version 6
 # Godot - (Nicht implementiert)
-# engine_plugin = "Unity"
+engine_plugin = "Unity"
 
 [server]
 host = "localhost"
@@ -37,15 +37,15 @@ security = "lax"
 
 # Server Secret für die Verschlüsslung von JWT-Sessions.
 # Falls nicht gesetzt, generiert Vivien automatisch ein nicht persistentes Secret bei Server start.
-#secret = ""
+secret = "Vivien"
 
 # Benutzer Whitelist (Optional)
 # Wenn gesetzt, sind nur die hier aufgeführten Benutzer erlaubt.
 # Der Benutzername kann im Client frei gewählt werden. Das ist kein echter Schutzmechanismus!
-users = [ "Anna", "Fufu" ]
+#users = [ "Anna", "Fufu" ]
 
 # Passwort Schutz des Servers
-password = "*****"
+#password = ""
 
 # Erlaubte Upload Formate (Optional)
 formats = "png,jpg,jpeg,tif,tiff,tga,txt,md,json,yaml,wav,mp3,acc,ogg,fbx,glb,gltf,obj,mtl"
@@ -68,7 +68,7 @@ excludes = [ ".meta" ]
 
 [views.artist]
 # Schreibbare Ordner
-#writes = [ "/Assets/" ]
+writes = [ "/Assets/" ]
 # Sichtbare Ordner und Dateien
-#includes = [ "*.png", "*.jpg", "*.tga", "*.tif", "*.svg", "*.md", "*.txt", "*.json", "*.yaml", "*.fbx", "*.obj", "*.gltf", "*.glb", "*.wav", "*.mp3", "*.ogg", "*.aac" ]
+includes = [ "*.png", "*.jpg", "*.tga", "*.tif", "*.svg", "*.md", "*.txt", "*.json", "*.yaml", "*.fbx", "*.obj", "*.gltf", "*.glb", "*.wav", "*.mp3", "*.ogg", "*.aac" ]
 excludes = [ ".idea/", ".git/", ".meta" ]

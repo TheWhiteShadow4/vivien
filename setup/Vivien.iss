@@ -11,28 +11,29 @@
 AppId={{33F18627-6E3A-403C-B4FA-64541CDADB29}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
 OutputBaseFilename=Vivien_Setup
 SolidCompression=yes
 WizardStyle=modern dynamic
+SetupIconFile=icon.ico
 
 [Languages]
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 
 [Files]
 Source: "..\target\{#MyAppName}-{#MyAppVersion}.jar"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\target\vivien-server.toml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "vivien-server.toml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "7za.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+Source: "icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Erstellt eine Desktop-Verknüpfung, die die JAR direkt über Java startet
-Name: "{autodesktop}\{#MyAppName}"; Filename: "java.exe"; Parameters: "-jar ""{app}\{#MyAppName}-{#MyAppVersion}.jar"""; WorkingDir: "{app}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "java.exe"; \
+	Parameters: "-jar ""{app}\{#MyAppName}-{#MyAppVersion}.jar"""; WorkingDir: "{app}"; IconFilename: "{app}\icon.ico"
 
 [Registry]
 ; Schreibt in den PATH des aktuellen Benutzers
@@ -40,6 +41,10 @@ Root: HKCU; Subkey: "Environment"; \
     ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}\jdk-{#JAVA_VERSION}\bin"; \
     Check: ShouldAddPath
 
+	
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\jdk-{#JAVA_VERSION}"
+Type: filesandordirs; Name: "{app}\cache"
 
 [Code]
 var
@@ -94,7 +99,7 @@ begin
   
   ConfigPage.Add('Repository URL:', False);
   ConfigPage.Add('Benutzername:', False);
-  ConfigPage.Add('Passwort:', False);
+  ConfigPage.Add('Passwort/Token:', False);
   ConfigPage.Add('Lokaler Pfad:', False);
   
   ConfigPage.Values[0] := '';
@@ -180,10 +185,10 @@ begin
 		if FileExists(TomlPfad) then
 		begin
 			{ Aufruf der Replace-Funktion für jeden Parameter }
-			ReplaceTextInFile(TomlPfad, '{URL}', ConfigPage.Values[0]);
-			ReplaceTextInFile(TomlPfad, '{USER}', ConfigPage.Values[1]);
-			ReplaceTextInFile(TomlPfad, '{PASS}', ConfigPage.Values[2]);
-			ReplaceTextInFile(TomlPfad, '{REPO}', ConfigPage.Values[3]);
+			ReplaceTextInFile(TomlPfad, '<GIT_URL>', ConfigPage.Values[0]);
+			ReplaceTextInFile(TomlPfad, '<Git_USER>', ConfigPage.Values[1]);
+			ReplaceTextInFile(TomlPfad, '<GIT_PASS>', ConfigPage.Values[2]);
+			ReplaceTextInFile(TomlPfad, '<REPOSITORY>', ConfigPage.Values[3]);
 		end;
 	end;
 end;

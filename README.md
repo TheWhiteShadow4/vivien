@@ -7,7 +7,52 @@ die an Hobby Spielen mitwirken, dabei helfen ihre Assets ins Projekt zu bekommen
 
 ![image](Screenshot%20App.jpg)
 
-## 🛠️ Erstmaliges Setup (nach dem Auschecken)
+## Features
+
+### Unterstütze Vorschau Formate
+
+- 🟡 Vorschau eingeschränkt
+- 🟢 Vorschau voll unterstützt
+- 🟢+ Code Editor Unterstützung
+
+| Format | Status |
+|--------|--------|
+| png    | 🟢     |
+| jpg    | 🟢     |
+| tiff   | 🟢     |
+| tga    | 🟢     |
+| txt    | 🟢     |
+| md     | 🟢+    |
+| json   | 🟢+    |
+| yaml   | 🟢+    |
+| toml   | 🟢+    |
+| xml    | 🟡     |
+| html   | 🟡     |
+| fbx    | 🟢     |
+| gltf   | 🟢     |
+| glb    | 🟢     |
+| obj    | 🟢     |
+| wav    | 🟢     |
+| mp3    | 🟢     |
+| ogg    | 🟢     |
+| aac    | 🟢     |
+
+## Installationsanleitung
+
+Für eine lokale Installation auf Windows empfiehlt sich die Setup Exe zu verwenden.
+Dieses installiert Vivien mit allen Abhängigkeiten mit wenigen Klicks.
+
+### Manuelle Installation
+
+*Hinweis: Vivien benötigt Java 21+*
+
+1. Jar-Archiv herunter laden.
+2. Konfigurationsvorlage `vivien-server.toml.template` herunter laden.
+3. Vorlage anpassen. **Wichtig!!**
+4. Jar Ausführen `java -jar Vivien-0.2.jar`
+5. Browser öffnen `localhost:8080`
+
+## Entwickler Anleitung
 
 ### 1. Frontend-Abhängigkeiten installieren
 Navigiere in den Frontend-Ordner und installiere Node-Pakete:
