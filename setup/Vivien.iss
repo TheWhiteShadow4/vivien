@@ -77,7 +77,7 @@ begin
         FileLines[I] := LineText;
       end;
       { Speichert die geänderte Datei wieder ab }
-      SaveStringsToFile(FileName, FileLines, False);
+      SaveStringsToUTF8FileWithoutBOM(FileName, FileLines, False);
     end;
   end;
 end;
