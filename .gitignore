@@ -62,3 +62,5 @@ frontend/.env.*.local
 
 /docker-compose.yml
 /vivien-volume/
+
+/setup/Output/
